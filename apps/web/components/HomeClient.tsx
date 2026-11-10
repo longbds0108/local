@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getSession } from "@/lib/circle-client";
+import { clientReverse } from "@/lib/client-geocode";
 import type { ItineraryView, MapPlace } from "@/lib/types";
 import { useChat } from "@/lib/use-chat";
 import AskCard from "./home/AskCard";
@@ -56,7 +57,7 @@ function MiniWallet() {
 }
 
 export default function HomeClient() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [gps, setGps] = useState<GpsState>("locating");
   const [here, setHere] = useState<HereInfo>(null);
   const [info, setInfo] = useState<LocationInfo | null>(null);
@@ -66,7 +67,15 @@ export default function HomeClient() {
   const loadInfo = useCallback(async (pt: { lat: number; lon: number }, isGps: boolean) => {
     setInfoLoading(true);
     try {
-      const res = await fetch(`/api/location?lat=${pt.lat}&lon=${pt.lon}`, { cache: "no-store" });
+      // Browser-side geocode first (BigDataCloud); the server falls back to Photon.
+      const place = await clientReverse(pt.lat, pt.lon, locale);
+      const qs = new URLSearchParams({ lat: String(pt.lat), lon: String(pt.lon) });
+      if (place) {
+        qs.set("label", place.label);
+        qs.set("names", place.names.join("|"));
+        if (place.country) qs.set("country", place.country);
+      }
+      const res = await fetch(`/api/location?${qs}`, { cache: "no-store" });
       if (!res.ok) throw new Error(String(res.status));
       const j = (await res.json()) as LocationInfo;
       setInfo(j);
@@ -76,7 +85,7 @@ export default function HomeClient() {
     } finally {
       setInfoLoading(false);
     }
-  }, []);
+  }, [locale]);
   const [start, setStart] = useState<{ lat: number; lon: number; isGps: boolean } | null>(null);
   const [places, setPlaces] = useState<MapPlace[]>([]);
   const [placesState, setPlacesState] = useState<"loading" | "ok" | "error">("loading");
@@ -161,7 +170,7 @@ export default function HomeClient() {
     if (it) setTab("map"); // show the route
   }, []);
 
-  const chat = useChat({ start, onItinerary, onPlaces });
+  const chat = useChat({ start, area: info?.label ?? null, onItinerary, onPlaces });
 
   const toggleSave = (osmId: string) => {
     setSaved((prev) => {

@@ -16,6 +16,7 @@ const Body = z.object({
   lat: z.number().min(-90).max(90).optional(),
   lon: z.number().min(-180).max(180).optional(),
   locale: z.enum(["vi", "en"]).default("vi"),
+  area: z.string().trim().max(160).optional(),
 });
 
 const busy = new Set<string>();
@@ -62,7 +63,7 @@ export const POST = handle(async (req: Request) => {
       const signal = AbortSignal.any([req.signal, deadline]);
       send({ type: "session", sessionId });
       try {
-        await runChatTurn({ sessionId, userText: body.message, start, startIsGps, locale: body.locale, send, signal });
+        await runChatTurn({ sessionId, userText: body.message, start, startIsGps, area: body.area, locale: body.locale, send, signal });
       } catch (err) {
         const { code, message } = deadline.aborted ? { code: "AI_TIMEOUT", message: "AI timed out" } : classifyAgentError(err);
         if (!req.signal.aborted) console.error("[chat] turn failed", err);

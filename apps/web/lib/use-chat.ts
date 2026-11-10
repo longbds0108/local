@@ -34,6 +34,8 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 export function useChat(opts: {
   start: { lat: number; lon: number; isGps: boolean } | null;
+  /** Readable area name from the browser geocode (helps the AI when server geocoding is down). */
+  area?: string | null;
   onItinerary: (it: ItineraryView | null) => void;
   onPlaces: (places: MapPlace[]) => void;
 }) {
@@ -94,6 +96,7 @@ export function useChat(opts: {
             message: trimmed,
             lat: start?.isGps ? start.lat : undefined,
             lon: start?.isGps ? start.lon : undefined,
+            area: start?.isGps ? (optsRef.current.area ?? undefined) : undefined,
             locale,
           }),
           signal: ctrl.signal,

@@ -38,8 +38,9 @@ function client() {
 
 type Msg = Anthropic.Beta.BetaMessageParam;
 
-async function contextBlock(sessionId: string, start: LatLon, startIsGps: boolean, locale: string): Promise<string> {
-  const area = startIsGps ? placeLabel(await reverseGeocode(start.lat, start.lon)) : null;
+async function contextBlock(sessionId: string, start: LatLon, startIsGps: boolean, locale: string, areaHint?: string): Promise<string> {
+  // Area name: from the browser geocode if given, else server-side (Photon).
+  const area = startIsGps ? (areaHint ?? placeLabel(await reverseGeocode(start.lat, start.lon))) : null;
   const session = await prisma.chatSession.findUnique({
     where: { id: sessionId },
     include: { itinerary: { include: { stops: { orderBy: { order: "asc" } } } } },
@@ -87,6 +88,7 @@ export async function runChatTurn(args: {
   userText: string;
   start: LatLon;
   startIsGps: boolean;
+  area?: string;
   locale: string;
   send: (ev: ChatEvent) => void;
   signal?: AbortSignal;
@@ -95,7 +97,7 @@ export async function runChatTurn(args: {
   const session = await prisma.chatSession.findUniqueOrThrow({ where: { id: sessionId } });
   const messages: Msg[] = JSON.parse(session.messages);
 
-  const ctxText = await contextBlock(sessionId, args.start, args.startIsGps, args.locale);
+  const ctxText = await contextBlock(sessionId, args.start, args.startIsGps, args.locale, args.area);
   messages.push({ role: "user", content: `${ctxText}\n\n${args.userText}` });
   await save(sessionId, messages);
 
