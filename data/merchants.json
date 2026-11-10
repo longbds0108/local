@@ -1,0 +1,9 @@
+{
+  "_note": "Demo merchant wallets on Arc testnet. Addresses only - private keys (if you need to move funds) are in data/merchant-keys.local.json, which is gitignored and never committed.",
+  "merchants": [
+    { "id": "m_ganhhao", "name": "Nhà hàng Gành Hào", "osmId": "node/2670494339", "walletAddress": "0xD301404Eda7E5E13F4E128231166Dbb3B2EEeeB4" },
+    { "id": "m_suoibenbien", "name": "Cafe Suối Bên Biển", "osmId": "way/220753348", "walletAddress": "0xCf161745FB163625a56Fb9EBac4aBE4C8Ece0d92" },
+    { "id": "m_banhkhot", "name": "Bánh khọt Bà Hai", "osmId": "node/2669581769", "walletAddress": "0x0bE20B2D915E470A2f0c4fa6048eC42c657c65c3" },
+    { "id": "m_partner", "name": "Hedgora Partner Pool (điểm có phí chưa có ví riêng)", "osmId": "hedgora:partner-pool", "walletAddress": "0x41854ba01b12B5eFC82D0DD9E25Da852A0D06D90" }
+  ]
+}

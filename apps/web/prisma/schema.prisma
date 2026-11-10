@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String      @id @default(cuid())
+  circleUserId  String      @unique
+  walletId      String?
+  walletAddress String?
+  email         String?
+  itineraries   Itinerary[]
+  createdAt     DateTime    @default(now())
+}
+
+model Merchant {
+  id            String @id
+  name          String
+  osmId         String @unique
+  walletAddress String
+  stops         Stop[]
+}
+
+model Itinerary {
+  id             String       @id @default(cuid())
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id])
+  title          String
+  startAt        DateTime
+  endAt          DateTime
+  partySize      Int
+  totalUsdc      Decimal // 6 decimals
+  status         String // DRAFT | PAID | COMPLETED | REFUNDED | PARTIAL
+  depositTxHash  String?
+  onchainId      String? // bytes32 used in the contract
+  deadline       Int? // unix seconds, passed to deposit()
+  payerAddress   String?
+  profile        String       @default("driving")
+  geometry       String? // GeoJSON LineString (JSON) for the route
+  stops          Stop[]
+  chatSessions   ChatSession[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Stop {
+  id            String    @id @default(cuid())
+  itineraryId   String
+  itinerary     Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+  order         Int
+  osmId         String
+  name          String
+  lat           Float
+  lon           Float
+  category      String
+  arriveAt      DateTime
+  durationMin   Int
+  travelMin     Int // from previous point (first stop: from user's start location)
+  priceUsdc     Decimal
+  priceSource   String    @default("seed") // seed | estimate
+  note          String?
+  merchantId    String?
+  merchant      Merchant? @relation(fields: [merchantId], references: [id])
+  qrSecret      String // random 32 bytes (hex), HMAC key for the QR
+  status        String // FREE | PENDING | CHECKED_IN | RELEASED | REFUNDED
+  onchainIndex  Int? // index in the escrow's stops[] (only paid stops are escrowed)
+  releaseTx     String?
+  refundTx      String?
+  checkedInAt   DateTime?
+}
+
+// Full Claude conversation for a chat (append-only, incl. tool calls), so edits
+// like "bỏ hải đăng" can modify the existing DRAFT itinerary.
+model ChatSession {
+  id          String     @id @default(cuid())
+  messages    String     @default("[]") // JSON array of Anthropic message params
+  itineraryId String?
+  itinerary   Itinerary? @relation(fields: [itineraryId], references: [id])
+  startLat    Float?
+  startLon    Float?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}

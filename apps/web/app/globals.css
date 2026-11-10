@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+/* Design tokens from the LocalMate mockup: deep green + mint, cream workspace. */
+:root {
+  --bg: #061513;
+  --surface: #0b201d;
+  --surface-2: #12312b;
+  --ink: #ecf7f3;
+  --ink-2: #91aaa2;
+  --line: rgb(255 255 255 / 0.09);
+  --accent: #70efc0;
+  --accent-ink: #06221c;
+  --accent-soft: rgb(112 239 192 / 0.12);
+  --ok: #70efc0;
+  --ok-soft: rgb(112 239 192 / 0.12);
+  --warn: #f3c063;
+  --warn-soft: rgb(243 192 99 / 0.12);
+  --danger: #ff8a7f;
+  /* Cream workspace panel */
+  --cream: #f3f4ee;
+  --cream-2: #ffffff;
+  --cream-ink: #10211e;
+  --cream-muted: #64736f;
+  --cream-line: #dce3dc;
+  --forest: #087b5a;
+  --forest-soft: #dff7ee;
+  --deep: #0a231e;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-cream: var(--cream);
+  --color-cream-2: var(--cream-2);
+  --color-cream-ink: var(--cream-ink);
+  --color-cream-muted: var(--cream-muted);
+  --color-cream-line: var(--cream-line);
+  --color-forest: var(--forest);
+  --color-forest-soft: var(--forest-soft);
+  --color-deep: var(--deep);
+  --font-sans: var(--font-dm-sans), var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-manrope), var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Ambient glows */
+.glow {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+/* Map markers */
+.user-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #2e86de;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 6px rgb(46 134 222 / 0.25);
+}
+
+.stop-pin {
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  background: #0c3028;
+  border: 3px solid #70efc0;
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+  cursor: pointer;
+}
+
+.hedgora-popup {
+  font-family: var(--font-sans);
+  color: #10211e;
+  display: grid;
+  gap: 2px;
+}
+.hedgora-popup .hp-title {
+  font-weight: 700;
+  font-size: 13px;
+}
+.hedgora-popup .hp-meta,
+.hedgora-popup .hp-hours {
+  font-size: 11px;
+  color: #64736f;
+}
+.hedgora-popup .hp-price {
+  font-size: 12px;
+  font-weight: 600;
+}
+.maplibregl-popup-content {
+  color: #10211e;
+}
+
+.maplibregl-ctrl-attrib {
+  font-size: 10px;
+}

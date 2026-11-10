@@ -1,0 +1,25 @@
+{
+  "_source": "Coordinates and osmId fetched from OpenStreetMap via Overpass API on 2026-11-10. Prices are demo estimates per person (USDC, testnet). openingHours only where present in OSM.",
+  "city": "Vũng Tàu",
+  "center": { "lat": 10.346, "lon": 107.0843 },
+  "pois": [
+    { "osmId": "way/235008112", "name": "Tượng Chúa Kitô Vua (Núi Nhỏ)", "nameEn": "Christ the King Statue (Small Mountain)", "lat": 10.3265, "lon": 107.08452, "category": "viewpoint", "priceUsdc": 0, "tags": ["view", "sea", "hiking", "landmark"], "suggestedMin": 60 },
+    { "osmId": "way/229301316", "name": "Hải đăng Vũng Tàu", "nameEn": "Vung Tau Lighthouse", "lat": 10.33411, "lon": 107.07766, "category": "viewpoint", "priceUsdc": 1, "merchantId": "m_partner", "tags": ["view", "sea", "landmark", "history"], "suggestedMin": 45 },
+    { "osmId": "way/234800751", "name": "Bãi Sau (Bãi Thùy Vân)", "nameEn": "Back Beach (Thuy Van)", "lat": 10.34254, "lon": 107.09823, "category": "beach", "priceUsdc": 0, "tags": ["beach", "sea", "swim", "sunset"], "suggestedMin": 60 },
+    { "osmId": "way/220821647", "name": "Bãi Trước", "nameEn": "Front Beach", "lat": 10.34384, "lon": 107.07386, "category": "beach", "priceUsdc": 0, "tags": ["beach", "sea", "sunset", "walk"], "suggestedMin": 45 },
+    { "osmId": "way/788324533", "name": "Bãi Vọng Nguyệt (cạnh Mũi Nghinh Phong)", "nameEn": "Vong Nguyet Beach (by Nghinh Phong Cape)", "lat": 10.32234, "lon": 107.08472, "category": "beach", "priceUsdc": 0, "tags": ["beach", "sea", "view", "photo"], "suggestedMin": 40 },
+    { "osmId": "way/220753354", "name": "Bạch Dinh (Villa Blanche)", "nameEn": "White Palace (Villa Blanche)", "lat": 10.35073, "lon": 107.06864, "category": "museum", "priceUsdc": 1, "merchantId": "m_partner", "tags": ["history", "view", "sea", "architecture"], "suggestedMin": 60 },
+    { "osmId": "way/580493869", "name": "Bảo tàng Bà Rịa-Vũng Tàu", "nameEn": "Ba Ria-Vung Tau Museum", "lat": 10.35054, "lon": 107.06968, "category": "museum", "priceUsdc": 1, "merchantId": "m_partner", "tags": ["history", "culture"], "suggestedMin": 45 },
+    { "osmId": "node/1276258153", "name": "Thích Ca Phật Đài", "nameEn": "Thich Ca Phat Dai Pagoda", "lat": 10.37463, "lon": 107.07054, "category": "attraction", "priceUsdc": 0, "tags": ["culture", "temple", "view"], "suggestedMin": 45 },
+    { "osmId": "node/6314254009", "name": "Đồi Con Heo", "nameEn": "Pig Hill", "lat": 10.32806, "lon": 107.0866, "category": "viewpoint", "priceUsdc": 0, "tags": ["view", "sea", "photo", "sunset"], "suggestedMin": 40 },
+    { "osmId": "node/2670494339", "name": "Nhà hàng Gành Hào", "nameEn": "Ganh Hao Seafood Restaurant", "lat": 10.3612, "lon": 107.06074, "category": "restaurant", "priceUsdc": 12, "merchantId": "m_ganhhao", "tags": ["seafood", "sea", "view", "dinner"], "suggestedMin": 75 },
+    { "osmId": "node/13441830301", "name": "Quach's Seafood", "nameEn": "Quach's Seafood", "lat": 10.34022, "lon": 107.08833, "category": "restaurant", "priceUsdc": 10, "merchantId": "m_partner", "tags": ["seafood"], "suggestedMin": 60 },
+    { "osmId": "node/6652681622", "name": "Vườn Ốc WongNai", "nameEn": "WongNai Snail Garden", "lat": 10.34477, "lon": 107.07692, "category": "restaurant", "priceUsdc": 8, "merchantId": "m_partner", "openingHours": "Mo-Su 15:00-23:30", "tags": ["seafood", "snail", "local"], "suggestedMin": 60 },
+    { "osmId": "node/5281198621", "name": "Ốc Cô Quyền", "nameEn": "Co Quyen Snail House", "lat": 10.33934, "lon": 107.08781, "category": "restaurant", "priceUsdc": 8, "merchantId": "m_partner", "openingHours": "Mo-Su 18:00-03:00", "tags": ["seafood", "snail", "local", "night"], "suggestedMin": 60 },
+    { "osmId": "node/2669581769", "name": "Bánh khọt Bà Hai", "nameEn": "Ba Hai Banh Khot", "lat": 10.34412, "lon": 107.08145, "category": "restaurant", "priceUsdc": 4, "merchantId": "m_banhkhot", "tags": ["banh_khot", "local", "street_food"], "suggestedMin": 40 },
+    { "osmId": "node/13797933901", "name": "Bánh Khọt Cô Ba", "nameEn": "Co Ba Banh Khot", "lat": 10.3407, "lon": 107.07834, "category": "restaurant", "priceUsdc": 4, "merchantId": "m_partner", "openingHours": "Mo-Su 06:30-22:00", "tags": ["banh_khot", "local", "street_food"], "suggestedMin": 40 },
+    { "osmId": "way/220753348", "name": "Cafe Suối Bên Biển", "nameEn": "Suoi Ben Bien Seaside Cafe", "lat": 10.35075, "lon": 107.06627, "category": "cafe", "priceUsdc": 3, "merchantId": "m_suoibenbien", "openingHours": "Mo-Su 07:00-23:30", "tags": ["cafe", "sea", "view", "sunset"], "suggestedMin": 45 },
+    { "osmId": "node/11903944370", "name": "Oasis Sea", "nameEn": "Oasis Sea Cafe", "lat": 10.35525, "lon": 107.06137, "category": "cafe", "priceUsdc": 3, "merchantId": "m_partner", "openingHours": "24/7", "tags": ["cafe", "sea", "view"], "suggestedMin": 45 },
+    { "osmId": "node/6130991590", "name": "Blue Corner Restaurant Cafe", "nameEn": "Blue Corner Restaurant Cafe", "lat": 10.33105, "lon": 107.0828, "category": "cafe", "priceUsdc": 3, "merchantId": "m_partner", "tags": ["cafe", "sea", "view"], "suggestedMin": 45 }
+  ]
+}

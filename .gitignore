@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+.env
+.env.local
+*.db
+*.db-journal
+data/*.local.json
+data/cache/
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+apps/web/public/maplibre/
