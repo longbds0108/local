@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { clientIp, handle, jsonError, parseQuery } from "@/lib/api";
 import { isOpenAt } from "@/lib/hours";
+import { photonHealthy } from "@/lib/photon";
 import { placesForMap, searchPlaces } from "@/lib/places";
 import { rateLimit } from "@/lib/rate-limit";
 import type { MapPlace } from "@/lib/types";
@@ -15,6 +16,8 @@ const Query = z.object({
   radius: z.coerce.number().int().min(300).max(8000).default(5000),
   categories: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(40).optional(),
+  /** Dish / name keyword, e.g. "phở" — food places whose name matches. */
+  q: z.string().trim().min(2).max(60).optional(),
 });
 
 export const GET = handle(async (req: Request) => {
@@ -22,7 +25,7 @@ export const GET = handle(async (req: Request) => {
   const q = parseQuery(req, Query);
   const results = q.categories
     ? await searchPlaces({ lat: q.lat, lon: q.lon, radiusM: q.radius, categories: q.categories.split(","), limit: q.limit })
-    : await placesForMap(q.lat, q.lon, q.radius);
+    : await placesForMap(q.lat, q.lon, q.radius, q.q);
   const now = new Date();
   const places: MapPlace[] = results.map((p) => ({
     openNow: isOpenAt(p.openingHours, now),
@@ -39,5 +42,7 @@ export const GET = handle(async (req: Request) => {
     distanceM: p.distanceM,
     source: p.source,
   }));
-  return NextResponse.json({ places });
+  // degraded: live OSM sources unavailable (rate-limited/overloaded) — only seed data was searched.
+  const degraded = !photonHealthy() && !results.some((p) => p.source === "osm");
+  return NextResponse.json({ places, degraded });
 });

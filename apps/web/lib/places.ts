@@ -3,7 +3,9 @@ import path from "node:path";
 import { CITY, config } from "./env";
 import { haversineKm, type LatLon } from "./geo";
 import { openDuringWindow } from "./hours";
-import { fetchOsmPois } from "./overpass";
+import { normalizeVi } from "./landmarks";
+import { fetchOsmPois, type OsmPoi } from "./overpass";
+import { photonAreaPois, photonDishPois } from "./photon-pois";
 import { CATEGORIES, unitPrice, type Category, type PriceSource } from "./pricing";
 
 export type SeedPoi = {
@@ -99,18 +101,44 @@ export type SearchParams = {
   windowEnd?: Date;
   /** Max time to wait for Overpass before answering with seed data only. */
   osmWaitMs?: number;
+  /** Name keyword (e.g. a dish: "phở", "cơm tấm") — searches food places by name. */
+  keyword?: string;
+  /** Interleave categories instead of pure distance order (for browsing). */
+  mixCategories?: boolean;
 };
 
 export type SearchResult = Place & { distanceM: number; openDuringWindow: boolean | null };
+
+function mixByCategory(list: SearchResult[]): SearchResult[] {
+  const groups = new Map<string, SearchResult[]>();
+  for (const p of list) groups.set(p.category, [...(groups.get(p.category) ?? []), p]);
+  const queues = [...groups.values()];
+  const out: SearchResult[] = [];
+  while (queues.some((q) => q.length)) for (const q of queues) if (q.length) out.push(q.shift()!);
+  return out;
+}
 
 export async function searchPlaces(params: SearchParams): Promise<SearchResult[]> {
   const { lat, lon } = params;
   const radiusM = Math.min(Math.max(params.radiusM, 300), 8000);
   const cats = (params.categories ?? []).filter((c): c is Category => (CATEGORIES as readonly string[]).includes(c));
   const limit = Math.min(Math.max(params.limit ?? 15, 1), 40);
+  const kw = params.keyword ? normalizeVi(params.keyword) : null;
 
-  const seed = loadSeedPois().map(fromSeed);
-  const osm = await fetchOsmPois(lat, lon, radiusM, params.osmWaitMs ?? 12_000);
+  let seed = loadSeedPois().map(fromSeed);
+  let osm: OsmPoi[];
+  if (kw) {
+    seed = seed.filter((p) => normalizeVi(p.name).includes(kw) || (p.tags ?? []).some((t) => normalizeVi(t.replace(/_/g, " ")).includes(kw)));
+    osm = await photonDishPois(params.keyword!, lat, lon, radiusM);
+  } else {
+    // Overpass has opening hours but is often overloaded; Photon covers any area.
+    const [ov, ph] = await Promise.all([
+      fetchOsmPois(lat, lon, radiusM, params.osmWaitMs ?? 12_000),
+      photonAreaPois(lat, lon, radiusM),
+    ]);
+    const ids = new Set(ov.map((o) => o.osmId));
+    osm = [...ov, ...ph.filter((p) => !ids.has(p.osmId))];
+  }
 
   // Merge: seed wins (it has prices + merchants). Also drop OSM duplicates of seed
   // entries that are the same place mapped as a different element.
@@ -141,14 +169,15 @@ export async function searchPlaces(params: SearchParams): Promise<SearchResult[]
 
   // Seed places first (curated, have prices/merchants), then by distance.
   results.sort((a, b) => (a.source === b.source ? a.distanceM - b.distanceM : a.source === "seed" ? -1 : 1));
+  if (params.mixCategories) results = mixByCategory(results);
   results = results.slice(0, limit);
   remember(results);
   return results;
 }
 
 /** Places for the map layer: seed + OSM around a point, no opening-hours filter. */
-export async function placesForMap(lat: number, lon: number, radiusM: number): Promise<SearchResult[]> {
-  return searchPlaces({ lat, lon, radiusM, limit: 40, osmWaitMs: 3_500 });
+export async function placesForMap(lat: number, lon: number, radiusM: number, keyword?: string): Promise<SearchResult[]> {
+  return searchPlaces({ lat, lon, radiusM, limit: 40, osmWaitMs: 3_500, keyword, mixCategories: !keyword });
 }
 
 /**

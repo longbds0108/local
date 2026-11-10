@@ -6,7 +6,7 @@ import { getSession } from "@/lib/circle-client";
 import type { ItineraryView, MapPlace } from "@/lib/types";
 import { useChat } from "@/lib/use-chat";
 import AskCard from "./home/AskCard";
-import Hero, { type GpsState } from "./home/Hero";
+import Hero, { type GpsState, type HereInfo, type LocationInfo } from "./home/Hero";
 import ItineraryTimeline from "./home/ItineraryTimeline";
 import PlaceCards from "./home/PlaceCards";
 import { useI18n } from "./I18nProvider";
@@ -14,7 +14,6 @@ import { useI18n } from "./I18nProvider";
 const MapView = dynamic(() => import("./Map"), { ssr: false });
 
 const CENTER = { lat: 10.346, lon: 107.0843 };
-const MAX_KM = 30;
 const SAVED_KEY = "hedgora.saved";
 const PAGE = 9;
 
@@ -59,13 +58,37 @@ function MiniWallet() {
 export default function HomeClient() {
   const { t } = useI18n();
   const [gps, setGps] = useState<GpsState>("locating");
+  const [here, setHere] = useState<HereInfo>(null);
+  const [info, setInfo] = useState<LocationInfo | null>(null);
+  const [infoLoading, setInfoLoading] = useState(false);
+
+  // Place name + current weather + landmark photo for a point.
+  const loadInfo = useCallback(async (pt: { lat: number; lon: number }, isGps: boolean) => {
+    setInfoLoading(true);
+    try {
+      const res = await fetch(`/api/location?lat=${pt.lat}&lon=${pt.lon}`, { cache: "no-store" });
+      if (!res.ok) throw new Error(String(res.status));
+      const j = (await res.json()) as LocationInfo;
+      setInfo(j);
+      if (isGps && j.label) setHere((h) => (h ? { ...h, label: j.label } : h));
+    } catch {
+      setInfo((prev) => prev ?? { label: null, weather: null, landmark: null, dishes: [] });
+    } finally {
+      setInfoLoading(false);
+    }
+  }, []);
   const [start, setStart] = useState<{ lat: number; lon: number; isGps: boolean } | null>(null);
   const [places, setPlaces] = useState<MapPlace[]>([]);
   const [placesState, setPlacesState] = useState<"loading" | "ok" | "error">("loading");
+  const [degraded, setDegraded] = useState(false);
   const [itinerary, setItinerary] = useState<ItineraryView | null>(null);
   const [tab, setTab] = useState<Tab>("discover");
   const [limit, setLimit] = useState(PAGE);
   const [saved, setSaved] = useState<Set<string>>(new Set());
+  // Local dish filter ("Cơm tấm", "Phở"…): real OSM food places whose name matches.
+  const [dish, setDish] = useState<string | null>(null);
+  const [dishPlaces, setDishPlaces] = useState<MapPlace[]>([]);
+  const [dishState, setDishState] = useState<"idle" | "loading" | "ok" | "error">("idle");
 
   // [1] GPS with fallback to the Vũng Tàu center.
   const locate = useCallback(() => {
@@ -73,26 +96,29 @@ export default function HomeClient() {
     if (!("geolocation" in navigator)) {
       setGps("denied");
       setStart({ ...CENTER, isGps: false });
+      void loadInfo(CENTER, false);
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const here = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-        if (km(here, CENTER) <= MAX_KM) {
-          setGps("ok");
-          setStart({ ...here, isGps: true });
-        } else {
-          setGps("far");
-          setStart({ ...CENTER, isGps: false });
-        }
+        const pt = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        const kmToCity = km(pt, CENTER);
+        setHere({ ...pt, label: null, kmToCity });
+        // Suggestions follow the user wherever they are (Vũng Tàu is only the no-GPS default).
+        setGps("ok");
+        setStart({ ...pt, isGps: true });
+        // Readable "district, city" + weather + landmark for where the user really is.
+        void loadInfo(pt, true);
       },
       () => {
         setGps("denied");
         setStart({ ...CENTER, isGps: false });
+        void loadInfo(CENTER, false);
       },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 },
+      // maximumAge 0: "Cập nhật" must re-read the position, not reuse a cached one.
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 0 },
     );
-  }, []);
+  }, [loadInfo]);
 
   useEffect(() => {
     locate();
@@ -107,9 +133,11 @@ export default function HomeClient() {
   const loadPlaces = useCallback(async (p: { lat: number; lon: number }) => {
     setPlacesState("loading");
     try {
-      const res = await fetch(`/api/places?lat=${p.lat}&lon=${p.lon}&radius=6000`);
+      const res = await fetch(`/api/places?lat=${p.lat}&lon=${p.lon}&radius=4000`);
       if (!res.ok) throw new Error(String(res.status));
-      setPlaces(((await res.json()) as { places: MapPlace[] }).places);
+      const j = (await res.json()) as { places: MapPlace[]; degraded?: boolean };
+      setPlaces(j.places);
+      setDegraded(!!j.degraded);
       setPlacesState("ok");
     } catch {
       setPlacesState("error");
@@ -154,8 +182,43 @@ export default function HomeClient() {
     document.getElementById("ask")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const sorted = useMemo(() => [...places].sort((a, b) => a.distanceM - b.distanceM), [places]);
-  const visible = tab === "saved" ? sorted.filter((p) => saved.has(p.osmId)) : sorted.slice(0, limit);
+  // Server order already mixes categories (food, cafés, sights…) nearest-first.
+  const sorted = places;
+  const visible =
+    tab === "saved" ? sorted.filter((p) => saved.has(p.osmId)) : dish ? dishPlaces : sorted.slice(0, limit);
+
+  const area = info?.label?.split(",")[0]?.trim() || (start?.isGps ? null : "Vũng Tàu");
+  const dishes = info?.dishes ?? [];
+
+  const pickDish = async (d: string) => {
+    if (!start) return;
+    if (dish === d) {
+      setDish(null);
+      return;
+    }
+    setDish(d);
+    setTab("discover");
+    setDishState("loading");
+    setDishPlaces([]);
+    try {
+      const res = await fetch(`/api/places?lat=${start.lat}&lon=${start.lon}&radius=5000&q=${encodeURIComponent(d)}`);
+      if (!res.ok) throw new Error(String(res.status));
+      const j = (await res.json()) as { places: MapPlace[]; degraded?: boolean };
+      const found = j.places;
+      setDishPlaces(found);
+      if (j.degraded) setDegraded(true);
+      onPlaces(found); // also show them on the map
+      setDishState("ok");
+    } catch {
+      setDishState("error");
+    }
+  };
+
+  // A new location invalidates the dish filter.
+  useEffect(() => {
+    setDish(null);
+    setDishPlaces([]);
+  }, [start]);
 
   const tabs: { id: Tab | "itinerary"; icon: string; label: string }[] = [
     { id: "discover", icon: "⌂", label: t.tabDiscover },
@@ -173,7 +236,7 @@ export default function HomeClient() {
       <div className="glow -top-[260px] -right-[100px] bg-[#28d7a4]" aria-hidden />
       <div className="glow top-[900px] -left-[200px] bg-[#2ca9ff]" aria-hidden />
 
-      <Hero gps={gps} onUpdateLocation={locate} />
+      <Hero gps={gps} here={here} info={info} infoLoading={infoLoading} onUpdateLocation={locate} />
 
       <section
         id="explore"
@@ -200,7 +263,15 @@ export default function HomeClient() {
             <div>
               <span className="text-[11px] font-extrabold tracking-[2px] text-forest">{t.curatedForYou}</span>
               <h2 className="mt-1 font-display text-[26px] font-extrabold md:text-[30px]">
-                {tab === "map" ? t.mapTitle : tab === "saved" ? t.savedTitle : t.discoverTitle}
+                {tab === "map"
+                  ? t.mapTitle
+                  : tab === "saved"
+                    ? t.savedTitle
+                    : dish
+                      ? t.dishNear.replace("{dish}", dish)
+                      : area
+                        ? t.discoverNear.replace("{area}", area)
+                        : t.discoverTitle}
               </h2>
             </div>
             <div className="flex gap-1 rounded-xl bg-white p-1 md:hidden">
@@ -224,6 +295,46 @@ export default function HomeClient() {
             </button>
           </div>
 
+          {dishes.length > 0 && tab !== "saved" && (
+            <div className="mb-5 flex flex-wrap items-center gap-2">
+              <span className="mr-1 text-xs font-semibold text-cream-muted">
+                🍜 {area ? t.dishesTitle.replace("{area}", area) : t.dishesTitleGeneric}
+              </span>
+              {dishes.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => void pickDish(d)}
+                  aria-pressed={dish === d}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    dish === d ? "border-forest bg-forest text-white" : "border-cream-line bg-white text-cream-ink hover:border-forest"
+                  }`}
+                >
+                  {d}
+                  {dish === d ? " ✕" : ""}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {dish && dishState === "ok" && dishPlaces.length === 0 && tab === "discover" && (
+            <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[17px] border border-dashed border-cream-line bg-white p-4 text-sm text-cream-muted">
+              <span>{degraded ? t.mapDataBusy : t.dishEmpty.replace("{dish}", dish)}</span>
+              <button
+                type="button"
+                onClick={() => void chat.send(t.askDish.replace("{dish}", dish))}
+                className="rounded-lg bg-forest-soft px-3 py-1.5 text-xs font-bold text-forest"
+              >
+                {t.askButton} →
+              </button>
+            </div>
+          )}
+          {dish && dishState === "error" && (
+            <p role="alert" className="mb-4 rounded-xl bg-[#fde8e4] px-3 py-2 text-sm text-[#b5452b]">
+              {t.poiError}
+            </p>
+          )}
+
           {placesState === "error" && (
             <p role="alert" className="mb-4 rounded-xl bg-[#fde8e4] px-3 py-2 text-sm text-[#b5452b]">
               {t.poiError}{" "}
@@ -237,7 +348,7 @@ export default function HomeClient() {
             <div className="relative h-[460px] overflow-hidden rounded-[17px] border border-[#dfe5df] md:h-[560px]">
               <MapView center={start ?? CENTER} user={start?.isGps ? start : null} places={places} itinerary={itinerary} t={t} />
             </div>
-          ) : placesState === "loading" && places.length === 0 ? (
+          ) : (placesState === "loading" && places.length === 0) || (dish && dishState === "loading") ? (
             <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 lg:grid-cols-3" aria-busy>
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="h-[300px] animate-pulse rounded-[17px] bg-white" />
@@ -245,12 +356,17 @@ export default function HomeClient() {
             </div>
           ) : visible.length === 0 ? (
             <p className="rounded-[17px] border border-dashed border-cream-line p-6 text-sm text-cream-muted">
-              {tab === "saved" ? t.savedEmpty : t.none}
+              {tab === "saved" ? t.savedEmpty : degraded ? t.mapDataBusy : t.none}{" "}
+              {tab !== "saved" && start && (
+                <button type="button" className="font-semibold text-forest underline" onClick={() => loadPlaces(start)}>
+                  {t.retry}
+                </button>
+              )}
             </p>
           ) : (
             <>
               <PlaceCards places={visible} saved={saved} onToggleSave={toggleSave} onAdd={addToPlan} busy={chat.busy} />
-              {tab === "discover" && sorted.length > limit && (
+              {tab === "discover" && !dish && sorted.length > limit && (
                 <div className="mt-6 text-center">
                   <button
                     type="button"

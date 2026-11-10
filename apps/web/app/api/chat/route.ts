@@ -3,7 +3,6 @@ import { classifyAgentError, runChatTurn } from "@/lib/agent";
 import { ApiError, clientIp, handle, jsonError, parseJson } from "@/lib/api";
 import { prisma } from "@/lib/db";
 import { CITY } from "@/lib/env";
-import { haversineKm } from "@/lib/geo";
 import { rateLimit } from "@/lib/rate-limit";
 import type { ChatEvent } from "@/lib/types";
 
@@ -31,10 +30,10 @@ export const POST = handle(async (req: Request) => {
 
   const body = await parseJson(req, Body);
 
-  // Starting point: GPS if it is inside the demo area, otherwise the city center.
+  // Starting point: the user's GPS wherever they are; Vũng Tàu center without GPS.
   let start: { lat: number; lon: number } = CITY.center;
   let startIsGps = false;
-  if (body.lat !== undefined && body.lon !== undefined && haversineKm(CITY.center, { lat: body.lat, lon: body.lon }) <= CITY.maxDistanceKm) {
+  if (body.lat !== undefined && body.lon !== undefined) {
     start = { lat: body.lat, lon: body.lon };
     startIsGps = true;
   }

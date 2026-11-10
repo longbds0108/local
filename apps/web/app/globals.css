@@ -134,3 +134,12 @@ body {
 .maplibregl-ctrl-attrib {
   font-size: 10px;
 }
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

@@ -1,0 +1,493 @@
+{
+  "_source": "Images from Wikimedia Commons (free licenses), resolved via Wikipedia page images on 2026-11-10. Credit must be shown with each image.",
+  "landmarks": {
+    "hcm": {
+      "nameVi": "Landmark 81",
+      "nameEn": "Landmark 81",
+      "keys": [
+        "ho chi minh",
+        "sai gon",
+        "saigon",
+        "binh duong"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e6/Ho_Chi_Minh_City_panorama_2019_%28cropped%29.jpg/1280px-Ho_Chi_Minh_City_panorama_2019_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Ho_Chi_Minh_City_panorama_2019_(cropped).jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Landmark_81",
+      "artist": "Lê Minh Phát",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    },
+    "hanoi": {
+      "nameVi": "Chùa Một Cột",
+      "nameEn": "One Pillar Pagoda",
+      "keys": [
+        "ha noi",
+        "hanoi"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5c/Hanoi%2C_Vietnam_%2812041825854%29.jpg/1280px-Hanoi%2C_Vietnam_%2812041825854%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Hanoi,_Vietnam_(12041825854).jpg",
+      "wiki": "https://en.wikipedia.org/wiki/One_Pillar_Pagoda",
+      "artist": "Clay Gilliland",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    },
+    "hue": {
+      "nameVi": "Đại Nội Huế",
+      "nameEn": "Imperial City of Hue",
+      "keys": [
+        "hue",
+        "thua thien hue"
+      ],
+      "image": "https://upload.wikimedia.org/wikipedia/commons/b/b9/%C4%90%E1%BA%A1i_n%E1%BB%99i.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "filePage": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BA%A1i_n%E1%BB%99i.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Imperial_City_of_Hu%E1%BA%BF",
+      "artist": "NguyenThanhBac123",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+    },
+    "vungtau": {
+      "nameVi": "Tượng Chúa Kitô Vua",
+      "nameEn": "Christ of Vung Tau",
+      "keys": [
+        "vung tau",
+        "ba ria vung tau",
+        "ba ria"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/75/Statue_of_Jesus_in_Vung_Tau.jpg/1280px-Statue_of_Jesus_in_Vung_Tau.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Statue_of_Jesus_in_Vung_Tau.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Christ_of_V%C5%A9ng_T%C3%A0u",
+      "artist": "Chris Phan from Eugene, Oregon, United States",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    },
+    "danang": {
+      "nameVi": "Cầu Vàng, Bà Nà",
+      "nameEn": "Golden Bridge, Ba Na Hills",
+      "keys": [
+        "da nang"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0c/Golden_Bridge_at_Ba_Na_Hills_20250718.jpg/1280px-Golden_Bridge_at_Ba_Na_Hills_20250718.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Golden_Bridge_at_Ba_Na_Hills_20250718.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Golden_Bridge_(Vietnam)",
+      "artist": "DvTor8303",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+    },
+    "hoian": {
+      "nameVi": "Phố cổ Hội An",
+      "nameEn": "Hoi An Ancient Town",
+      "keys": [
+        "hoi an",
+        "quang nam"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/27/10549-Hoi-An_%2837621348460%29.jpg/1280px-10549-Hoi-An_%2837621348460%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:10549-Hoi-An_(37621348460).jpg",
+      "wiki": "https://en.wikipedia.org/wiki/H%E1%BB%99i_An_Old_Town",
+      "artist": "xiquinhosilva",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    },
+    "halong": {
+      "nameVi": "Vịnh Hạ Long",
+      "nameEn": "Ha Long Bay",
+      "keys": [
+        "quang ninh",
+        "ha long"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/79/Ha_Long_Bay_in_2019.jpg/1280px-Ha_Long_Bay_in_2019.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Ha_Long_Bay_in_2019.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/H%E1%BA%A1_Long_Bay",
+      "artist": "Taewangkorea",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    },
+    "fansipan": {
+      "nameVi": "Đỉnh Fansipan",
+      "nameEn": "Fansipan",
+      "keys": [
+        "lao cai",
+        "sa pa",
+        "sapa",
+        "yen bai"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/04/Fansipan_Summit.jpg/1280px-Fansipan_Summit.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Fansipan_Summit.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Fansipan",
+      "artist": "Isderion",
+      "license": "CC BY-SA 3.0 de",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/de/deed.en"
+    },
+    "trangan": {
+      "nameVi": "Tràng An",
+      "nameEn": "Trang An",
+      "keys": [
+        "ninh binh",
+        "ha nam",
+        "nam dinh"
+      ],
+      "image": "https://upload.wikimedia.org/wikipedia/commons/0/08/Muaxuantamcoc.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Muaxuantamcoc.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Tr%C3%A0ng_An_Scenic_Landscape_Complex",
+      "artist": "Kien1980v",
+      "license": "Public domain",
+      "licenseUrl": null
+    },
+    "catba": {
+      "nameVi": "Đảo Cát Bà",
+      "nameEn": "Cat Ba Island",
+      "keys": [
+        "hai phong",
+        "hai duong",
+        "cat ba"
+      ],
+      "image": "https://upload.wikimedia.org/wikipedia/commons/9/92/Cat_Ba_town.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Cat_Ba_town.JPG",
+      "wiki": "https://en.wikipedia.org/wiki/C%C3%A1t_B%C3%A0_Island",
+      "artist": "Binh Giang",
+      "license": "Public domain",
+      "licenseUrl": null
+    },
+    "ponagar": {
+      "nameVi": "Tháp Bà Ponagar",
+      "nameEn": "Po Nagar Cham Towers",
+      "keys": [
+        "khanh hoa",
+        "nha trang",
+        "ninh thuan"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Ganesh_Tempel_Po_Nagar_Nha_Trang.jpg/1280px-Ganesh_Tempel_Po_Nagar_Nha_Trang.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Ganesh_Tempel_Po_Nagar_Nha_Trang.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Po_Nagar",
+      "artist": "Tervlugt",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0"
+    },
+    "dalat": {
+      "nameVi": "Hồ Xuân Hương, Đà Lạt",
+      "nameEn": "Xuan Huong Lake, Da Lat",
+      "keys": [
+        "lam dong",
+        "da lat",
+        "dak nong",
+        "binh thuan"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c1/Xuan_Huong_Lake_08.jpg/1280px-Xuan_Huong_Lake_08.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Xuan_Huong_Lake_08.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Xu%C3%A2n_H%C6%B0%C6%A1ng_Lake",
+      "artist": "Diane Selwyn",
+      "license": "Public domain",
+      "licenseUrl": null
+    },
+    "cantho": {
+      "nameVi": "Chợ nổi Cái Răng",
+      "nameEn": "Cai Rang Floating Market",
+      "keys": [
+        "can tho",
+        "soc trang",
+        "hau giang"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/62/M%E1%BB%99t_c%E1%BA%A3nh_%E1%BB%9F_ch%E1%BB%A3_n%E1%BB%95i_C%C3%A1i_R%C4%83ng.jpg/1280px-M%E1%BB%99t_c%E1%BA%A3nh_%E1%BB%9F_ch%E1%BB%A3_n%E1%BB%95i_C%C3%A1i_R%C4%83ng.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:M%E1%BB%99t_c%E1%BA%A3nh_%E1%BB%9F_ch%E1%BB%A3_n%E1%BB%95i_C%C3%A1i_R%C4%83ng.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/C%C3%A1i_R%C4%83ng_Floating_Market",
+      "artist": "Bùi Thụy Đào Nguyên",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    },
+    "phuquoc": {
+      "nameVi": "Phú Quốc",
+      "nameEn": "Phu Quoc",
+      "keys": [
+        "phu quoc",
+        "an giang",
+        "kien giang"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6e/Bai-sao-phu-quoc-tuonglamphotos.jpg/1280px-Bai-sao-phu-quoc-tuonglamphotos.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Bai-sao-phu-quoc-tuonglamphotos.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Ph%C3%BA_Qu%E1%BB%91c",
+      "artist": "Trantuonglam",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    },
+    "bangioc": {
+      "nameVi": "Thác Bản Giốc",
+      "nameEn": "Ban Gioc Waterfall",
+      "keys": [
+        "cao bang"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e1/Bangioc9tam.jpg/1280px-Bangioc9tam.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Bangioc9tam.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Ban_Gioc%E2%80%93Detian_Falls",
+      "artist": "Lê Minh Phát",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    },
+    "thanhhoa": {
+      "nameVi": "Thành nhà Hồ",
+      "nameEn": "Citadel of the Ho Dynasty",
+      "keys": [
+        "thanh hoa"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/Tay_Do_castle_South_gate.JPG/1280px-Tay_Do_castle_South_gate.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Tay_Do_castle_South_gate.JPG",
+      "wiki": "https://en.wikipedia.org/wiki/Citadel_of_the_H%E1%BB%93_Dynasty",
+      "artist": "Silviculture",
+      "license": "Public domain",
+      "licenseUrl": null
+    },
+    "phutho": {
+      "nameVi": "Đền Hùng",
+      "nameEn": "Hung Kings Temple",
+      "keys": [
+        "phu tho",
+        "vinh phuc",
+        "hoa binh"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f8/Mausoleum_of_Hung_King.JPG/1280px-Mausoleum_of_Hung_King.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Mausoleum_of_Hung_King.JPG",
+      "wiki": "https://en.wikipedia.org/wiki/H%C3%B9ng_Temple",
+      "artist": "Viethavvh",
+      "license": "Public domain",
+      "licenseUrl": null
+    },
+    "bacninh": {
+      "nameVi": "Chùa Bút Tháp",
+      "nameEn": "But Thap Pagoda",
+      "keys": [
+        "bac ninh",
+        "bac giang"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/Ch%C3%B9a_B%C3%BAt_Th%C3%A1p.jpg/1280px-Ch%C3%B9a_B%C3%BAt_Th%C3%A1p.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Ch%C3%B9a_B%C3%BAt_Th%C3%A1p.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/B%C3%BAt_Th%C3%A1p_Temple",
+      "artist": "Jean-Pierre Dalbéra",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    },
+    "hagiang": {
+      "nameVi": "Đèo Mã Pí Lèng",
+      "nameEn": "Ma Pi Leng Pass",
+      "keys": [
+        "tuyen quang",
+        "ha giang"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/46/Ma_Pi_Leng_Pass_winding_road_Ha_Giang_Vietnam.jpg/1280px-Ma_Pi_Leng_Pass_winding_road_Ha_Giang_Vietnam.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Ma_Pi_Leng_Pass_winding_road_Ha_Giang_Vietnam.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/M%C3%A3_P%C3%AD_L%C3%A8ng_Pass",
+      "artist": "Khánh Hmoong",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    },
+    "quangngai": {
+      "nameVi": "Đảo Lý Sơn",
+      "nameEn": "Ly Son Island",
+      "keys": [
+        "quang ngai",
+        "kon tum",
+        "ly son"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/51/Mot_phan_quang_canh_Ly_Son.jpg/1280px-Mot_phan_quang_canh_Ly_Son.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Mot_phan_quang_canh_Ly_Son.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/L%C3%BD_S%C6%A1n",
+      "artist": "Từ Trung Tâm Dữ Liệu Hoàng Sa",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0"
+    },
+    "sonla": {
+      "nameVi": "Đồi chè Mộc Châu",
+      "nameEn": "Moc Chau tea hills",
+      "keys": [
+        "son la",
+        "moc chau"
+      ],
+      "image": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Chemocchau.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Chemocchau.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/M%E1%BB%99c_Ch%C3%A2u",
+      "artist": "ePi.Longo",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    },
+    "thainguyen": {
+      "nameVi": "Hồ Ba Bể",
+      "nameEn": "Ba Be Lake",
+      "keys": [
+        "thai nguyen",
+        "bac kan"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c5/Babenp_2007_01_3.jpg/1280px-Babenp_2007_01_3.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Babenp_2007_01_3.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Ba_B%E1%BB%83_Lake",
+      "artist": "Rolf Müller (User:Rolfmueller)",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/"
+    },
+    "dongthap": {
+      "nameVi": "Vườn quốc gia Tràm Chim",
+      "nameEn": "Tram Chim National Park",
+      "keys": [
+        "dong thap",
+        "tien giang"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fa/%C4%90%E1%BB%93ng_c%E1%BB%8F_v%C3%A0_chim_n%C6%B0%E1%BB%9Bc.jpg/1280px-%C4%90%E1%BB%93ng_c%E1%BB%8F_v%C3%A0_chim_n%C6%B0%E1%BB%9Bc.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:%C4%90%E1%BB%93ng_c%E1%BB%8F_v%C3%A0_chim_n%C6%B0%E1%BB%9Bc.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Tr%C3%A0m_Chim_National_Park",
+      "artist": "Quoilp",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/"
+    },
+    "quangtri": {
+      "nameVi": "Phong Nha - Kẻ Bàng",
+      "nameEn": "Phong Nha-Ke Bang",
+      "keys": [
+        "quang tri",
+        "quang binh",
+        "phong nha"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c9/Phongnhakebang6.jpg/1280px-Phongnhakebang6.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Phongnhakebang6.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Phong_Nha%E2%80%93K%E1%BA%BB_B%C3%A0ng_National_Park",
+      "artist": "Genghiskhanviet",
+      "license": "Public domain",
+      "licenseUrl": null
+    },
+    "gialai": {
+      "nameVi": "Quy Nhơn",
+      "nameEn": "Quy Nhon",
+      "keys": [
+        "gia lai",
+        "binh dinh",
+        "quy nhon"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Skyline_of_Quy_Nhon.jpg/1280px-Skyline_of_Quy_Nhon.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Skyline_of_Quy_Nhon.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Quy_Nh%C6%A1n",
+      "artist": "Vũ Tuấn Quy Nhơn",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    },
+    "dongnai": {
+      "nameVi": "Vườn quốc gia Cát Tiên",
+      "nameEn": "Cat Tien National Park",
+      "keys": [
+        "dong nai",
+        "binh phuoc"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/Cat_Tien_National_Park%2C_Vietnam.jpg/1280px-Cat_Tien_National_Park%2C_Vietnam.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Cat_Tien_National_Park,_Vietnam.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/C%C3%A1t_Ti%C3%AAn_National_Park",
+      "artist": "Vyacheslav Argenberg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    },
+    "daklak": {
+      "nameVi": "Mũi Điện lúc bình minh",
+      "nameEn": "Mui Dien at dawn",
+      "keys": [
+        "dak lak",
+        "phu yen"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Muidienvaobinhminh.jpg/1280px-Muidienvaobinhminh.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Muidienvaobinhminh.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/%C4%90%E1%BA%AFk_L%E1%BA%AFk_province",
+      "artist": "Lê Nguyễn Nhật Long",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    },
+    "dienbien": {
+      "nameVi": "Chiến thắng Điện Biên Phủ",
+      "nameEn": "Victory at Dien Bien Phu",
+      "keys": [
+        "dien bien"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ae/Victory_in_Battle_of_Dien_Bien_Phu.jpg/1280px-Victory_in_Battle_of_Dien_Bien_Phu.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Victory_in_Battle_of_Dien_Bien_Phu.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Battle_of_Dien_Bien_Phu",
+      "artist": "Vietnam People's Army",
+      "license": "Public domain",
+      "licenseUrl": null
+    },
+    "nghean": {
+      "nameVi": "Biển Cửa Lò",
+      "nameEn": "Cua Lo Beach",
+      "keys": [
+        "nghe an",
+        "cua lo"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a4/B%C3%A3i_bi%E1%BB%83n_C%E1%BB%ADa_L%C3%B2..jpg/1280px-B%C3%A3i_bi%E1%BB%83n_C%E1%BB%ADa_L%C3%B2..jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:B%C3%A3i_bi%E1%BB%83n_C%E1%BB%ADa_L%C3%B2..jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Ngh%E1%BB%87_An_province",
+      "artist": "Bùi Thụy Đào Nguyên",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    },
+    "hatinh": {
+      "nameVi": "Biển Thiên Cầm",
+      "nameEn": "Thien Cam Beach",
+      "keys": [
+        "ha tinh"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3d/Thiencambeach.jpg/1280px-Thiencambeach.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Thiencambeach.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/H%C3%A0_T%C4%A9nh_province",
+      "artist": "Khoitran1957",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    },
+    "tayninh": {
+      "nameVi": "Tòa Thánh Cao Đài Tây Ninh",
+      "nameEn": "Cao Dai Holy See",
+      "keys": [
+        "tay ninh",
+        "long an"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/07/Cao_Dai_Holy_See_%2810037404444%29.jpg/1280px-Cao_Dai_Holy_See_%2810037404444%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Cao_Dai_Holy_See_(10037404444).jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Great_Divine_Temple",
+      "artist": "Gary Todd from Xinzheng, China",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+    },
+    "vinhlong": {
+      "nameVi": "Sông Hàm Luông, Bến Tre",
+      "nameEn": "Ham Luong River, Ben Tre",
+      "keys": [
+        "vinh long",
+        "ben tre",
+        "tra vinh"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2f/Ham_Luong_River_from_Ham_Luong_Bridge.jpg/1280px-Ham_Luong_River_from_Ham_Luong_Bridge.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Ham_Luong_River_from_Ham_Luong_Bridge.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/B%E1%BA%BFn_Tre",
+      "artist": "Magicknight94",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    },
+    "camau": {
+      "nameVi": "Biểu tượng đờn kìm Bạc Liêu",
+      "nameEn": "Dan kim monument, Bac Lieu",
+      "keys": [
+        "ca mau",
+        "bac lieu"
+      ],
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0b/Bi%E1%BB%83u_t%C6%B0%E1%BB%A3ng_c%C3%A2y_%C4%91%E1%BB%9Dn_k%C3%ACm_4_B%E1%BA%A1c_Li%C3%AAu.jpg/1280px-Bi%E1%BB%83u_t%C6%B0%E1%BB%A3ng_c%C3%A2y_%C4%91%E1%BB%9Dn_k%C3%ACm_4_B%E1%BA%A1c_Li%C3%AAu.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Bi%E1%BB%83u_t%C6%B0%E1%BB%A3ng_c%C3%A2y_%C4%91%E1%BB%9Dn_k%C3%ACm_4_B%E1%BA%A1c_Li%C3%AAu.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/B%E1%BA%A1c_Li%C3%AAu",
+      "artist": "Huỳnh Hoàng Nhật Duy",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    },
+    "hungyen": {
+      "nameVi": "Phố Hiến, Hưng Yên",
+      "nameEn": "Pho Hien, Hung Yen",
+      "keys": [
+        "hung yen",
+        "thai binh"
+      ],
+      "image": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Ph%C6%B0%E1%BB%9Dng_Ph%E1%BB%91_Hi%E1%BA%BFn.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "filePage": "https://commons.wikimedia.org/wiki/File:Ph%C6%B0%E1%BB%9Dng_Ph%E1%BB%91_Hi%E1%BA%BFn.jpg",
+      "wiki": "https://en.wikipedia.org/wiki/Ph%E1%BB%91_Hi%E1%BA%BFn",
+      "artist": "Hoàng Huy",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0"
+    }
+  }
+}
