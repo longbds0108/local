@@ -51,7 +51,7 @@ export default function WalletButton() {
         onClick={() => void onClick()}
         className="flex min-h-[40px] items-center rounded-xl border border-[#295047] bg-[#12312b] px-3 text-xs font-bold text-[#dffff4] md:px-4 md:text-sm"
       >
-        <span className={`mr-2 inline-block h-[7px] w-[7px] rounded-full ${connected ? "bg-accent" : "bg-[#667d76]"}`} />
+        {connected && <span className="mr-2 inline-block h-[7px] w-[7px] rounded-full bg-accent" />}
         {connected ? shortAddr(session!.walletAddress!) : t.connectWallet}
       </button>
       {open && connected && (
