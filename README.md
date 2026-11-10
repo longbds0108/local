@@ -20,6 +20,8 @@ data/          vungtau_pois.json (18 POI, toạ độ/osmId lấy từ OSM), mer
 ## 2. Chạy local (M1–M3 chỉ cần Anthropic key)
 
 ```bash
+git clone --recursive https://github.com/longbds0108/local.git hedgora-travel && cd hedgora-travel
+# (đã clone không có --recursive? chạy: git submodule update --init --recursive)
 cp .env.example apps/web/.env       # rồi điền ANTHROPIC_API_KEY
 cd apps/web
 npm install
