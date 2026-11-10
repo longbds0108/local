@@ -4,6 +4,7 @@ import { CITY, config } from "./env";
 import { haversineKm, type LatLon } from "./geo";
 import { openDuringWindow } from "./hours";
 import { normalizeVi } from "./landmarks";
+import { ofmPois } from "./ofm-pois";
 import { fetchOsmPois, type OsmPoi } from "./overpass";
 import { photonAreaPois, photonDishPois } from "./photon-pois";
 import { CATEGORIES, unitPrice, type Category, type PriceSource } from "./pricing";
@@ -118,6 +119,13 @@ function mixByCategory(list: SearchResult[]): SearchResult[] {
   return out;
 }
 
+/** Keep the first occurrence of each OSM element (earlier lists win). */
+function mergeOsm(...lists: OsmPoi[][]): OsmPoi[] {
+  const byId = new Map<string, OsmPoi>();
+  for (const l of lists) for (const p of l) if (!byId.has(p.osmId)) byId.set(p.osmId, p);
+  return [...byId.values()];
+}
+
 export async function searchPlaces(params: SearchParams): Promise<SearchResult[]> {
   const { lat, lon } = params;
   const radiusM = Math.min(Math.max(params.radiusM, 300), 8000);
@@ -127,17 +135,19 @@ export async function searchPlaces(params: SearchParams): Promise<SearchResult[]
 
   let seed = loadSeedPois().map(fromSeed);
   let osm: OsmPoi[];
+  const tiles = ofmPois(lat, lon, radiusM); // reliable CDN source (OSM data, no opening hours)
   if (kw) {
     seed = seed.filter((p) => normalizeVi(p.name).includes(kw) || (p.tags ?? []).some((t) => normalizeVi(t.replace(/_/g, " ")).includes(kw)));
-    osm = await photonDishPois(params.keyword!, lat, lon, radiusM);
+    const fromTiles = (await tiles).filter(
+      (p) => (p.category === "restaurant" || p.category === "cafe") && normalizeVi(p.name).includes(kw),
+    );
+    // Photon only as a supplement when the tiles have few matches.
+    osm = fromTiles.length >= 5 ? fromTiles : mergeOsm(fromTiles, await photonDishPois(params.keyword!, lat, lon, radiusM));
   } else {
-    // Overpass has opening hours but is often overloaded; Photon covers any area.
-    const [ov, ph] = await Promise.all([
-      fetchOsmPois(lat, lon, radiusM, params.osmWaitMs ?? 12_000),
-      photonAreaPois(lat, lon, radiusM),
-    ]);
-    const ids = new Set(ov.map((o) => o.osmId));
-    osm = [...ov, ...ph.filter((p) => !ids.has(p.osmId))];
+    // Overpass first (has opening hours) when it answers in time; tiles always; Photon only if both are thin.
+    const [ov, tl] = await Promise.all([fetchOsmPois(lat, lon, radiusM, params.osmWaitMs ?? 12_000), tiles]);
+    osm = mergeOsm(ov, tl);
+    if (osm.length < 10) osm = mergeOsm(osm, await photonAreaPois(lat, lon, radiusM));
   }
 
   // Merge: seed wins (it has prices + merchants). Also drop OSM duplicates of seed
@@ -146,6 +156,8 @@ export async function searchPlaces(params: SearchParams): Promise<SearchResult[]
   for (const p of seed) merged.set(p.osmId, p);
   for (const o of osm) {
     if (merged.has(o.osmId)) continue;
+    // Some OSM "names" are really descriptions/reviews — not usable as a place name.
+    if (o.name.length > 60) continue;
     const dup = seed.some(
       (s) => s.name.toLowerCase() === o.name.toLowerCase() && haversineKm(s, o) < 0.3,
     );

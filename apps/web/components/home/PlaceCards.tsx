@@ -1,16 +1,16 @@
 "use client";
 
-import { distance } from "@/lib/format";
+import { CATEGORY_EMOJI, distance } from "@/lib/format";
 import type { MapPlace } from "@/lib/types";
 import { useI18n } from "../I18nProvider";
 
 const IMG = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=700&q=80`;
 // Category photos (illustrative, not of the specific place).
-const CATEGORY_IMG: Record<string, string> = {
+const CATEGORY_IMG: Record<string, string | undefined> = {
   restaurant: IMG("photo-1559314809-0d155014e29e"),
   beach: IMG("photo-1507525428034-b723cf961d3e"),
   viewpoint: IMG("photo-1464822759023-fed622ff2c3b"),
-  attraction: IMG("photo-1464822759023-fed622ff2c3b"),
+  // attraction: no generic photo fits parks, temples, monuments… → icon tile
   cafe: IMG("photo-1495474472287-4d71bcdd2085"),
   museum: IMG("photo-1518998053901-5348d3961a04"),
 };
@@ -38,9 +38,18 @@ export default function PlaceCards({ places, saved, onToggleSave, onAdd, busy }:
             className="overflow-hidden rounded-[17px] border border-[#dfe5df] bg-white text-cream-ink transition duration-200 hover:-translate-y-1 hover:shadow-[0_15px_40px_#52645e20]"
           >
             <div
-              className="relative h-[210px] bg-cover bg-center sm:h-[165px]"
-              style={{ backgroundImage: `url('${CATEGORY_IMG[p.category] ?? CATEGORY_IMG.attraction}')` }}
+              className="relative grid h-[210px] place-items-center bg-cover bg-center sm:h-[165px]"
+              style={
+                CATEGORY_IMG[p.category]
+                  ? { backgroundImage: `url('${CATEGORY_IMG[p.category]}')` }
+                  : { background: "radial-gradient(circle at 30% 20%, #86ffd2 0%, #25b78a 45%, #0c3028 100%)" }
+              }
             >
+              {!CATEGORY_IMG[p.category] && (
+                <span className="text-6xl drop-shadow" aria-hidden>
+                  {CATEGORY_EMOJI[p.category] ?? "📍"}
+                </span>
+              )}
               <span className={`absolute top-3 left-3 rounded-[7px] px-2 py-1.5 text-[9px] font-extrabold tracking-[0.8px] ${tag.cls}`}>{tag.text}</span>
               <button
                 type="button"
