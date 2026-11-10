@@ -3,6 +3,7 @@ import { Be_Vietnam_Pro, DM_Sans, Manrope } from "next/font/google";
 import type { ReactNode } from "react";
 import Header from "@/components/Header";
 import { I18nProvider } from "@/components/I18nProvider";
+import MobileNav from "@/components/MobileNav";
 import "./globals.css";
 
 const dmSans = DM_Sans({ subsets: ["latin", "latin-ext"], weight: ["400", "500", "600", "700"], variable: "--font-dm-sans", display: "swap" });
@@ -31,7 +32,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="min-h-dvh bg-bg text-ink">
         <I18nProvider>
           <Header />
-          <main>{children}</main>
+          {/* Bottom padding keeps content clear of the mobile bottom nav. */}
+          <main className="pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">{children}</main>
+          <MobileNav />
         </I18nProvider>
       </body>
     </html>

@@ -144,6 +144,8 @@ const vi = {
   // Home (LocalMate design)
   navExplore: "Khám phá",
   navTrips: "Lịch trình",
+  navAsk: "Hỏi AI",
+  mapTwoFingers: "Dùng hai ngón tay để di chuyển bản đồ",
   brandTagline: "Trợ lý du lịch AI",
   connectWallet: "Kết nối ví",
   walletNotConfigured: "Chưa cấu hình Circle (NEXT_PUBLIC_CIRCLE_APP_ID / Google Client ID) — xem README.",
@@ -189,6 +191,8 @@ const vi = {
   openNow: "Đang mở cửa",
   closedNow: "Đang đóng cửa",
   addToPlan: "Thêm vào lịch trình",
+  addShort: "＋ Lịch trình",
+  unknownHoursShort: "Chưa rõ giờ",
   smartItinerary: "LỊCH TRÌNH THÔNG MINH",
   itineraryEmptyTitle: "Lịch trình của bạn",
   itineraryEmptyBody:
@@ -349,6 +353,8 @@ const en: Dict = {
   copy: "Copy",
   navExplore: "Explore",
   navTrips: "Trips",
+  navAsk: "Ask AI",
+  mapTwoFingers: "Use two fingers to move the map",
   brandTagline: "AI local companion",
   connectWallet: "Connect wallet",
   walletNotConfigured: "Circle is not configured (NEXT_PUBLIC_CIRCLE_APP_ID / Google Client ID) — see README.",
@@ -393,6 +399,8 @@ const en: Dict = {
   openNow: "Open now",
   closedNow: "Closed now",
   addToPlan: "Add to itinerary",
+  addShort: "＋ Add to plan",
+  unknownHoursShort: "Hours unknown",
   smartItinerary: "SMART ITINERARY",
   itineraryEmptyTitle: "Your itinerary",
   itineraryEmptyBody:

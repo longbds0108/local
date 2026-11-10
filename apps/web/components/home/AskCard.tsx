@@ -39,7 +39,7 @@ export default function AskCard({ messages, busy, hasItinerary, onSend, onReset 
           <span className="text-xs text-[#9bb0aa]">{t.askSubtitle}</span>
         </div>
         {messages.length > 0 && (
-          <button type="button" onClick={onReset} className="shrink-0 text-xs text-accent hover:underline">
+          <button type="button" onClick={onReset} className="-my-2 min-h-10 shrink-0 px-1 text-xs text-accent hover:underline">
             {t.chatNew}
           </button>
         )}
@@ -48,7 +48,7 @@ export default function AskCard({ messages, busy, hasItinerary, onSend, onReset 
       {messages.length > 0 && (
         <div
           ref={scrollRef}
-          className="col-span-full max-h-[380px] space-y-3 overflow-y-auto rounded-xl bg-[#13342d] p-3.5 text-sm leading-relaxed text-[#d9eee7]"
+          className="col-span-full max-h-[50dvh] space-y-3 md:max-h-[380px] overflow-y-auto rounded-xl bg-[#13342d] p-3.5 text-sm leading-relaxed text-[#d9eee7]"
           aria-live="polite"
         >
           {messages.map((m, i) =>
@@ -87,7 +87,7 @@ export default function AskCard({ messages, busy, hasItinerary, onSend, onReset 
             ),
           )}
           {hasItinerary && !busy && (
-            <a href="#itinerary" className="inline-block rounded-lg bg-accent/15 px-3 py-1.5 text-xs font-semibold text-accent">
+            <a href="#itinerary" className="inline-flex min-h-10 items-center rounded-lg bg-accent/15 px-3 text-sm font-semibold text-accent">
               {t.askItineraryReady} ↓
             </a>
           )}
@@ -104,25 +104,25 @@ export default function AskCard({ messages, busy, hasItinerary, onSend, onReset 
           onChange={(e) => setInput(e.target.value)}
           maxLength={2000}
           placeholder={t.askPlaceholder}
-          className="mb-2 h-[46px] w-full min-w-0 rounded-[10px] bg-white px-3 text-sm text-[#10211e] outline-none placeholder:text-[#84918d] sm:mb-0 sm:h-auto sm:flex-1 sm:rounded-none sm:bg-transparent"
+          className="mb-2 h-12 w-full min-w-0 rounded-[10px] bg-white px-3 text-base text-[#10211e] sm:text-sm outline-none placeholder:text-[#84918d] sm:mb-0 sm:h-auto sm:flex-1 sm:rounded-none sm:bg-transparent"
         />
         <button
           type="submit"
           disabled={busy || !input.trim()}
-          className="min-h-[44px] w-full rounded-[9px] bg-accent px-[18px] text-sm font-bold text-[#08231c] disabled:opacity-60 sm:w-auto"
+          className="min-h-12 w-full rounded-[9px] bg-accent px-[18px] text-base font-bold sm:min-h-[44px] sm:text-sm text-[#08231c] disabled:opacity-60 sm:w-auto"
         >
           {busy ? t.chatThinkingShort : `${t.askButton} →`}
         </button>
       </form>
 
-      <div className="col-span-full flex flex-wrap gap-2">
+      <div className="col-span-full -mx-[18px] flex gap-2 overflow-x-auto px-[18px] pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
         {t.quickPrompts.map((p) => (
           <button
             key={p.label}
             type="button"
             disabled={busy}
             onClick={() => onSend(p.prompt)}
-            className="rounded-[20px] border border-white/10 bg-white/[0.04] px-[11px] py-[7px] text-xs text-[#c5d8d1] hover:border-accent/50 disabled:opacity-50"
+            className="min-h-10 shrink-0 rounded-[20px] border border-white/10 bg-white/[0.04] px-3.5 text-sm whitespace-nowrap text-[#c5d8d1] hover:border-accent/50 disabled:opacity-50 sm:text-xs"
           >
             {p.label}
           </button>

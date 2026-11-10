@@ -129,6 +129,24 @@ export default function HomeClient() {
     );
   }, [loadInfo]);
 
+  // Deep links from the mobile bottom bar: /#map, /#saved, /#explore.
+  useEffect(() => {
+    const apply = () => {
+      const h = window.location.hash;
+      if (h === "#map" || h === "#saved") {
+        setTab(h === "#map" ? "map" : "saved");
+        // After the tab renders, bring the map itself (or the saved list) into view.
+        setTimeout(() => {
+          const el = document.getElementById(h === "#map" ? "map-view" : "explore");
+          el?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 80);
+      } else if (h === "#explore") setTab("discover");
+    };
+    apply();
+    window.addEventListener("hashchange", apply);
+    return () => window.removeEventListener("hashchange", apply);
+  }, []);
+
   useEffect(() => {
     locate();
     try {
@@ -268,7 +286,7 @@ export default function HomeClient() {
         <div className="min-w-0 p-[18px] md:p-10">
           <AskCard messages={chat.messages} busy={chat.busy} hasItinerary={!!itinerary} onSend={(s) => void chat.send(s)} onReset={chat.reset} />
 
-          <div className="mt-10 mb-5 flex flex-wrap items-end justify-between gap-3">
+          <div className="mt-8 mb-4 flex flex-wrap items-end justify-between gap-3 md:mt-10 md:mb-5">
             <div>
               <span className="text-[11px] font-extrabold tracking-[2px] text-forest">{t.curatedForYou}</span>
               <h2 className="mt-1 font-display text-[26px] font-extrabold md:text-[30px]">
@@ -283,13 +301,15 @@ export default function HomeClient() {
                         : t.discoverTitle}
               </h2>
             </div>
-            <div className="flex gap-1 rounded-xl bg-white p-1 md:hidden">
+            <div className="grid w-full grid-cols-3 gap-1 rounded-xl bg-white p-1 md:hidden" role="tablist">
               {(["discover", "map", "saved"] as Tab[]).map((id) => (
                 <button
                   key={id}
                   type="button"
+                  role="tab"
+                  aria-selected={tab === id}
                   onClick={() => setTab(id)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${tab === id ? "bg-forest-soft text-forest" : "text-cream-muted"}`}
+                  className={`min-h-11 rounded-lg px-2 text-sm font-semibold ${tab === id ? "bg-forest-soft text-forest" : "text-cream-muted"}`}
                 >
                   {id === "discover" ? t.tabDiscover : id === "map" ? t.tabMap : t.tabSaved}
                 </button>
@@ -305,8 +325,12 @@ export default function HomeClient() {
           </div>
 
           {dishes.length > 0 && tab !== "saved" && (
-            <div className="mb-5 flex flex-wrap items-center gap-2">
-              <span className="mr-1 text-xs font-semibold text-cream-muted">
+            <div className="mb-4 md:mb-5">
+              <p className="mb-2 text-xs font-semibold text-cream-muted md:hidden">
+                🍜 {area ? t.dishesTitle.replace("{area}", area) : t.dishesTitleGeneric}
+              </p>
+            <div className="-mx-[18px] flex items-center gap-2 overflow-x-auto px-[18px] pb-1 [scrollbar-width:none] md:mx-0 md:flex-wrap md:overflow-visible md:px-0 [&::-webkit-scrollbar]:hidden">
+              <span className="mr-1 hidden text-xs font-semibold text-cream-muted md:inline">
                 🍜 {area ? t.dishesTitle.replace("{area}", area) : t.dishesTitleGeneric}
               </span>
               {dishes.map((d) => (
@@ -315,7 +339,7 @@ export default function HomeClient() {
                   type="button"
                   onClick={() => void pickDish(d)}
                   aria-pressed={dish === d}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                  className={`min-h-10 shrink-0 rounded-full border px-4 text-sm font-semibold whitespace-nowrap transition ${
                     dish === d ? "border-forest bg-forest text-white" : "border-cream-line bg-white text-cream-ink hover:border-forest"
                   }`}
                 >
@@ -323,6 +347,7 @@ export default function HomeClient() {
                   {dish === d ? " ✕" : ""}
                 </button>
               ))}
+            </div>
             </div>
           )}
 
@@ -332,7 +357,7 @@ export default function HomeClient() {
               <button
                 type="button"
                 onClick={() => void chat.send(t.askDish.replace("{dish}", dish))}
-                className="rounded-lg bg-forest-soft px-3 py-1.5 text-xs font-bold text-forest"
+                className="min-h-10 rounded-lg bg-forest-soft px-3 text-sm font-bold text-forest"
               >
                 {t.askButton} →
               </button>
@@ -347,27 +372,27 @@ export default function HomeClient() {
           {placesState === "error" && (
             <p role="alert" className="mb-4 rounded-xl bg-[#fde8e4] px-3 py-2 text-sm text-[#b5452b]">
               {t.poiError}{" "}
-              <button type="button" className="font-semibold underline" onClick={() => start && loadPlaces(start)}>
+              <button type="button" className="min-h-10 font-semibold underline" onClick={() => start && loadPlaces(start)}>
                 {t.retry}
               </button>
             </p>
           )}
 
           {tab === "map" ? (
-            <div className="relative h-[460px] overflow-hidden rounded-[17px] border border-[#dfe5df] md:h-[560px]">
+            <div id="map-view" className="relative h-[62dvh] min-h-[380px] scroll-mt-20 overflow-hidden rounded-[17px] border border-[#dfe5df] md:h-[560px]">
               <MapView center={start ?? CENTER} user={start?.isGps ? start : null} places={places} itinerary={itinerary} t={t} />
             </div>
           ) : (placesState === "loading" && places.length === 0) || (dish && dishState === "loading") ? (
-            <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 lg:grid-cols-3" aria-busy>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-[18px] lg:grid-cols-3" aria-busy>
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-[300px] animate-pulse rounded-[17px] bg-white" />
+                <div key={i} className="h-[150px] animate-pulse rounded-2xl bg-white sm:h-[300px] sm:rounded-[17px]" />
               ))}
             </div>
           ) : visible.length === 0 ? (
             <p className="rounded-[17px] border border-dashed border-cream-line p-6 text-sm text-cream-muted">
               {tab === "saved" ? t.savedEmpty : degraded ? t.mapDataBusy : t.none}{" "}
               {tab !== "saved" && start && (
-                <button type="button" className="font-semibold text-forest underline" onClick={() => loadPlaces(start)}>
+                <button type="button" className="min-h-10 font-semibold text-forest underline" onClick={() => loadPlaces(start)}>
                   {t.retry}
                 </button>
               )}
@@ -380,7 +405,7 @@ export default function HomeClient() {
                   <button
                     type="button"
                     onClick={() => setLimit((l) => l + PAGE)}
-                    className="rounded-xl border border-cream-line bg-white px-5 py-2.5 text-sm font-semibold text-forest"
+                    className="min-h-11 w-full rounded-xl border border-cream-line bg-white px-5 text-sm font-semibold text-forest sm:w-auto"
                   >
                     {t.showMore}
                   </button>

@@ -150,7 +150,7 @@ export default function MerchantClient() {
                 href={`${detail.explorerUrl}/address/${detail.merchant.walletAddress}`}
                 target="_blank"
                 rel="noreferrer"
-                className="font-mono text-[11px] text-accent underline"
+                className="inline-block min-h-6 pt-1 font-mono text-[11px] text-accent underline"
               >
                 {shortAddr(detail.merchant.walletAddress)} ↗
               </a>
@@ -173,7 +173,7 @@ export default function MerchantClient() {
               value={paste}
               onChange={(e) => setPaste(e.target.value)}
               placeholder="hedgora://checkin?s=…&sig=…"
-              className="min-h-[44px] min-w-0 flex-1 rounded-xl border border-line bg-bg px-3 font-mono text-xs text-ink"
+              className="min-h-[44px] min-w-0 flex-1 rounded-xl border border-line bg-bg px-3 font-mono text-base text-ink sm:text-xs"
             />
             <button
               type="submit"

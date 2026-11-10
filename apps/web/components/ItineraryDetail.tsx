@@ -90,7 +90,7 @@ export default function ItineraryDetail({ initial, vouchers, explorerUrl }: Prop
 
   return (
     <div className="mx-auto w-full max-w-xl space-y-4 px-4 py-5">
-      <Link href="/" className="text-sm text-accent hover:underline">
+      <Link href="/" className="inline-flex min-h-11 items-center text-sm text-accent hover:underline">
         {t.backToMap}
       </Link>
       <header className="space-y-1">
@@ -108,7 +108,7 @@ export default function ItineraryDetail({ initial, vouchers, explorerUrl }: Prop
       {!paid && (
         <div className="rounded-2xl bg-surface-2 p-4 text-sm text-ink">
           {t.notPaidYet}{" "}
-          <Link href={`/pay/${it.id}`} className="font-semibold text-accent underline">
+          <Link href={`/pay/${it.id}`} className="mt-2 flex min-h-11 items-center justify-center rounded-xl bg-accent px-4 font-semibold text-accent-ink">
             {t.goPay}
           </Link>
         </div>

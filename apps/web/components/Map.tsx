@@ -100,6 +100,9 @@ export default function MapView({ center, user, places, itinerary, t }: Props) {
       center: [center.lon, center.lat],
       zoom: 13.2,
       attributionControl: { compact: false, customAttribution: ATTRIBUTION },
+      // On phones, one finger scrolls the page; two fingers move the map.
+      cooperativeGestures: window.matchMedia("(pointer: coarse)").matches,
+      locale: { "CooperativeGesturesHandler.MobileHelpText": tRef.current.mapTwoFingers },
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
     mapRef.current = map;

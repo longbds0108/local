@@ -210,7 +210,7 @@ export default function PaymentPreview({ initial, explorerUrl, faucetUrl, feeEst
 
   return (
     <div className="mx-auto w-full max-w-xl space-y-4 px-4 py-5">
-      <Link href="/" className="text-sm text-accent hover:underline">
+      <Link href="/" className="inline-flex min-h-11 items-center text-sm text-accent hover:underline">
         {t.backToMap}
       </Link>
       <div className="flex flex-wrap items-center justify-between gap-2">

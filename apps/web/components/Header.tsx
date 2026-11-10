@@ -14,8 +14,8 @@ export default function Header() {
     { href: "/merchant", label: t.navMerchant },
   ];
   return (
-    <header className="sticky top-0 z-30 flex h-[72px] items-center justify-between gap-3 border-b border-line bg-bg/85 px-[18px] backdrop-blur-xl md:px-[5vw]">
-      <Link href="/" className="flex items-center gap-2.5 text-white">
+    <header className="sticky top-0 z-30 flex h-16 items-center md:h-[72px] justify-between gap-3 border-b border-line bg-bg/85 px-[18px] backdrop-blur-xl md:px-[5vw]">
+      <Link href="/" className="flex min-h-11 items-center gap-2.5 text-white">
         <span className="grid h-[34px] w-[34px] -rotate-6 place-items-center rounded-[10px] bg-accent font-display text-lg font-extrabold text-accent-ink">
           H
         </span>
@@ -34,9 +34,6 @@ export default function Header() {
         ))}
       </nav>
       <div className="flex items-center gap-2">
-        <Link href="/merchant" className="text-xs text-[#a7bbb5] md:hidden">
-          {t.navMerchant}
-        </Link>
         <LangToggle />
         <WalletButton />
       </div>
