@@ -5,7 +5,7 @@ import { haversineKm, type LatLon } from "./geo";
 import { openDuringWindow } from "./hours";
 import { normalizeVi } from "./landmarks";
 import { ofmPois } from "./ofm-pois";
-import { fetchOsmPois, type OsmPoi } from "./overpass";
+import { openingHoursFor, type OsmPoi } from "./overpass";
 import { photonAreaPois, photonDishPois } from "./photon-pois";
 import { CATEGORIES, unitPrice, type Category, type PriceSource } from "./pricing";
 
@@ -144,9 +144,8 @@ export async function searchPlaces(params: SearchParams): Promise<SearchResult[]
     // Photon only as a supplement when the tiles have few matches.
     osm = fromTiles.length >= 5 ? fromTiles : mergeOsm(fromTiles, await photonDishPois(params.keyword!, lat, lon, radiusM));
   } else {
-    // Overpass first (has opening hours) when it answers in time; tiles always; Photon only if both are thin.
-    const [ov, tl] = await Promise.all([fetchOsmPois(lat, lon, radiusM, params.osmWaitMs ?? 12_000), tiles]);
-    osm = mergeOsm(ov, tl);
+    // Tiles always; Photon (if configured/reachable) only when the tiles are thin.
+    osm = await tiles;
     if (osm.length < 10) osm = mergeOsm(osm, await photonAreaPois(lat, lon, radiusM));
   }
 
@@ -168,20 +167,26 @@ export async function searchPlaces(params: SearchParams): Promise<SearchResult[]
 
   const here: LatLon = { lat, lon };
   let results: SearchResult[] = [...merged.values()]
-    .map((p) => ({
-      ...p,
-      distanceM: Math.round(haversineKm(here, p) * 1000),
-      openDuringWindow:
-        params.windowStart && params.windowEnd ? openDuringWindow(p.openingHours, params.windowStart, params.windowEnd) : null,
-    }))
+    .map((p) => ({ ...p, distanceM: Math.round(haversineKm(here, p) * 1000), openDuringWindow: null as boolean | null }))
     .filter((p) => p.distanceM <= radiusM)
-    .filter((p) => cats.length === 0 || cats.includes(p.category))
-    // Spec: skip POIs whose opening_hours show they are closed during the window.
-    .filter((p) => p.openDuringWindow !== false);
+    .filter((p) => cats.length === 0 || cats.includes(p.category));
 
   // Seed places first (curated, have prices/merchants), then by distance.
   results.sort((a, b) => (a.source === b.source ? a.distanceM - b.distanceM : a.source === "seed" ? -1 : 1));
   if (params.mixCategories) results = mixByCategory(results);
+
+  // Opening hours (tiles don't carry them): ask Overpass by id for the candidates only.
+  results = results.slice(0, limit * 2);
+  const needHours = results.filter((p) => p.source === "osm" && !p.openingHours).map((p) => p.osmId);
+  if (needHours.length) {
+    const hours = await openingHoursFor(needHours, params.osmWaitMs ?? 4000);
+    for (const p of results) if (!p.openingHours && hours.has(p.osmId)) p.openingHours = hours.get(p.osmId);
+  }
+  if (params.windowStart && params.windowEnd) {
+    for (const p of results) p.openDuringWindow = openDuringWindow(p.openingHours, params.windowStart, params.windowEnd);
+    // Spec: skip POIs whose opening_hours show they are closed during the window.
+    results = results.filter((p) => p.openDuringWindow !== false);
+  }
   results = results.slice(0, limit);
   remember(results);
   return results;
@@ -189,7 +194,7 @@ export async function searchPlaces(params: SearchParams): Promise<SearchResult[]
 
 /** Places for the map layer: seed + OSM around a point, no opening-hours filter. */
 export async function placesForMap(lat: number, lon: number, radiusM: number, keyword?: string): Promise<SearchResult[]> {
-  return searchPlaces({ lat, lon, radiusM, limit: 40, osmWaitMs: 3_500, keyword, mixCategories: !keyword });
+  return searchPlaces({ lat, lon, radiusM, limit: 40, osmWaitMs: 3_000, keyword, mixCategories: !keyword });
 }
 
 /**

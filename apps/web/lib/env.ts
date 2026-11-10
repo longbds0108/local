@@ -32,9 +32,6 @@ export const config = {
     const v = read("ANTHROPIC_EFFORT");
     return v === "low" || v === "high" || v === "xhigh" || v === "max" ? v : "medium";
   },
-  get overpassUrl() {
-    return read("OVERPASS_URL") ?? "https://overpass-api.de/api/interpreter";
-  },
   get osrmUrl() {
     return (read("OSRM_URL") ?? "https://router.project-osrm.org").replace(/\/$/, "");
   },

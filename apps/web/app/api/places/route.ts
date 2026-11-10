@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { clientIp, handle, jsonError, parseQuery } from "@/lib/api";
 import { isOpenAt } from "@/lib/hours";
-import { photonHealthy } from "@/lib/photon";
 import { placesForMap, searchPlaces } from "@/lib/places";
 import { rateLimit } from "@/lib/rate-limit";
 import type { MapPlace } from "@/lib/types";
@@ -42,7 +41,7 @@ export const GET = handle(async (req: Request) => {
     distanceM: p.distanceM,
     source: p.source,
   }));
-  // degraded: live OSM sources unavailable (rate-limited/overloaded) — only seed data was searched.
-  const degraded = !photonHealthy() && !results.some((p) => p.source === "osm");
+  // degraded: the OSM sources (map tiles) could not be reached — only seed data was searched.
+  const degraded = !q.q && !results.some((p) => p.source === "osm");
   return NextResponse.json({ places, degraded });
 });

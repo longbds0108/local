@@ -1,7 +1,9 @@
 // Shared client for the public Photon instance (komoot, OSM data, no key).
 // Fair use matters: the public server blocks IPs that send too much, so every
 // response is cached on disk and a circuit breaker stops all calls for a while
-// after a refusal / 429 / 5xx. Self-host Photon (PHOTON_URL) for production.
+// after a refusal / 429 / 5xx. Off unless PHOTON_URL is set: the public
+// instance blocks some networks outright (connection refused), and its roles are
+// covered by BigDataCloud (browser geocoding) and vector tiles (places).
 import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -14,8 +16,9 @@ export function photonHealthy(): boolean {
   return Date.now() >= downUntil;
 }
 
-function base() {
-  return (process.env.PHOTON_URL?.trim() || "https://photon.komoot.io").replace(/\/$/, "");
+function base(): string | null {
+  const url = process.env.PHOTON_URL?.trim();
+  return url ? url.replace(/\/$/, "") : null;
 }
 
 function cacheFile(key: string) {
@@ -48,9 +51,10 @@ async function writeCache(key: string, value: unknown) {
 export async function photonGet<T>(pathAndQuery: string, ttlMs: number): Promise<T | null> {
   const cached = await readCache<T>(pathAndQuery, ttlMs);
   if (cached !== undefined) return cached;
-  if (!photonHealthy()) return null;
+  const b = base();
+  if (!b || !photonHealthy()) return null;
   try {
-    const res = await fetch(`${base()}${pathAndQuery}`, {
+    const res = await fetch(`${b}${pathAndQuery}`, {
       headers: { "User-Agent": "HedgoraTravel/0.1 (demo)" },
       signal: AbortSignal.timeout(10_000),
     });
