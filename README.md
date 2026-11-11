@@ -78,7 +78,7 @@ Sau khi sửa contract: `forge build && (cd ../apps/web && npm run abi)` để c
    - API key (server) → `CIRCLE_API_KEY`
 3. `NEXT_PUBLIC_GOOGLE_CLIENT_ID` = Google Client ID. Khởi động lại `npm run dev` (biến `NEXT_PUBLIC_*` được build vào client).
 
-Luồng: `/pay/[id]` → "Đăng nhập Google & thanh toán" → Google → `/auth/callback` (SDK đọc token từ redirect) → tạo ví SCA trên `ARC-TESTNET` nếu chưa có (user xác nhận trong UI Circle) → quay lại `/pay/[id]` → **approve** (xác nhận) → **deposit** (xác nhận) → server đọc escrow on-chain, đối chiếu merchant + số tiền, ghi `PAID` + tx hash.
+Luồng: `/trips/[id]` (bước Thanh toán) → "Đăng nhập Google & thanh toán" → Google → `/auth/callback` (SDK đọc token từ redirect) → tạo ví SCA trên `ARC-TESTNET` nếu chưa có (user xác nhận trong UI Circle) → quay lại `/trips/[id]` → **approve** (xác nhận) → **deposit** (xác nhận) → server đọc escrow on-chain, đối chiếu merchant + số tiền, ghi `PAID` + tx hash.
 
 Nạp USDC testnet: copy địa chỉ ví trên màn thanh toán → faucet.
 
@@ -86,9 +86,10 @@ Private key của user không bao giờ đi qua server: mọi chữ ký diễn r
 
 ## 5. QR check-in + hoàn tiền (M7–M8)
 
-- `/itinerary/[id]`: voucher QR cho từng điểm có phí (`hedgora://checkin?s={stopId}&sig={HMAC_SHA256(stopId, qrSecret)}`), cập nhật trạng thái tự động.
-- `/merchant` (mở trên máy khác): chọn merchant → quét QR bằng camera (hoặc dán nội dung QR) → server kiểm tra chữ ký, đúng merchant, `PENDING`, itinerary `PAID`, chưa quá deadline → `release()` bằng `OPERATOR_PRIVATE_KEY` → merchant nhận USDC (xem số dư + link explorer).
-- **Huỷ điểm** (nút trên `/itinerary/[id]`): user chứng minh quyền bằng Circle user token (ví của user phải là payer on-chain) → operator `refund()`.
+- `/trips/[id]` (bước Đi & quét mã): mã QR cho từng điểm có phí, điểm tiếp theo hiện sẵn (`hedgora://checkin?s={stopId}&sig={HMAC_SHA256(stopId, qrSecret)}`), cập nhật trạng thái tự động.
+- Cấu trúc trang của khách: `/` (Khám phá · Bản đồ · Hỏi AI) → `/trips` (mọi chuyến đi) → `/trips/[id]` (một trang cho mỗi chuyến: Lên lịch → Thanh toán → Đi & quét mã → Xong) · `/wallet` (số dư, tiền đang giữ, lịch sử). Link cũ `/pay/[id]`, `/itinerary/[id]`, `/dashboard` tự chuyển sang trang mới.
+- `/merchant` (mở trên máy khác) — mở từ chân trang ("Bạn là chủ quán?"): chọn merchant → quét QR bằng camera (hoặc dán nội dung QR) → server kiểm tra chữ ký, đúng merchant, `PENDING`, itinerary `PAID`, chưa quá deadline → `release()` bằng `OPERATOR_PRIVATE_KEY` → merchant nhận USDC (xem số dư + link explorer).
+- **Huỷ điểm** (nút trên `/trips/[id]`): user chứng minh quyền bằng Circle user token (ví của user phải là payer on-chain) → operator `refund()`.
 - **Hết hạn**: `npm run refund:sweep` (hoặc cron `POST /api/refund {"mode":"sweep"}`, header `x-cron-secret` nếu đặt `CRON_SECRET`) hoàn các điểm `PENDING` của lịch trình đã qua `endAt + 2h`. Payer cũng tự gọi `refund()` trực tiếp trên contract được sau deadline.
 
 Ví merchant demo (chỉ địa chỉ) ở `data/merchants.json`; private key tương ứng ở `data/merchant-keys.local.json` (gitignored — dùng nếu muốn rút USDC testnet). Các điểm có phí chưa có ví riêng dùng ví "Hedgora Partner Pool".
@@ -119,7 +120,7 @@ Trạng thái itinerary: `DRAFT → PAID → COMPLETED | REFUNDED | PARTIAL`. St
 
 ## 8. Giới hạn của MVP
 
-- Link `/itinerary/[id]` (cuid khó đoán) là "chìa khoá" xem voucher; `/merchant` chưa có đăng nhập merchant.
+- Link `/trips/[id]` (cuid khó đoán) là "chìa khoá" xem voucher; `/merchant` chưa có đăng nhập merchant.
 - Rate limit + lock chat ở bộ nhớ process (1 instance). Dùng Redis khi scale.
 - Bản đồ mặc định dùng style vector miễn phí của [OpenFreeMap](https://openfreemap.org) (dữ liệu OSM, không cần key) vì `tile.openstreetmap.org` bị chặn ở một số mạng và CARTO nay cần API key. Overpass/OSRM public chỉ dùng cho demo — production nên tự host hoặc dùng nhà cung cấp trả phí (`NEXT_PUBLIC_MAP_STYLE_URL`/`NEXT_PUBLIC_MAP_TILE_URL`, `OVERPASS_URL`, `OSRM_URL`).
 - Ô "Vị trí của bạn": GPS → tên phường/quận + tỉnh/thành (trình duyệt gọi [BigDataCloud](https://www.bigdatacloud.com/free-api/free-reverse-geocode-to-city-api) miễn phí; server dự phòng bằng [Photon](https://photon.komoot.io)/OSM; toạ độ làm tròn ~100 m trước khi gửi), thời tiết hiện tại + giờ hoàng hôn ([Open-Meteo](https://open-meteo.com)), và ảnh địa danh nổi bật của 34 tỉnh/thành sau sáp nhập 2025 (`data/landmarks.json` — ảnh Wikimedia Commons giấy phép tự do, luôn hiển thị tác giả + giấy phép). Lạng Sơn, Lai Châu và nơi ngoài Việt Nam dùng ảnh mặc định.

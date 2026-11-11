@@ -69,7 +69,7 @@ export default function ItineraryCard({ itinerary, compact = false }: { itinerar
           <div className="text-base font-bold text-ink">{usdc(itinerary.totalUsdc)}</div>
         </div>
         <Link
-          href={paid ? `/itinerary/${itinerary.id}` : `/pay/${itinerary.id}`}
+          href={`/trips/${itinerary.id}`}
           className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-ink hover:opacity-90"
         >
           {paid ? t.viewVouchers : t.viewPayment}

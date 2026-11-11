@@ -1,26 +1,8 @@
-import { notFound } from "next/navigation";
-import PaymentPreview from "@/components/PaymentPreview";
-import { estimatePaymentFeeUsdc } from "@/lib/chain";
-import { config } from "@/lib/env";
-import { getItineraryView } from "@/lib/itinerary";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
-export default async function PayPage({ params }: { params: Promise<{ id: string }> }) {
+/** Old link: payment now lives on the trip page. */
+export default async function PayRedirect({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ autopay?: string }> }) {
   const { id } = await params;
-  const itinerary = await getItineraryView(id);
-  if (!itinerary) notFound();
-
-  const paidStops = itinerary.stops.filter((s) => Number(s.priceUsdc) > 0).length;
-  const feeEstimate = config.paymentsConfigured && paidStops > 0 ? await estimatePaymentFeeUsdc(paidStops) : null;
-
-  return (
-    <PaymentPreview
-      initial={itinerary}
-      explorerUrl={config.explorerUrl ?? null}
-      faucetUrl={config.faucetUrl ?? null}
-      feeEstimate={feeEstimate}
-      paymentsConfigured={config.paymentsConfigured}
-    />
-  );
+  const { autopay } = await searchParams;
+  redirect(`/trips/${encodeURIComponent(id)}${autopay === "1" ? "?autopay=1" : ""}`);
 }

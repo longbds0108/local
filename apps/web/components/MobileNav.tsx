@@ -26,7 +26,10 @@ export default function MobileNav() {
     { href: "/#explore", hash: "#explore", icon: "⌂", label: t.tabDiscover },
     { href: "/#map", hash: "#map", icon: "⌖", label: t.tabMap },
     { href: "/#ask", hash: "#ask", icon: "✦", label: t.navAsk, primary: true },
-    { href: "/#itinerary", hash: "#itinerary", icon: "◇", label: t.navTrips },
+  ];
+  const pages = [
+    { href: "/trips", icon: "◇", label: t.navTripsPage, active: !!path?.startsWith("/trips") },
+    { href: "/wallet", icon: "◉", label: t.navWallet, active: path === "/wallet" },
   ];
 
   const onHashClick = (e: MouseEvent<HTMLAnchorElement>, h: string) => {
@@ -68,20 +71,20 @@ export default function MobileNav() {
             </a>
           </li>
         ))}
-        <li>
-          <Link
-            href="/dashboard"
-            aria-current={path === "/dashboard" ? "page" : undefined}
-            className={`flex min-h-16 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold ${
-              path === "/dashboard" ? "text-accent" : "text-ink-2"
-            }`}
-          >
-            <span className="text-xl leading-none" aria-hidden>
-              ◉
-            </span>
-            {t.navDashboard}
-          </Link>
-        </li>
+        {pages.map((p) => (
+          <li key={p.href}>
+            <Link
+              href={p.href}
+              aria-current={p.active ? "page" : undefined}
+              className={`flex min-h-16 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold ${p.active ? "text-accent" : "text-ink-2"}`}
+            >
+              <span className="text-xl leading-none" aria-hidden>
+                {p.icon}
+              </span>
+              {p.label}
+            </Link>
+          </li>
+        ))}
       </ul>
     </nav>
   );

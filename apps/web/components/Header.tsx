@@ -8,11 +8,11 @@ import WalletButton from "./WalletButton";
 export default function Header() {
   const { t } = useI18n();
   const path = usePathname();
+  // Traveller destinations only; the partner portal is linked from the footer.
   const nav = [
-    { href: "/#explore", label: t.navExplore },
-    { href: "/#itinerary", label: t.navTrips },
-    { href: "/dashboard", label: t.navDashboard },
-    { href: "/merchant", label: t.navMerchant },
+    { href: "/", label: t.navExplore, active: path === "/" },
+    { href: "/trips", label: t.navTripsPage, active: path?.startsWith("/trips") },
+    { href: "/wallet", label: t.navWallet, active: path === "/wallet" },
   ];
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center md:h-[72px] justify-between gap-3 border-b border-line bg-bg/85 px-[18px] backdrop-blur-xl md:px-[5vw]">
@@ -28,7 +28,8 @@ export default function Header() {
           <Link
             key={n.href}
             href={n.href}
-            className={`inline-flex min-h-11 items-center text-sm ${path === n.href ? "text-accent" : "text-[#a7bbb5] hover:text-white"}`}
+            aria-current={n.active ? "page" : undefined}
+            className={`inline-flex min-h-11 items-center text-sm ${n.active ? "font-semibold text-accent" : "text-[#a7bbb5] hover:text-white"}`}
           >
             {n.label}
           </Link>

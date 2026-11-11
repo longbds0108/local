@@ -81,7 +81,7 @@ export default function ItineraryTimeline({ itinerary }: { itinerary: ItineraryV
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <Link
-              href={paid ? `/itinerary/${itinerary.id}` : `/pay/${itinerary.id}`}
+              href={`/trips/${itinerary.id}`}
               className="rounded-xl bg-accent px-5 py-3 text-sm font-bold text-accent-ink hover:opacity-90"
             >
               {paid ? t.viewVouchers : t.viewPayment} →

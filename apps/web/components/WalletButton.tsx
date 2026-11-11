@@ -113,13 +113,22 @@ export default function WalletButton() {
             <b>{balance !== null ? `${balance} USDC` : "…"}</b>
           </div>
           {session?.email && <div className="truncate text-xs text-ink-2">{session.email}</div>}
-          <Link
-            href="/dashboard"
-            onClick={() => setOpen(false)}
-            className="flex min-h-10 items-center justify-center rounded-lg bg-accent text-xs font-bold text-accent-ink"
-          >
-            ◉ {t.navDashboard} →
-          </Link>
+          <div className="grid grid-cols-2 gap-2">
+            <Link
+              href="/trips"
+              onClick={() => setOpen(false)}
+              className="flex min-h-10 items-center justify-center rounded-lg bg-accent text-xs font-bold text-accent-ink"
+            >
+              ◇ {t.navTripsPage}
+            </Link>
+            <Link
+              href="/wallet"
+              onClick={() => setOpen(false)}
+              className="flex min-h-10 items-center justify-center rounded-lg bg-surface-2 text-xs font-bold text-ink"
+            >
+              ◉ {t.navWallet}
+            </Link>
+          </div>
           {authMode() === "pin" && <p className="text-[11px] leading-snug text-ink-2">{t.walletBrowserNote}</p>}
           <a
             href={process.env.NEXT_PUBLIC_FAUCET_URL || "https://faucet.circle.com"}

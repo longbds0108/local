@@ -9,7 +9,6 @@ import {
   executeChallenge,
   getSession,
   logout,
-  saveSession,
   authMode,
   connectWallet,
   getOrRefreshSession,
@@ -18,8 +17,8 @@ import {
 } from "@/lib/circle-client";
 import { CATEGORY_EMOJI, hhmm, shortAddr, usdc } from "@/lib/format";
 import type { ItineraryView } from "@/lib/types";
-import { useI18n } from "./I18nProvider";
-import { PriceLabel } from "./ItineraryCard";
+import { useI18n } from "../I18nProvider";
+import { PriceLabel } from "../ItineraryCard";
 import { errorText } from "@/lib/error-text";
 
 type Phase =
@@ -35,10 +34,11 @@ type Phase =
 
 type Props = {
   initial: ItineraryView;
-  explorerUrl: string | null;
   faucetUrl: string | null;
   feeEstimate: string | null;
   paymentsConfigured: boolean;
+  /** Called once the deposit is confirmed; the trip page then reloads into its QR step. */
+  onPaid: () => void;
 };
 
 class FlowError extends Error {
@@ -59,12 +59,16 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
   return json as T;
 }
 
-export default function PaymentPreview({ initial, explorerUrl, faucetUrl, feeEstimate, paymentsConfigured }: Props) {
+/** Unpaid trip: the plan with prices, then the one payment action. */
+export default function PaymentPanel({ initial, faucetUrl, feeEstimate, paymentsConfigured, onPaid }: Props) {
   const { t } = useI18n();
   const [itinerary, setItinerary] = useState(initial);
   const [session, setSession] = useState<CircleSession | null>(null);
   const [balance, setBalance] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>(initial.status === "DRAFT" ? "idle" : "done");
+  useEffect(() => {
+    if (phase === "done") onPaid();
+  }, [phase, onPaid]);
   const [error, setError] = useState<string | null>(null);
   const autoStarted = useRef(false);
 
@@ -208,7 +212,7 @@ export default function PaymentPreview({ initial, explorerUrl, faucetUrl, feeEst
     setError(null);
     setPhase(authMode() === "pin" ? "creating" : "login");
     try {
-      const s = await connectWallet(`/pay/${itinerary.id}?autopay=1`);
+      const s = await connectWallet(`/trips/${itinerary.id}?autopay=1`);
       if (!s) return;
       setSession(s);
       if (s.walletAddress) void refreshBalance(s.walletAddress);
@@ -232,28 +236,24 @@ export default function PaymentPreview({ initial, explorerUrl, faucetUrl, feeEst
   };
 
   return (
-    <div className="mx-auto w-full max-w-xl space-y-4 px-4 py-5">
-      <Link href="/" className="inline-flex min-h-11 items-center text-sm text-accent hover:underline">
-        {t.backToMap}
-      </Link>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-bold text-ink">{t.payTitle}</h1>
-        <span className="rounded-full bg-warn-soft px-3 py-1 text-xs font-semibold text-warn">⚠️ {t.testnetBadge}</span>
-      </div>
-
-      <section className="rounded-2xl border border-line bg-surface p-4">
-        <h2 className="font-semibold text-ink">{itinerary.title}</h2>
-        <p className="text-xs text-ink-2">
-          {hhmm(itinerary.startAt)}–{hhmm(itinerary.endAt)} · {itinerary.partySize} {itinerary.partySize === 1 ? t.person : t.people}
-        </p>
-        <ul className="mt-3 divide-y divide-line">
+    <div className="space-y-5">
+      <section className="rounded-[20px] border border-line bg-surface p-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-bold text-ink-2">{t.tripStops}</h2>
+          <Link href="/#ask" className="inline-flex min-h-10 items-center text-sm font-semibold text-accent hover:underline">
+            ✦ {t.editWithAi}
+          </Link>
+        </div>
+        <ul className="mt-1 divide-y divide-line">
           {itinerary.stops.map((s, i) => (
             <li key={s.id} className="flex items-center justify-between gap-3 py-2">
               <div className="min-w-0">
                 <div className="truncate text-sm font-medium text-ink">
                   {i + 1}. {CATEGORY_EMOJI[s.category] ?? "📍"} {s.name}
                 </div>
-                <div className="text-xs text-ink-2">{hhmm(s.arriveAt)}</div>
+                <div className="text-xs text-ink-2">
+                  {hhmm(s.arriveAt)} · {s.durationMin} {t.minutes}
+                </div>
               </div>
               <PriceLabel price={s.priceUsdc} source={s.priceSource} />
             </li>
@@ -275,24 +275,12 @@ export default function PaymentPreview({ initial, explorerUrl, faucetUrl, feeEst
       </section>
 
       {phase === "done" ? (
-        <section className="space-y-3 rounded-2xl border border-ok/40 bg-ok-soft p-4">
-          <h2 className="text-lg font-bold text-ok">✅ {t.paidTitle}</h2>
-          {itinerary.depositTxHash && (
-            <p className="text-sm break-all text-ink">
-              {t.txHash}: <code className="text-xs">{itinerary.depositTxHash}</code>
-              {explorerUrl && (
-                <>
-                  {" "}
-                  <a className="font-semibold text-accent underline" href={`${explorerUrl}/tx/${itinerary.depositTxHash}`} target="_blank" rel="noreferrer">
-                    {t.viewOnExplorer} ↗
-                  </a>
-                </>
-              )}
-            </p>
-          )}
-          <Link href={`/itinerary/${itinerary.id}`} className="inline-block rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-ink">
-            {t.viewVouchers} →
-          </Link>
+        <section role="status" className="flex items-center gap-3 rounded-[20px] border border-ok/40 bg-ok-soft p-4">
+          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ok border-t-transparent" />
+          <div>
+            <h2 className="font-bold text-ok">✅ {t.paidTitle}</h2>
+            <p className="text-sm text-ink">{t.openingQr}</p>
+          </div>
         </section>
       ) : isFree ? (
         <p className="rounded-2xl bg-surface-2 p-4 text-sm text-ink">{t.freeItinerary}</p>
@@ -301,7 +289,7 @@ export default function PaymentPreview({ initial, explorerUrl, faucetUrl, feeEst
           {t.paymentsNotConfigured}
         </p>
       ) : (
-        <section className="space-y-3 rounded-2xl border border-line bg-surface p-4">
+        <section className="space-y-3 rounded-[20px] border border-line bg-surface p-4">
           {session?.walletAddress && (
             <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
               <div>
@@ -347,21 +335,6 @@ export default function PaymentPreview({ initial, explorerUrl, faucetUrl, feeEst
           >
             {session ? `${t.pay} ${usdc(itinerary.totalUsdc)}` : authMode() === "pin" ? t.connectAndPay : t.loginAndPay}
           </button>
-          {session && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => {
-                logout();
-                saveSession(null);
-                setSession(null);
-                setBalance(null);
-              }}
-              className="w-full text-center text-xs text-ink-2 hover:underline"
-            >
-              {t.logout}
-            </button>
-          )}
         </section>
       )}
     </div>
