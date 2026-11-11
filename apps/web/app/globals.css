@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Design tokens from the LocalMate mockup: deep green + mint, cream workspace. */
+/* Design tokens: deep green + mint, cream workspace. */
 :root {
   --bg: #061513;
   --surface: #0b201d;

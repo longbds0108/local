@@ -25,7 +25,7 @@ type Props = {
 
 /**
  * Mobile: compact horizontal rows (thumbnail left) so several places fit on a
- * screen. ≥640px: the LocalMate-style photo cards in a grid.
+ * screen. ≥640px: photo cards in a grid.
  */
 export default function PlaceCards({ places, saved, onToggleSave, onAdd, busy }: Props) {
   const { t, locale } = useI18n();

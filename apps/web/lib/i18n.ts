@@ -128,7 +128,7 @@ const vi = {
   loading: "Đang tải…",
   retry: "Thử lại",
   copy: "Sao chép",
-  // Home (LocalMate design)
+  // Home
   navExplore: "Khám phá",
   dashTitle: "Chuyến đi của tôi",
   dashConnectTitle: "Bắt đầu để xem chuyến đi của bạn",

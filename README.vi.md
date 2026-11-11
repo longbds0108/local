@@ -143,7 +143,7 @@ Trạng thái itinerary: `DRAFT → PAID → COMPLETED | REFUNDED | PARTIAL`. St
   - tên khu vực: BigDataCloud (gọi từ trình duyệt);
   - giờ mở cửa: Overpass **theo id** chỉ cho các địa điểm đang hiển thị (1 request nhỏ, cache 7 ngày), thử lần lượt `OVERPASS_URL` (mặc định `overpass.openstreetmap.fr` rồi `overpass-api.de`), máy chủ lỗi bị bỏ qua 10 phút;
   - Photon tắt mặc định (`PHOTON_URL` rỗng) — bật lại khi có máy chủ truy cập được (tự host).
-- Giao diện theo thiết kế LocalMate (một font Be Vietnam Pro, xanh đậm/mint). Ảnh Unsplash là ảnh minh hoạ theo loại địa điểm, không phải ảnh thật của từng nơi.
+- Giao diện (một font Be Vietnam Pro, xanh đậm/mint). Ảnh Unsplash là ảnh minh hoạ theo loại địa điểm, không phải ảnh thật của từng nơi.
 - PWA: có manifest + icon, chưa có service worker/offline.
 - "Mũi Nghinh Phong" và "Bến Đình" chưa có trong seed vì không lấy được osmId xác thực lúc tạo dữ liệu (Overpass/Nominatim bị giới hạn) — thay bằng Bãi Vọng Nguyệt (cạnh Nghinh Phong) và Nhà hàng Gành Hào. Thêm bằng cách tra OSM rồi bổ sung vào `apps/web/data/vungtau_pois.json`.
 

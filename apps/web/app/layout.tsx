@@ -16,8 +16,6 @@ const appFont = Be_Vietnam_Pro({
   display: "swap",
 });
 
-// Older builds stored keys as hedgora.* and then payagent.*; move them to toura.* before the app starts.
-const MIGRATE_STORAGE = `try{for(const st of [localStorage,sessionStorage]){for(const k of Object.keys(st)){const p=k.indexOf("hedgora.")===0?8:k.indexOf("payagent.")===0?9:0;if(p){const n="toura."+k.slice(p);if(st.getItem(n)===null)st.setItem(n,st.getItem(k));st.removeItem(k);}}}}catch(e){}`;
 
 export const metadata: Metadata = {
   description: "Toura — AI travel planner that pays each place in USDC only when you arrive",
@@ -36,11 +34,6 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="vi" className={appFont.variable}>
-      <head>
-        {/* Runs before the app: moves data saved under the old name (wallet session, check-in
-            codes, drafts, language) to the new keys, so nobody loses a wallet or a code. */}
-        <script dangerouslySetInnerHTML={{ __html: MIGRATE_STORAGE }} />
-      </head>
       <body className="min-h-dvh bg-bg text-ink">
         <I18nProvider>
           <Header />

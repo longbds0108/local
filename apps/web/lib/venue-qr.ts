@@ -8,7 +8,7 @@ export function venuePayload(merchantId: string): string {
 }
 
 export function parseVenue(text: string): string | null {
-  const m = text.trim().match(/^(?:toura|payagent|hedgora):\/\/venue\?(.+)$/); // old payagent:// and hedgora:// QRs still work
+  const m = text.trim().match(/^toura:\/\/venue\?(.+)$/);
   if (!m) return null;
   const id = new URLSearchParams(m[1]).get("m");
   return id && /^[a-z0-9_-]{1,64}$/i.test(id) ? id : null;

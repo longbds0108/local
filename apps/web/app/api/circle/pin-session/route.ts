@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // The browser generates a random id once and keeps it (wallet is tied to it).
-const Body = z.object({ userId: z.string().regex(/^(toura|payagent|hedgora)-[0-9a-f-]{36}$/) });
+const Body = z.object({ userId: z.string().regex(/^toura-[0-9a-f-]{36}$/) });
 
 /**
  * "Connect wallet" without Google: ensure a Circle PIN user exists for this
