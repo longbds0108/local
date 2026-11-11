@@ -1,30 +1,40 @@
 # Hedgora Travel
 
 **An AI local guide that plans your next few hours — and pays each place only when you actually show up.**
-USDC on Arc testnet · Circle user-controlled wallets (PIN, no extension) · per-stop escrow.
+USDC on Arc testnet · Circle user-controlled wallets (PIN, no extension) · escrow for bookings, scan-to-pay for everything else.
 
 > Vietnamese docs: [README.vi.md](README.vi.md) · Testnet only — test USDC has no real value; venue prices are demo values.
 
 ## The problem
 
 Travellers don't want to prepay for places they may never reach; small venues lose money on no-shows.
-Hedgora sits in the middle: you pay the whole plan once, the money waits in escrow, and each venue is paid
-**at the moment you arrive** — unused stops come back to you.
+Hedgora sits in the middle, and each stop is paid the way that venue works:
+
+| Stop | When you pay | How |
+|---|---|---|
+| **Prepaid** — the venue takes bookings (restaurant table, tickets) | Now, once, for all such stops | Held in the escrow; released to the venue **when you arrive**, refunded if you don't |
+| **Pay at venue** — a partner venue you just walk into (cafe, street food) | When you arrive | Scan the venue's QR, enter the bill, confirm with your PIN — USDC goes straight to the venue |
+| **Pay yourself** — not a Hedgora partner | When you arrive | Shown as an estimate; you pay there directly (no fake "partner pool") |
+
+The venue decides: `prepay: true` in [`data/merchants.json`](data/merchants.json) means it takes bookings. A trip with
+nothing to prepay is simply **started** (no transaction) and paid stop by stop.
 
 ## How it works
 
 ```
- Ask AI ──► plan (real OSM places, real routes, opening hours)
+ Ask AI ──► plan (real OSM places, real routes, opening hours) — each stop tagged prepaid / at venue / yourself
    │
    ▼
- Pay once ──► escrow.deposit{value: total}(…, codeHashes)      ← 1 PIN confirmation, native USDC
-   │            your phone created one secret code per stop;
-   │            only keccak256(code) leaves the device
+ Prepay bookings ──► escrow.deposit{value: prepaid total}(…, codeHashes)   ← 1 PIN confirmation, native USDC
+   │   (or "Start" if nothing    your phone created one secret code per booked stop;
+   │    needs prepaying)         only keccak256(code) leaves the device
    ▼
- At the venue ──► you scan the venue's QR   (or the venue scans yours)
-   │              → release(id, stop, code) → that venue is paid
+ At the venue ──► you scan the venue's QR
+   │   prepaid stop  → release(id, stop, code) → the escrow pays that venue
+   │   pay at venue  → you enter the bill → USDC.transfer(venue, bill) from your wallet (PIN)
+   │                   → the server confirms it from the Transfer event on-chain
    ▼
- Didn't go? ──► cancel any time, or it's refunded automatically after the window
+ Didn't go? ──► cancel a booked stop any time, or it's refunded automatically after the window
 ```
 
 ### Trust model (what the contract guarantees)
@@ -36,7 +46,10 @@ Hedgora sits in the middle: you pay the whole plan once, the money waits in escr
 | Hedgora operator key | Relay transactions (pay gas); refund a stop **to the payer** | Release a stop without the traveller's code; send money anywhere else |
 | Payer | Refund any unused stop after the deadline, directly on-chain | — |
 
-Every stop's money can only end up in two places: the merchant fixed at deposit, or back with the payer.
+Every prepaid stop's money can only end up in two places: the merchant fixed at deposit, or back with the payer.
+Pay-at-venue money never passes through Hedgora: it goes from the traveller's wallet to the venue's wallet
+(address from the server's database, never from the client), and a stop is only marked paid when the chain
+shows that transfer — each transfer can count for one stop only.
 Contract: [`contracts/src/HedgoraEscrow.sol`](contracts/src/HedgoraEscrow.sol) (escrow v2).
 
 ## Built on Arc + Circle
@@ -50,9 +63,9 @@ Contract: [`contracts/src/HedgoraEscrow.sol`](contracts/src/HedgoraEscrow.sol) (
 |---|---|
 | `/` | Location-aware discovery, ask the AI ("4 hours this afternoon, 2 people, beach + seafood, ~30 USDC"), one-tap edits |
 | `/trips` | All trips: not paid / upcoming / done, plus "Up next". Works before you have a wallet |
-| `/trips/[id]` | One page per trip: **Plan → Pay → Go & scan → Done**. Shortfall helper, scan-to-pay, directions, refund time, share |
+| `/trips/[id]` | One page per trip: **Plan → Pay (or Start) → Go & scan → Done**. Prepay / at-venue / yourself split, shortfall helper, scan-to-pay (release or enter the bill), directions, refund time, share |
 | `/wallet` | Balance, money held for trips, payment history |
-| `/merchant` | Partner portal: the venue's printable QR, or scan a guest's code |
+| `/merchant` | Partner portal: the venue's printable QR (works for bookings and walk-ins), or scan a guest's booking code |
 
 ## Run locally
 
@@ -78,9 +91,11 @@ Arc testnet: chain `5042002`, RPC `https://rpc.testnet.arc.io`, explorer `https:
 - End to end on a local chain (Anvil) with a Circle API stand-in: 30 USDC deposited in one tx → server confirms merchants/amounts/code hashes on-chain → wrong code refused → right code pays the venue exactly 6 USDC → replay refused → operator can't release without the code → cancel refunds exactly 24 USDC → escrow back to 0.
 - Scan-to-pay with a simulated camera feed: venue paid 6 then 24 USDC; trip moves to Done.
 - Automatic refund of an overdue trip: traveller gets exactly 30 USDC back.
+- Mixed trip on the local chain (27 checks), with a stand-in for Arc's USDC ERC-20 interface (`contracts/test/mocks/MockArcUsdc.sol`): only the booking (24 of 35) is prepaid → a venue QR from another venue, another wallet, a bad amount and paying a prepaid stop directly are all refused → the cafe is paid the real bill (6.5 USDC) straight from the traveller's wallet, confirmed from the Transfer event → paying it twice is refused → the booking is released with the code → the trip completes with the pay-yourself stop untouched. A trip with nothing to prepay starts without a transaction; an unpaid at-venue stop is marked skipped when the window closes; one transfer is never credited to two stops.
+- In the browser (simulated camera): start trip → scan the cafe's QR → enter 7.5 → after a reload the page finds the payment on-chain by itself.
 - UI: 5 pages × 4 phone sizes, Vietnamese/English with no mixed language, single typeface.
 
-**Not yet verified:** a live transaction on Arc testnet (needs the funded operator wallet), the real Circle PIN flow end to end, and the format of Circle's `amount` field (decimal USDC per Circle's example — a mismatch would revert, not lose funds).
+**Not yet verified:** a live transaction on Arc testnet (needs the funded operator wallet), the real Circle PIN flow end to end, the format of Circle's `amount` field (decimal USDC per Circle's example — a mismatch would revert, not lose funds), and a pay-at-venue transfer through Circle on Arc (a `contractExecution` of `transfer(address,uint256)` on `0x3600…0000`; Arc's Transfer events are confirmed live on testnet).
 
 ## Architecture
 
@@ -98,6 +113,7 @@ Stack: Next.js 15, React 19, Tailwind 4, Prisma (SQLite), MapLibre, viem, Foundr
 ## Limits (MVP)
 
 - Check-in codes live in the browser that paid (like the PIN wallet). Losing browser data means that stop can't be checked in — its money is still refundable.
+- Pay-at-venue: the traveller types the bill; nothing stops them paying less than the venue asks (as with any QR transfer — the venue sees the amount arrive). Only three demo venues are partners; every other place is "pay yourself".
 - The partner portal has no login. Funds are safe (the contract only pays the right venue), but anyone can view a venue's revenue.
 - SQLite + in-memory rate limits: single instance. Public OSM services are for demo use.
 

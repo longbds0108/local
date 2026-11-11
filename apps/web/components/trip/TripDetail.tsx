@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { hhmm, usdc } from "@/lib/format";
+import { paySplit } from "@/lib/pay-modes";
 import { isExpiredDraft } from "@/lib/use-account";
 import type { ItineraryView } from "@/lib/types";
 import { BackLink, DateBlock } from "../account/shared";
@@ -25,9 +26,10 @@ function currentStep(it: ItineraryView): number {
   return 4; // finished: every step done
 }
 
-function Stepper({ step }: { step: number }) {
+function Stepper({ step, prepay }: { step: number; prepay: boolean }) {
   const { t } = useI18n();
-  const labels = [t.stepPlan, t.stepPay, t.stepGo, t.stepDone];
+  // Trips with nothing to prepay are started, not paid.
+  const labels = [t.stepPlan, prepay ? t.stepPay : t.stepStart, t.stepGo, t.stepDone];
   return (
     <ol className="grid grid-cols-4" aria-label={t.tripProgress}>
       {labels.map((label, i) => {
@@ -58,7 +60,7 @@ export default function TripDetail({ initial, explorerUrl, faucetUrl, feeEstimat
   const { t } = useI18n();
   const router = useRouter();
   const [it, setIt] = useState(initial);
-  // A server refresh (after paying) brings a new itinerary + signed QR codes.
+  // A server refresh (after paying or starting) brings the trip's new state.
   useEffect(() => setIt(initial), [initial]);
   const onPaid = useCallback(() => router.refresh(), [router]);
   const [shared, setShared] = useState(false);
@@ -109,7 +111,7 @@ export default function TripDetail({ initial, explorerUrl, faucetUrl, feeEstimat
         </div>
       </header>
 
-      {!expired && <Stepper step={step} />}
+      {!expired && <Stepper step={step} prepay={paySplit(it.stops).prepay > 0} />}
 
       {it.status === "DRAFT" ? (
         <PaymentPanel initial={it} faucetUrl={faucetUrl} feeEstimate={feeEstimate} paymentsConfigured={paymentsConfigured} onPaid={onPaid} />

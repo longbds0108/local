@@ -1,6 +1,8 @@
 // Arc testnet access via viem. All chain parameters come from .env.
 import {
   createPublicClient,
+  getAddress,
+  parseAbiItem,
   createWalletClient,
   defineChain,
   formatUnits,
@@ -43,6 +45,39 @@ export function publicClient() {
 export function addresses() {
   const [escrow] = required("ESCROW_ADDRESS");
   return { escrow: escrow as Address };
+}
+
+/**
+ * Arc's USDC through its ERC-20 interface (6 decimals). It moves the same balance as
+ * native USDC, and every transfer emits a standard Transfer event we can verify.
+ */
+export function usdcErc20(): Address {
+  return (process.env.USDC_ADDRESS?.trim() || "0x3600000000000000000000000000000000000000") as Address;
+}
+
+const TRANSFER = parseAbiItem("event Transfer(address indexed from, address indexed to, uint256 value)");
+
+// cacheTime 0: viem caches the block number for a few seconds by default, which would
+// hide a transfer mined right after the payment was started.
+export async function currentBlock(): Promise<bigint> {
+  return publicClient().getBlockNumber({ cacheTime: 0 });
+}
+
+/**
+ * The first USDC transfer from → to since fromBlock that isn't already accounted for.
+ * Used to confirm a pay-at-venue payment from the chain, not from the client.
+ */
+export async function findUsdcTransfer(from: Address, to: Address, fromBlock: bigint, exclude: Set<string>) {
+  const pc = publicClient();
+  const latest = await pc.getBlockNumber({ cacheTime: 0 });
+  const window = 9_000n;
+  for (let start = fromBlock; start <= latest; start += window) {
+    const end = start + window - 1n < latest ? start + window - 1n : latest;
+    const logs = await pc.getLogs({ address: usdcErc20(), event: TRANSFER, args: { from: getAddress(from), to: getAddress(to) }, fromBlock: start, toBlock: end });
+    const hit = logs.find((l) => !exclude.has(l.transactionHash.toLowerCase()) && (l.args.value ?? 0n) > 0n);
+    if (hit) return { txHash: hit.transactionHash, value: hit.args.value!, decimals: 6 };
+  }
+  return null;
 }
 
 export function onchainIdFor(itineraryId: string): Hex {

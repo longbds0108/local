@@ -58,7 +58,7 @@ export function LangToggle() {
     <button
       type="button"
       onClick={() => setLocale(locale === "vi" ? "en" : "vi")}
-      className="min-h-[40px] rounded-xl border border-line px-3 text-xs font-semibold text-ink-2 hover:text-white"
+      className="min-h-[40px] min-w-[44px] rounded-xl border border-line px-3 text-xs font-semibold text-ink-2 hover:text-white"
       aria-label={t.switchLang}
     >
       {t.langToggle}

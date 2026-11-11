@@ -50,12 +50,22 @@ export const POST = handle(async (req: Request) => {
   const activity: DashboardActivity[] = [];
 
   for (const it of paid) {
-    const paidStops = it.stops.filter((s) => s.status !== "FREE");
-    const deposit = paidStops.reduce((sum, s) => sum + Number(s.priceUsdc), 0);
-    if (it.depositTxHash || it.paidAt) {
+    const escrowStops = it.stops.filter((s) => s.status !== "FREE" && s.payMode === "ESCROW");
+    const deposit = escrowStops.reduce((sum, s) => sum + Number(s.priceUsdc), 0);
+    if (it.depositTxHash || (it.paidAt && deposit > 0)) {
       activity.push({ type: "deposit", itineraryId: it.id, title: it.title, amountUsdc: deposit.toFixed(2), txHash: it.depositTxHash, at: (it.paidAt ?? it.updatedAt).toISOString() });
     }
-    for (const s of paidStops) {
+    for (const s of it.stops) {
+      if (s.payMode === "VENUE") {
+        // Paid straight to the venue on arrival — never held by the escrow.
+        if (s.status === "RELEASED") {
+          const amount = Number((s.paidUsdc ?? s.priceUsdc).toString());
+          released += amount;
+          activity.push({ type: "venue", itineraryId: it.id, title: s.name, merchant: s.merchant?.name ?? null, merchantId: s.merchant?.id ?? null, amountUsdc: amount.toFixed(2), txHash: s.releaseTx, at: (s.checkedInAt ?? it.updatedAt).toISOString() });
+        } else if (s.status === "PENDING" && it.status === "PAID" && (it.deadline ?? 0) > now) activeVouchers += 1;
+        continue;
+      }
+      if (s.status === "FREE" || s.payMode !== "ESCROW") continue;
       const amount = Number(s.priceUsdc);
       if (s.status === "RELEASED") {
         released += amount;

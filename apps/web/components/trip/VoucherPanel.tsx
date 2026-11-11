@@ -3,11 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { authMode, CircleClientError, connectWallet, ensureWallet, getOrRefreshSession, getSession, hasPinWallet, logout } from "@/lib/circle-client";
 import { checkinPayload, codesFor } from "@/lib/checkin-codes";
-import { directionsUrl, stopOffer } from "@/lib/stop-info";
+import { directionsUrl, payModeLabel, stopOffer } from "@/lib/stop-info";
 import { dayMonth } from "../account/shared";
 import { errorText } from "@/lib/error-text";
 import { CATEGORY_EMOJI, hhmm, usdc } from "@/lib/format";
-import { merchantName } from "@/lib/i18n";
 import type { ItineraryView, StopView } from "@/lib/types";
 import { stopState } from "../account/TripsClient";
 import { useI18n } from "../I18nProvider";
@@ -42,6 +41,21 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
     const res = await fetch(`/api/itinerary?id=${encodeURIComponent(it.id)}`, { cache: "no-store" });
     if (res.ok) onChange(((await res.json()) as { itinerary: ItineraryView }).itinerary);
   }, [it.id, onChange]);
+
+  // A pay-at-venue payment started earlier (page closed mid-way)? Look for it on-chain
+  // before the traveller is asked to pay again.
+  const started = it.stops.filter((s) => s.payMode === "VENUE" && s.status === "PENDING" && s.payStarted).map((s) => s.id).join(",");
+  useEffect(() => {
+    if (!started) return;
+    void (async () => {
+      let found = false;
+      for (const stopId of started.split(",")) {
+        const res = await fetch("/api/venue-pay/confirm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ stopId }) });
+        if (res.ok && ((await res.json()) as { paid?: boolean }).paid) found = true;
+      }
+      if (found) await refresh();
+    })().catch(() => {});
+  }, [started, refresh]);
 
   // Poll while a venue may scan a code or a refund is in flight.
   useEffect(() => {
@@ -87,17 +101,20 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
     }
   };
 
+  const prepaid = (s: StopView) => s.payMode === "ESCROW";
+  // A prepaid stop can be used with its code (on this device); a pay-at-venue stop just by scanning.
   const canUse = (s: StopView) => it.status === "PAID" && s.status === "PENDING" && !!vouchers[s.id];
-  const next = it.stops.find(canUse) ?? null;
-  // Paid stops whose code isn't on this device (paid in another browser, or data cleared).
-  const missing = it.status === "PAID" ? it.stops.filter((s) => s.status === "PENDING" && !vouchers[s.id]) : [];
+  const actionable = (s: StopView) => it.status === "PAID" && s.status === "PENDING" && (s.payMode === "VENUE" || !!vouchers[s.id]);
+  const next = it.stops.find(actionable) ?? null;
+  // Prepaid stops whose code isn't on this device (paid in another browser, or data cleared).
+  const missing = it.status === "PAID" ? it.stops.filter((s) => s.status === "PENDING" && prepaid(s) && !vouchers[s.id]) : [];
   const paidStops = it.stops.filter((s) => s.status !== "FREE");
-  const paidOut = paidStops.filter((s) => s.status === "RELEASED").reduce((n, s) => n + Number(s.priceUsdc), 0);
+  const paidOut = paidStops.filter((s) => s.status === "RELEASED").reduce((n, s) => n + Number(s.paidUsdc ?? s.priceUsdc), 0);
   const refunded = paidStops.filter((s) => s.status === "REFUNDED").reduce((n, s) => n + Number(s.priceUsdc), 0);
   const txs = [
     it.depositTxHash ? { label: t.txDeposit, hash: it.depositTxHash } : null,
     ...it.stops.flatMap((s) => [
-      s.releaseTx ? { label: `${t.txRelease} · ${s.name}`, hash: s.releaseTx } : null,
+      s.releaseTx ? { label: `${prepaid(s) ? t.txRelease : t.payModeVenue} · ${s.name}`, hash: s.releaseTx } : null,
       s.refundTx ? { label: `${t.txRefund} · ${s.name}`, hash: s.refundTx } : null,
     ]),
   ].filter((x): x is { label: string; hash: string } => !!x);
@@ -122,7 +139,7 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
       )}
 
       {/* When unused money comes back — stated with the real time. */}
-      {it.status === "PAID" && it.deadline && it.stops.some((s) => s.status === "PENDING") && (
+      {it.status === "PAID" && it.deadline && it.stops.some((s) => s.status === "PENDING" && prepaid(s)) && (
         <p className="rounded-xl bg-surface-2 px-4 py-3 text-sm text-[#c5d8d1]">
           ↩{" "}
           {it.deadline * 1000 > Date.now()
@@ -145,13 +162,13 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
             {CATEGORY_EMOJI[next.category] ?? "📍"} {next.name}
           </h2>
           <p className="mt-1 text-sm text-[#b8cdc6]">
-            {hhmm(next.arriveAt)} · {usdc(next.priceUsdc)}
+            {hhmm(next.arriveAt)} · {prepaid(next) ? `${usdc(next.priceUsdc)} · ${t.payModeEscrow}` : `~${usdc(next.priceUsdc)} · ${t.payModeVenue}`}
           </p>
           {stopOffer(t, next) && <p className="mt-1 text-xs text-[#9bb0aa]">{stopOffer(t, next)}</p>}
 
           {/* Two ways to pay at the venue: scan theirs (primary), or let them scan yours. */}
           <div className="mt-4">
-            <PayByScan it={it} codes={codes} onPaid={() => void refresh()} />
+            <PayByScan it={it} codes={codes} onPaid={() => void refresh()} returnTo={`/trips/${it.id}`} />
           </div>
           <a
             href={directionsUrl(next)}
@@ -161,11 +178,15 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
           >
             🧭 {t.directions} ↗
           </a>
-          <div className="mt-4 text-center text-xs font-semibold text-[#9bb0aa]">{t.orShowYourQr}</div>
-          <div className="mt-2 flex justify-center">
-            <QRVoucher payload={vouchers[next.id]} label={next.name} download={`hedgora-${next.id}.png`} />
-          </div>
-          <div className="mt-3">{cancelButton(next)}</div>
+          {prepaid(next) && vouchers[next.id] && (
+            <>
+              <div className="mt-4 text-center text-xs font-semibold text-[#9bb0aa]">{t.orShowYourQr}</div>
+              <div className="mt-2 flex justify-center">
+                <QRVoucher payload={vouchers[next.id]} label={next.name} download={`hedgora-${next.id}.png`} />
+              </div>
+              <div className="mt-3">{cancelButton(next)}</div>
+            </>
+          )}
         </section>
       )}
 
@@ -202,11 +223,11 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
                       <h3 className="min-w-0 font-semibold text-white">
                         {CATEGORY_EMOJI[s.category] ?? "📍"} {s.name}
                       </h3>
-                      <PriceLabel price={s.priceUsdc} source={s.priceSource} />
+                      <PriceLabel stop={s} />
                     </div>
                     <p className="text-xs text-ink-2">
                       {hhmm(s.arriveAt)} · {s.durationMin} {t.minutes}
-                      {s.merchant && Number(s.priceUsdc) > 0 ? ` · ${merchantName(t, s.merchant)}` : ""}
+                      {payModeLabel(t, s) ? ` · ${payModeLabel(t, s)}` : ""}
                     </p>
                     {s.note && (
                       <p className="mt-1 text-xs text-[#c5d8d1]">
@@ -216,9 +237,9 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
                     )}
                     {stopOffer(t, s) && <p className="mt-0.5 text-xs text-ink-2">{stopOffer(t, s)}</p>}
                     <p className={`mt-1 text-xs font-semibold ${s.status === "PENDING" ? "text-accent" : "text-ink-2"}`}>
-                      {isNext ? `${st.label} · ${t.nextStopShort}` : s.status === "FREE" ? t.noVoucherFree : st.label}
+                      {isNext ? `${st.label} · ${t.nextStopShort}` : s.status === "FREE" && s.payMode !== "SELF" ? t.noVoucherFree : st.label}
                     </p>
-                    {it.status === "PAID" && s.status === "PENDING" && !vouchers[s.id] && <div className="mt-2">{cancelButton(s)}</div>}
+                    {it.status === "PAID" && s.status === "PENDING" && prepaid(s) && !vouchers[s.id] && <div className="mt-2">{cancelButton(s)}</div>}
                     {it.status === "PAID" && s.status === "PENDING" && !isNext && (
                       <a
                         href={directionsUrl(s)}

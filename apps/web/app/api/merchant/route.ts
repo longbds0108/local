@@ -25,7 +25,7 @@ export const GET = handle(async (req: Request) => {
     where: { merchantId: id, status: "RELEASED" },
     orderBy: { checkedInAt: "desc" },
     take: 50,
-    select: { id: true, name: true, priceUsdc: true, releaseTx: true, checkedInAt: true },
+    select: { id: true, name: true, priceUsdc: true, paidUsdc: true, payMode: true, releaseTx: true, checkedInAt: true },
   });
   let balance: string | null = null;
   try {
@@ -33,12 +33,14 @@ export const GET = handle(async (req: Request) => {
   } catch {
     balance = null; // chain not configured / RPC down — page still works
   }
-  const revenue = released.reduce((s, r) => s + Number(r.priceUsdc), 0);
+  // Pay-at-venue stops record what was actually paid; prepaid stops pay their fixed price.
+  const amountOf = (r: (typeof released)[number]) => (r.paidUsdc ?? r.priceUsdc).toString();
+  const revenue = released.reduce((s, r) => s + Number(amountOf(r)), 0);
   return NextResponse.json({
     merchant,
     balance,
     revenueUsdc: revenue.toFixed(2),
     explorerUrl: config.explorerUrl ?? null,
-    released: released.map((r) => ({ ...r, priceUsdc: r.priceUsdc.toString() })),
+    released: released.map((r) => ({ id: r.id, name: r.name, releaseTx: r.releaseTx, checkedInAt: r.checkedInAt, priceUsdc: amountOf(r) })),
   });
 });

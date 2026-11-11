@@ -8,13 +8,13 @@ const prisma = new PrismaClient();
 async function main() {
   const dataDir = process.env.DATA_DIR ?? path.resolve(process.cwd(), "../../data");
   const { merchants } = JSON.parse(readFileSync(path.join(dataDir, "merchants.json"), "utf8")) as {
-    merchants: { id: string; name: string; osmId: string; walletAddress: string }[];
+    merchants: { id: string; name: string; osmId: string; walletAddress: string; prepay?: boolean }[];
   };
   for (const m of merchants) {
     await prisma.merchant.upsert({
       where: { id: m.id },
-      create: m,
-      update: { name: m.name, osmId: m.osmId, walletAddress: m.walletAddress },
+      create: { ...m, prepay: !!m.prepay },
+      update: { name: m.name, osmId: m.osmId, walletAddress: m.walletAddress, prepay: !!m.prepay },
     });
   }
   console.log(`Seeded ${merchants.length} merchants`);

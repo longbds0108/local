@@ -1,5 +1,6 @@
 // A venue's fixed QR (printed at the counter). The traveller scans it to pay the
-// stop booked at that venue; their device then submits the stop's check-in code.
+// stop at that venue: a prepaid stop is released with the check-in code from their
+// device; a pay-at-venue stop is paid by a direct USDC transfer they confirm.
 // It carries only the venue id — no secret — so it is safe to print.
 
 export function venuePayload(merchantId: string): string {

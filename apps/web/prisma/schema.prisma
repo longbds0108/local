@@ -22,6 +22,9 @@ model Merchant {
   name          String
   osmId         String @unique
   walletAddress String
+  /// The venue takes bookings and asks for a deposit → its stops are prepaid into the escrow.
+  /// Otherwise travellers pay it directly when they arrive (scan its QR).
+  prepay        Boolean @default(false)
   stops         Stop[]
 }
 
@@ -68,7 +71,15 @@ model Stop {
   merchant      Merchant? @relation(fields: [merchantId], references: [id])
   qrSecret      String // legacy (v1 HMAC vouchers); unused since escrow v2
   codeHash      String? // keccak256 of the check-in code; the code itself never leaves the traveller's device
-  status        String // FREE | PENDING | CHECKED_IN | RELEASED | REFUNDED
+  // How this stop is paid:
+  //   ESCROW — prepaid into the escrow, released to the venue with the check-in code
+  //   VENUE  — paid directly to the venue's wallet on arrival (traveller scans the venue QR)
+  //   SELF   — venue isn't a Hedgora partner: estimate only, traveller pays it themselves
+  //   NONE   — free
+  payMode       String    @default("ESCROW")
+  paidUsdc      Decimal? // VENUE: amount actually paid at the venue
+  payFromBlock  Int? // VENUE: chain block when the payment was started (where to look for the transfer)
+  status        String // FREE | PENDING | CHECKED_IN | RELEASED | REFUNDED | SKIPPED (VENUE stop never paid)
   onchainIndex  Int? // index in the escrow's stops[] (only paid stops are escrowed)
   releaseTx     String?
   refundTx      String?

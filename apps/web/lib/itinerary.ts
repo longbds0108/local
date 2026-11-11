@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "./db";
-import type { ItineraryStatus, ItineraryView, StopStatus, StopView } from "./types";
+import type { ItineraryStatus, ItineraryView, PayMode, StopStatus, StopView } from "./types";
 
 const include = { stops: { include: { merchant: true }, orderBy: { order: "asc" } } } as const;
 type ItineraryWithStops = Prisma.ItineraryGetPayload<{ include: typeof include }>;
@@ -36,6 +36,9 @@ export function toView(it: ItineraryWithStops): ItineraryView {
         priceSource: s.priceSource as "seed" | "estimate",
         note: s.note,
         status: s.status as StopStatus,
+        payMode: s.payMode as PayMode,
+        paidUsdc: s.paidUsdc?.toString() ?? null,
+        payStarted: s.payFromBlock !== null,
         onchainIndex: s.onchainIndex,
         releaseTx: s.releaseTx,
         refundTx: s.refundTx,
@@ -56,8 +59,9 @@ export async function getItineraryWithStops(id: string) {
 }
 
 /**
- * Derive the itinerary status from its paid stops once it has been paid:
- * all released → COMPLETED, all refunded → REFUNDED, all settled but mixed → PARTIAL.
+ * Derive the itinerary status from its in-app stops (prepaid + pay-at-venue) once started:
+ * nothing refunded → COMPLETED, refunds but nothing paid → REFUNDED, otherwise PARTIAL.
+ * A pay-at-venue stop that was never paid (SKIPPED) moved no money.
  */
 export async function recomputeItineraryStatus(itineraryId: string): Promise<ItineraryStatus> {
   const it = await prisma.itinerary.findUniqueOrThrow({ where: { id: itineraryId }, include: { stops: true } });
@@ -65,9 +69,10 @@ export async function recomputeItineraryStatus(itineraryId: string): Promise<Iti
   const paid = it.stops.filter((s) => s.status !== "FREE");
   const released = paid.filter((s) => s.status === "RELEASED").length;
   const refunded = paid.filter((s) => s.status === "REFUNDED").length;
+  const skipped = paid.filter((s) => s.status === "SKIPPED").length;
   let status: ItineraryStatus = "PAID";
-  if (paid.length > 0 && released + refunded === paid.length) {
-    status = released === paid.length ? "COMPLETED" : refunded === paid.length ? "REFUNDED" : "PARTIAL";
+  if (paid.length > 0 && released + refunded + skipped === paid.length) {
+    status = refunded === 0 ? "COMPLETED" : released === 0 ? "REFUNDED" : "PARTIAL";
   }
   if (status !== it.status) await prisma.itinerary.update({ where: { id: itineraryId }, data: { status } });
   return status;

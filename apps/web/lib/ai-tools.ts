@@ -9,6 +9,8 @@ import type { LatLon } from "./geo";
 import { openThroughout } from "./hours";
 import { getItineraryView } from "./itinerary";
 import { getRoute, type Profile } from "./osrm";
+import { paySplit } from "./pay-modes";
+import type { PayMode } from "./types";
 import { PARTNER_POOL_MERCHANT_ID, resolvePlace, searchPlaces, type Place } from "./places";
 import { partyPrice } from "./pricing";
 import { newQrSecret } from "./qr";
@@ -257,9 +259,14 @@ async function runBuild(raw: unknown, ctx: ToolContext) {
     );
   }
 
+  // Partner venues decide how they are paid: bookings are prepaid into the escrow,
+  // walk-in venues are paid on arrival. Anywhere else is an estimate the traveller pays themselves.
+  const partners = new Map((await prisma.merchant.findMany()).filter((m) => m.id !== PARTNER_POOL_MERCHANT_ID).map((m) => [m.id, m]));
   const stopsData = input.stops.map((s, i) => {
     const p = places[i];
     const price = partyPrice(p.priceUsdc, input.partySize);
+    const partner = price > 0 && p.merchantId ? partners.get(p.merchantId) : undefined;
+    const payMode: PayMode = !(price > 0) ? "NONE" : !partner ? "SELF" : partner.prepay ? "ESCROW" : "VENUE";
     return {
       order: i,
       osmId: p.osmId,
@@ -273,12 +280,14 @@ async function runBuild(raw: unknown, ctx: ToolContext) {
       priceUsdc: price.toFixed(2),
       priceSource: p.priceSource,
       note: s.note ?? null,
-      merchantId: price > 0 ? (p.merchantId ?? PARTNER_POOL_MERCHANT_ID) : null,
+      merchantId: partner?.id ?? null,
       qrSecret: newQrSecret(),
-      status: price > 0 ? "PENDING" : "FREE",
+      payMode,
+      status: payMode === "ESCROW" || payMode === "VENUE" ? "PENDING" : "FREE",
     };
   });
   const total = stopsData.reduce((sum, s) => sum + Number(s.priceUsdc), 0);
+  const split = paySplit(stopsData);
 
   const session = await prisma.chatSession.findUniqueOrThrow({ where: { id: ctx.sessionId }, include: { itinerary: true } });
   const editable = session.itinerary && session.itinerary.status === "DRAFT" ? session.itinerary : null;
@@ -313,6 +322,10 @@ async function runBuild(raw: unknown, ctx: ToolContext) {
     itineraryId,
     updatedExistingDraft: !!editable,
     totalUsdc: total.toFixed(2),
+    // When the money is paid: now (deposit), at the venue in the app, or by the traveller on their own.
+    prepayNowUsdc: split.prepay.toFixed(2),
+    payAtVenueUsdc: split.atVenue.toFixed(2),
+    payYourselfUsdc: split.self.toFixed(2),
     partySize: input.partySize,
     endsAt: hhmm(prevDepart),
     routeApproximate: route.approximate,
@@ -324,9 +337,17 @@ async function runBuild(raw: unknown, ctx: ToolContext) {
       travelMinFromPrevious: s.travelMin,
       priceUsdc: s.priceUsdc,
       priceSource: s.priceSource,
+      payment: PAYMENT_LABEL[s.payMode],
     })),
   };
 }
+
+const PAYMENT_LABEL: Record<PayMode, string> = {
+  ESCROW: "prepay (deposit held in escrow, released to the venue on arrival)",
+  VENUE: "pay_at_venue (traveller scans the venue's QR and pays in USDC on arrival)",
+  SELF: "pay_yourself (not a Hedgora partner; price is an estimate, paid outside the app)",
+  NONE: "free",
+};
 
 const SUMMARY: Record<string, (out: unknown) => string> = {
   search_places: (o) => String((o as { count: number }).count),

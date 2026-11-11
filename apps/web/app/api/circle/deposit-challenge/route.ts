@@ -36,8 +36,9 @@ export const POST = handle(async (req: Request) => {
   if (!it) throw new ApiError(404, "NOT_FOUND", "Itinerary not found");
   if (it.status !== "DRAFT") throw new ApiError(409, "CONFLICT", "Itinerary is already paid");
 
-  const paid = it.stops.filter((s) => s.status === "PENDING");
-  if (paid.length === 0) throw new ApiError(400, "BAD_REQUEST", "Nothing to pay — every stop in this itinerary is free");
+  // Only stops at venues that take bookings are prepaid; pay-at-venue stops are paid on arrival.
+  const paid = it.stops.filter((s) => s.status === "PENDING" && s.payMode === "ESCROW");
+  if (paid.length === 0) throw new ApiError(400, "BAD_REQUEST", "Nothing to prepay on this trip");
   if (paid.some((s) => !s.merchant)) throw new ApiError(500, "INTERNAL", "A paid stop has no merchant wallet (run db:seed)");
   if (paid.some((s) => !codeHashes[s.id])) throw new ApiError(400, "BAD_REQUEST", "Invalid request");
   const hashes = paid.map((s) => codeHashes[s.id].toLowerCase());

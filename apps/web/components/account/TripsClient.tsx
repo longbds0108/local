@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { CATEGORY_EMOJI, hhmm, usdc } from "@/lib/format";
 import type { DashboardData, ItineraryView, StopView } from "@/lib/types";
+import { paySplit } from "@/lib/pay-modes";
 import { isExpiredDraft, useAccount, useDrafts } from "@/lib/use-account";
 import { useI18n } from "../I18nProvider";
 import { AccountPage, ConnectCard, DateBlock, ErrorNote, fill } from "./shared";
@@ -16,23 +17,34 @@ export const tripHref = (id: string) => `/trips/${id}`;
 export function stopState(s: StopView, t: T) {
   switch (s.status) {
     case "RELEASED":
-      return { icon: "✓", label: t.dashStopDone, cls: "bg-accent text-accent-ink" };
+      // Prepaid: released on arrival. Pay-at-venue: paid on arrival.
+      return { icon: "✓", label: s.payMode === "VENUE" ? t.stopStatus.RELEASED : t.dashStopDone, cls: "bg-accent text-accent-ink" };
     case "REFUNDED":
       return { icon: "↩", label: t.dashStopRefunded, cls: "bg-surface-2 text-ink-2" };
+    case "SKIPPED":
+      return { icon: "–", label: t.stopSkipped, cls: "bg-surface-2 text-ink-2" };
     case "CHECKED_IN":
     case "REFUNDING":
       return { icon: "…", label: t.dashStopBusy, cls: "bg-warn-soft text-warn" };
     case "FREE":
-      return { icon: "·", label: t.stopStatus.FREE, cls: "bg-surface-2 text-ink-2" };
+      return s.payMode === "SELF"
+        ? { icon: "·", label: t.stopPayYourself, cls: "bg-surface-2 text-ink-2" }
+        : { icon: "·", label: t.stopStatus.FREE, cls: "bg-surface-2 text-ink-2" };
     default:
-      return { icon: "", label: t.dashStopWaiting, cls: "border-2 border-accent" };
+      return { icon: "", label: s.payMode === "VENUE" ? t.stopPayOnArrival : t.dashStopWaiting, cls: "border-2 border-accent" };
   }
+}
+
+function ctaLabel(it: ItineraryView, kind: Kind, t: T): string {
+  if (kind === "draft") return paySplit(it.stops).prepay > 0 ? t.dashPay : t.startTrip;
+  if (kind === "active") return it.stops.some((s) => s.payMode === "ESCROW" && s.status === "PENDING") ? t.dashOpenQr : t.dashOpenTrip;
+  return kind === "expired" ? t.dashReplan : t.dashDetails;
 }
 
 function TripCard({ it, kind }: { it: ItineraryView; kind: Kind }) {
   const { t } = useI18n();
   const paidStops = it.stops.filter((s) => s.status !== "FREE");
-  const done = paidStops.filter((s) => s.status === "RELEASED" || s.status === "REFUNDED").length;
+  const done = paidStops.filter((s) => s.status === "RELEASED" || s.status === "REFUNDED" || s.status === "SKIPPED").length;
   const pill =
     kind === "draft"
       ? { text: t.dashUnpaid, cls: "bg-warn-soft text-warn" }
@@ -98,7 +110,7 @@ function TripCard({ it, kind }: { it: ItineraryView; kind: Kind }) {
             muted ? "border border-line text-ink" : "bg-accent text-accent-ink"
           }`}
         >
-          {kind === "draft" ? t.dashPay : kind === "active" ? t.dashOpenQr : kind === "expired" ? t.dashReplan : t.dashDetails} →
+          {ctaLabel(it, kind, t)} →
         </span>
       </div>
     </Link>
@@ -137,18 +149,16 @@ function nextAction(data: DashboardData | null, drafts: ItineraryView[], t: T): 
     return {
       title: fill(t.dashNextCheckin, { place: best.s.name, time: hhmm(best.s.arriveAt) }),
       body: fill(t.dashNextCheckinBody, { trip: best.it.title }),
-      cta: t.dashOpenQr,
+      cta: best.s.payMode === "VENUE" ? t.dashOpenTrip : t.dashOpenQr,
       href: tripHref(best.it.id),
     };
   }
   const draft = drafts[0];
   if (draft) {
-    return {
-      title: fill(t.dashNextPay, { trip: draft.title }),
-      body: fill(t.dashNextPayBody, { total: usdc(draft.totalUsdc) }),
-      cta: t.dashPay,
-      href: tripHref(draft.id),
-    };
+    const prepay = paySplit(draft.stops).prepay;
+    return prepay > 0
+      ? { title: fill(t.dashNextPay, { trip: draft.title }), body: fill(t.dashNextPayBody, { total: usdc(prepay) }), cta: t.dashPay, href: tripHref(draft.id) }
+      : { title: fill(t.dashNextStart, { trip: draft.title }), body: t.startNote, cta: t.startTrip, href: tripHref(draft.id) };
   }
   if (data && data.balanceUsdc !== null && Number(data.balanceUsdc) < 1) {
     return { title: t.dashNextTopUp, body: t.dashNextTopUpBody, cta: t.dashTopUp, href: data.faucetUrl ?? "https://faucet.circle.com", external: true };

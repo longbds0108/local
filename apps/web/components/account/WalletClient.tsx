@@ -23,6 +23,14 @@ function ActivityRow({ a }: { a: DashboardActivity }) {
       amountCls: "text-ink-2",
       iconCls: "bg-accent-soft text-accent",
     },
+    venue: {
+      icon: "↗",
+      title: fill(t.dashTxVenue, { merchant: a.merchant ? merchantName(t, { id: a.merchantId, name: a.merchant }) : a.title }),
+      note: t.dashTxVenueNote,
+      amount: `−${usdc(a.amountUsdc)}`,
+      amountCls: "text-white",
+      iconCls: "bg-surface-2 text-ink",
+    },
     refund: { icon: "↩", title: fill(t.dashTxRefund, { place: a.title }), note: t.dashTxRefundNote, amount: `+${usdc(a.amountUsdc)}`, amountCls: "text-accent", iconCls: "bg-accent-soft text-accent" },
   }[a.type];
   // Each row opens its trip; the blockchain record is on the trip page.

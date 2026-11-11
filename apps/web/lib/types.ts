@@ -1,7 +1,15 @@
 // Types shared by server and client (no server-only imports here).
 
 // CHECKED_IN / REFUNDING are short-lived locks while the on-chain tx is in flight.
-export type StopStatus = "FREE" | "PENDING" | "CHECKED_IN" | "REFUNDING" | "RELEASED" | "REFUNDED";
+// SKIPPED: a pay-at-venue stop the traveller never paid (no money was held for it).
+export type StopStatus = "FREE" | "PENDING" | "CHECKED_IN" | "REFUNDING" | "RELEASED" | "REFUNDED" | "SKIPPED";
+/**
+ * ESCROW: prepaid now, released to the venue with the check-in code.
+ * VENUE:  paid straight to the venue's wallet on arrival (scan its QR).
+ * SELF:   the venue isn't a partner — an estimate; the traveller pays it themselves.
+ * NONE:   free.
+ */
+export type PayMode = "ESCROW" | "VENUE" | "SELF" | "NONE";
 export type ItineraryStatus = "DRAFT" | "PAID" | "COMPLETED" | "REFUNDED" | "PARTIAL";
 
 export type StopView = {
@@ -19,6 +27,11 @@ export type StopView = {
   priceSource: "seed" | "estimate";
   note: string | null;
   status: StopStatus;
+  payMode: PayMode;
+  /** VENUE stops: the amount actually paid at the venue. */
+  paidUsdc: string | null;
+  /** VENUE stops: a payment was started (look for it on-chain before paying again). */
+  payStarted: boolean;
   onchainIndex: number | null;
   releaseTx: string | null;
   refundTx: string | null;
@@ -70,7 +83,7 @@ export type ChatEvent =
   | { type: "done" };
 
 export type DashboardActivity = {
-  type: "deposit" | "release" | "refund";
+  type: "deposit" | "release" | "venue" | "refund";
   itineraryId: string;
   title: string;
   merchant?: string | null;

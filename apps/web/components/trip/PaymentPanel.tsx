@@ -21,7 +21,8 @@ import { useI18n } from "../I18nProvider";
 import { PriceLabel } from "../ItineraryCard";
 import { errorText } from "@/lib/error-text";
 import { codeHashes, ensureCodes } from "@/lib/checkin-codes";
-import { stopOffer } from "@/lib/stop-info";
+import { payModeLabel, stopOffer } from "@/lib/stop-info";
+import { paySplit } from "@/lib/pay-modes";
 import { isExpiredDraft } from "@/lib/use-account";
 
 type Phase =
@@ -31,6 +32,7 @@ type Phase =
   | "checking"
   | "deposit"
   | "confirming"
+  | "starting"
   | "done";
 
 type Props = {
@@ -73,8 +75,11 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
   const [error, setError] = useState<string | null>(null);
   const autoStarted = useRef(false);
 
-  const paidStops = itinerary.stops.filter((s) => Number(s.priceUsdc) > 0);
-  const isFree = paidStops.length === 0;
+  // What is paid now (bookings, into the escrow), at the venue in the app, or outside the app.
+  const split = paySplit(itinerary.stops);
+  const hasPrepay = split.prepay > 0;
+  const hasVenue = split.atVenueStops > 0;
+  const nothingInApp = !hasPrepay && !hasVenue;
 
   const refreshBalance = useCallback(async (addr: string): Promise<number | null> => {
     try {
@@ -87,9 +92,9 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
     }
   }, []);
 
-  // What the wallet must hold: the trip plus the network fee (gas is paid in USDC on Arc).
-  const need = Number(itinerary.totalUsdc) + (feeEstimate ? Number(feeEstimate) : 0);
-  const short = session?.walletAddress && balance !== null ? Math.max(0, need - Number(balance)) : 0;
+  // What the wallet must hold now: the prepaid part plus the network fee (gas is paid in USDC on Arc).
+  const need = hasPrepay ? split.prepay + (feeEstimate ? Number(feeEstimate) : 0) : 0;
+  const short = hasPrepay && session?.walletAddress && balance !== null ? Math.max(0, need - Number(balance)) : 0;
   const expired = isExpiredDraft(itinerary);
   const [copied, setCopied] = useState(false);
 
@@ -124,6 +129,18 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
           setSession(s);
         }
         const addr = s.walletAddress!;
+
+        // Nothing to prepay: starting the trip links it to this wallet; venues are paid on arrival.
+        if (!hasPrepay) {
+          setPhase("starting");
+          const r = await api<{ started: boolean; itinerary?: ItineraryView }>("/api/itinerary/start", {
+            method: "POST",
+            body: JSON.stringify({ userToken: s.userToken, itineraryId: itinerary.id }),
+          });
+          if (r.itinerary) setItinerary(r.itinerary);
+          setPhase("done");
+          return;
+        }
         setPhase("checking");
 
         // Already deposited (e.g. page reloaded mid-flow)?
@@ -149,7 +166,7 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
         }
 
         // One code per paid stop, created and kept on this device; only hashes go out.
-        const paidIds = itinerary.stops.filter((x) => x.status === "PENDING" && Number(x.priceUsdc) > 0).map((x) => x.id);
+        const paidIds = itinerary.stops.filter((x) => x.status === "PENDING" && x.payMode === "ESCROW").map((x) => x.id);
         let hashes: Record<string, string>;
         try {
           hashes = codeHashes(ensureCodes(itinerary.id, paidIds));
@@ -184,7 +201,7 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
         showError(err);
       }
     },
-    [itinerary.id, need, refreshBalance, showError],
+    [itinerary.id, hasPrepay, need, refreshBalance, showError],
   );
 
   // Follow connects/disconnects made elsewhere (e.g. the header wallet button).
@@ -247,6 +264,7 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
     checking: t.stepCheck,
     deposit: t.stepDeposit,
     confirming: t.stepConfirm,
+    starting: t.starting,
     done: "",
   };
 
@@ -277,30 +295,62 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
                 </div>
                 <div className="text-xs text-ink-2">
                   {hhmm(s.arriveAt)} · {s.durationMin} {t.minutes}
+                  {payModeLabel(t, s) && (
+                    <>
+                      {" · "}
+                      <span className={s.payMode === "SELF" ? "text-ink-2" : "font-semibold text-accent"}>{payModeLabel(t, s)}</span>
+                    </>
+                  )}
                 </div>
                 {s.note && <div className="mt-0.5 text-xs text-[#c5d8d1]">{s.note}</div>}
                 {stopOffer(t, s) && <div className="mt-0.5 text-xs text-ink-2">{stopOffer(t, s)}</div>}
               </div>
-              <PriceLabel price={s.priceUsdc} source={s.priceSource} />
+              <PriceLabel stop={s} />
             </li>
           ))}
         </ul>
         {!expired && (
         <>
-        <dl className="mt-3 space-y-1 border-t border-line pt-3 text-sm">
-          <div className="flex justify-between">
-            <dt className="text-ink-2">{t.total}</dt>
-            <dd className="text-lg font-bold text-ink">{usdc(itinerary.totalUsdc)}</dd>
-          </div>
-          <div className="flex items-baseline justify-between gap-3 text-xs">
-            <dt className="text-ink-2">
-              {t.networkFee}
-              <span className="block opacity-80">{t.feeNote}</span>
-            </dt>
-            <dd className="shrink-0 whitespace-nowrap text-ink-2">{feeEstimate ? `~${Number(feeEstimate).toFixed(4)} USDC` : "—"}</dd>
-          </div>
+        <dl className="mt-3 space-y-1.5 border-t border-line pt-3 text-sm">
+          {hasPrepay && (
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="font-semibold text-ink">{t.splitPrepay}</dt>
+              <dd className="text-lg font-bold text-ink">{usdc(split.prepay.toFixed(2))}</dd>
+            </div>
+          )}
+          {hasVenue && (
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-ink-2">{t.splitVenue}</dt>
+              <dd className="font-semibold text-ink">~{usdc(split.atVenue.toFixed(2))}</dd>
+            </div>
+          )}
+          {split.self > 0 && (
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-ink-2">{t.splitSelf}</dt>
+              <dd className="text-ink-2">~{usdc(split.self.toFixed(2))}</dd>
+            </div>
+          )}
+          {(hasVenue || split.self > 0) && (
+            <div className="flex items-baseline justify-between gap-3 border-t border-line/60 pt-1.5 text-xs">
+              <dt className="text-ink-2">{t.totalEstimate}</dt>
+              <dd className="text-ink-2">{usdc(itinerary.totalUsdc)}</dd>
+            </div>
+          )}
+          {hasPrepay && (
+            <div className="flex items-baseline justify-between gap-3 text-xs">
+              <dt className="text-ink-2">
+                {t.networkFee}
+                <span className="block opacity-80">{t.feeNote}</span>
+              </dt>
+              <dd className="shrink-0 whitespace-nowrap text-ink-2">{feeEstimate ? `~${Number(feeEstimate).toFixed(4)} USDC` : "—"}</dd>
+            </div>
+          )}
         </dl>
-        <p className="mt-3 rounded-xl bg-surface-2 p-3 text-xs text-ink-2">🔒 {t.escrowExplain}</p>
+        <div className="mt-3 space-y-2 text-xs text-ink-2">
+          {hasPrepay && <p className="rounded-xl bg-surface-2 p-3">🔒 {t.prepayExplain}</p>}
+          {hasVenue && <p className="rounded-xl bg-surface-2 p-3">📷 {t.venueExplain}</p>}
+          {split.self > 0 && <p className="rounded-xl bg-surface-2 p-3">🧾 {t.selfExplain}</p>}
+        </div>
         </>
         )}
       </section>
@@ -309,12 +359,12 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
         <section role="status" className="flex items-center gap-3 rounded-[20px] border border-ok/40 bg-ok-soft p-4">
           <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ok border-t-transparent" />
           <div>
-            <h2 className="font-bold text-ok">✅ {t.paidTitle}</h2>
-            <p className="text-sm text-ink">{t.openingQr}</p>
+            <h2 className="font-bold text-ok">✅ {hasPrepay ? t.paidTitle : t.startedTitle}</h2>
+            <p className="text-sm text-ink">{hasPrepay ? t.openingQr : t.openingTrip}</p>
           </div>
         </section>
-      ) : expired ? null : isFree ? (
-        <p className="rounded-2xl bg-surface-2 p-4 text-sm text-ink">{t.freeItinerary}</p>
+      ) : expired ? null : nothingInApp ? (
+        <p className="rounded-2xl bg-surface-2 p-4 text-sm text-ink">{Number(itinerary.totalUsdc) > 0 ? t.noInAppPay : t.freeItinerary}</p>
       ) : !paymentsConfigured || !circleConfigured() ? (
         <p role="alert" className="rounded-2xl bg-danger/10 p-4 text-sm text-danger">
           {t.paymentsNotConfigured}
@@ -411,15 +461,21 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
             onClick={() => (session ? void pay(session) : void login())}
             className="min-h-[48px] w-full rounded-xl bg-accent px-4 text-base font-semibold text-accent-ink disabled:opacity-50"
           >
-            {short > 0
-              ? t.payNeedMore.replace("{amount}", usdc(short.toFixed(2)))
-              : session
-                ? `${t.pay} ${usdc(itinerary.totalUsdc)}`
-                : authMode() === "pin"
-                  ? t.connectAndPay
-                  : t.loginAndPay}
+            {!hasPrepay
+              ? session
+                ? t.startTrip
+                : t.connectAndStart
+              : short > 0
+                ? t.payNeedMore.replace("{amount}", usdc(short.toFixed(2)))
+                : session
+                  ? `${t.pay} ${usdc(split.prepay.toFixed(2))}`
+                  : authMode() === "pin"
+                    ? t.connectAndPay
+                    : t.loginAndPay}
           </button>
-          {!busy && short === 0 && <p className="text-center text-xs text-ink-2">{session ? t.payConfirmNote : t.payHowNote}</p>}
+          {!busy && short === 0 && (
+            <p className="text-center text-xs text-ink-2">{!hasPrepay ? t.startNote : session ? t.payConfirmNote : t.payHowNote}</p>
+          )}
         </section>
       )}
     </div>
