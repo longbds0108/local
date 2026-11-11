@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
-import {HedgoraEscrow} from "../src/HedgoraEscrow.sol";
+import {PayAgentEscrow} from "../src/PayAgentEscrow.sol";
 
 /// A merchant contract that refuses native transfers.
 contract Rejecter {
@@ -13,12 +13,12 @@ contract Rejecter {
 
 /// Tries to re-enter release() when paid.
 contract Reenterer {
-    HedgoraEscrow escrow;
+    PayAgentEscrow escrow;
     bytes32 id;
     bytes32 code;
     bool tried;
 
-    function arm(HedgoraEscrow e, bytes32 i, bytes32 c) external {
+    function arm(PayAgentEscrow e, bytes32 i, bytes32 c) external {
         escrow = e;
         id = i;
         code = c;
@@ -32,8 +32,8 @@ contract Reenterer {
     }
 }
 
-contract HedgoraEscrowTest is Test {
-    HedgoraEscrow escrow;
+contract PayAgentEscrowTest is Test {
+    PayAgentEscrow escrow;
 
     address owner = makeAddr("owner");
     address operator = makeAddr("operator");
@@ -54,7 +54,7 @@ contract HedgoraEscrowTest is Test {
     event Refunded(bytes32 indexed itineraryId, uint256 stopIndex, address payer, uint256 amount);
 
     function setUp() public {
-        escrow = new HedgoraEscrow(operator, owner);
+        escrow = new PayAgentEscrow(operator, owner);
         vm.deal(payer, 100 ether);
         deadline = uint64(block.timestamp + 4 hours);
     }
@@ -90,7 +90,7 @@ contract HedgoraEscrowTest is Test {
 
         assertEq(address(escrow).balance, A1 + A2);
         assertEq(payer.balance, 100 ether - A1 - A2);
-        (address p, uint64 d, HedgoraEscrow.StopInfo[] memory stops) = escrow.getItinerary(ID);
+        (address p, uint64 d, PayAgentEscrow.StopInfo[] memory stops) = escrow.getItinerary(ID);
         assertEq(p, payer);
         assertEq(d, deadline);
         assertEq(stops.length, 2);
@@ -108,13 +108,13 @@ contract HedgoraEscrowTest is Test {
         bytes32[] memory hashes = new bytes32[](1);
         hashes[0] = _hash(C1);
         vm.prank(payer);
-        vm.expectRevert(HedgoraEscrow.WrongAmount.selector);
+        vm.expectRevert(PayAgentEscrow.WrongAmount.selector);
         escrow.deposit{value: A1 - 1}(ID, merchants, amounts, hashes, deadline);
     }
 
     function test_deposit_revertsOnDuplicateId() public {
         _deposit();
-        vm.expectRevert(HedgoraEscrow.ItineraryExists.selector);
+        vm.expectRevert(PayAgentEscrow.ItineraryExists.selector);
         _deposit();
     }
 
@@ -128,7 +128,7 @@ contract HedgoraEscrowTest is Test {
         bytes32[] memory hashes = new bytes32[](1);
         hashes[0] = _hash(C1);
         vm.prank(payer);
-        vm.expectRevert(HedgoraEscrow.InvalidInput.selector);
+        vm.expectRevert(PayAgentEscrow.InvalidInput.selector);
         escrow.deposit{value: A1 + A2}(ID, merchants, amounts, hashes, deadline);
     }
 
@@ -139,7 +139,7 @@ contract HedgoraEscrowTest is Test {
         amounts[0] = A1;
         bytes32[] memory hashes = new bytes32[](1);
         vm.prank(payer);
-        vm.expectRevert(HedgoraEscrow.InvalidInput.selector);
+        vm.expectRevert(PayAgentEscrow.InvalidInput.selector);
         escrow.deposit{value: A1}(ID, merchants, amounts, hashes, deadline);
     }
 
@@ -150,13 +150,13 @@ contract HedgoraEscrowTest is Test {
         bytes32[] memory hashes = new bytes32[](1);
         hashes[0] = _hash(C1);
         vm.prank(payer);
-        vm.expectRevert(HedgoraEscrow.InvalidInput.selector);
+        vm.expectRevert(PayAgentEscrow.InvalidInput.selector);
         escrow.deposit{value: A1}(ID, merchants, amounts, hashes, deadline);
 
         merchants[0] = m1;
         amounts[0] = 0;
         vm.prank(payer);
-        vm.expectRevert(HedgoraEscrow.InvalidInput.selector);
+        vm.expectRevert(PayAgentEscrow.InvalidInput.selector);
         escrow.deposit{value: 0}(ID, merchants, amounts, hashes, deadline);
     }
 
@@ -168,7 +168,7 @@ contract HedgoraEscrowTest is Test {
         bytes32[] memory hashes = new bytes32[](1);
         hashes[0] = _hash(C1);
         vm.prank(payer);
-        vm.expectRevert(HedgoraEscrow.InvalidDeadline.selector);
+        vm.expectRevert(PayAgentEscrow.InvalidDeadline.selector);
         escrow.deposit{value: A1}(ID, merchants, amounts, hashes, uint64(block.timestamp));
     }
 
@@ -183,49 +183,49 @@ contract HedgoraEscrowTest is Test {
 
         assertEq(m1.balance, A1);
         assertEq(address(escrow).balance, A2);
-        (,, HedgoraEscrow.StopInfo[] memory stops) = escrow.getItinerary(ID);
+        (,, PayAgentEscrow.StopInfo[] memory stops) = escrow.getItinerary(ID);
         assertEq(stops[0].status, escrow.STATUS_RELEASED());
     }
 
     function test_release_operatorCannotReleaseWithoutCode() public {
         _deposit();
         vm.prank(operator);
-        vm.expectRevert(HedgoraEscrow.WrongCode.selector);
+        vm.expectRevert(PayAgentEscrow.WrongCode.selector);
         escrow.release(ID, 0, bytes32(0));
     }
 
     function test_release_revertsOnWrongCode() public {
         _deposit();
-        vm.expectRevert(HedgoraEscrow.WrongCode.selector);
+        vm.expectRevert(PayAgentEscrow.WrongCode.selector);
         escrow.release(ID, 0, C2); // code of the other stop
     }
 
     function test_release_revertsTwice() public {
         _deposit();
         escrow.release(ID, 0, C1);
-        vm.expectRevert(HedgoraEscrow.StopNotLocked.selector);
+        vm.expectRevert(PayAgentEscrow.StopNotLocked.selector);
         escrow.release(ID, 0, C1);
     }
 
     function test_release_revertsAfterDeadline() public {
         _deposit();
         vm.warp(deadline + 1);
-        vm.expectRevert(HedgoraEscrow.DeadlinePassed.selector);
+        vm.expectRevert(PayAgentEscrow.DeadlinePassed.selector);
         escrow.release(ID, 0, C1);
     }
 
     function test_release_revertsOnUnknownItineraryOrIndex() public {
-        vm.expectRevert(HedgoraEscrow.ItineraryNotFound.selector);
+        vm.expectRevert(PayAgentEscrow.ItineraryNotFound.selector);
         escrow.release(ID, 0, C1);
         _deposit();
-        vm.expectRevert(HedgoraEscrow.StopIndexOutOfRange.selector);
+        vm.expectRevert(PayAgentEscrow.StopIndexOutOfRange.selector);
         escrow.release(ID, 2, C1);
     }
 
     function test_release_revertsWhenMerchantRejectsPayment() public {
         Rejecter r = new Rejecter();
         _depositTo(address(r), m2);
-        vm.expectRevert(HedgoraEscrow.TransferFailed.selector);
+        vm.expectRevert(PayAgentEscrow.TransferFailed.selector);
         escrow.release(ID, 0, C1);
         // Still locked, so it can be refunded later.
         vm.prank(operator);
@@ -237,7 +237,7 @@ contract HedgoraEscrowTest is Test {
         Reenterer r = new Reenterer();
         _depositTo(address(r), m2);
         r.arm(escrow, ID, C1);
-        vm.expectRevert(HedgoraEscrow.TransferFailed.selector);
+        vm.expectRevert(PayAgentEscrow.TransferFailed.selector);
         escrow.release(ID, 0, C1);
     }
 
@@ -255,7 +255,7 @@ contract HedgoraEscrowTest is Test {
     function test_refund_byPayerOnlyAfterDeadline() public {
         _deposit();
         vm.prank(payer);
-        vm.expectRevert(HedgoraEscrow.DeadlineNotReached.selector);
+        vm.expectRevert(PayAgentEscrow.DeadlineNotReached.selector);
         escrow.refund(ID, 0);
 
         vm.warp(deadline + 1);
@@ -268,7 +268,7 @@ contract HedgoraEscrowTest is Test {
         _deposit();
         vm.warp(deadline + 1);
         vm.prank(stranger);
-        vm.expectRevert(HedgoraEscrow.NotAuthorized.selector);
+        vm.expectRevert(PayAgentEscrow.NotAuthorized.selector);
         escrow.refund(ID, 0);
     }
 
@@ -276,7 +276,7 @@ contract HedgoraEscrowTest is Test {
         _deposit();
         escrow.release(ID, 0, C1);
         vm.prank(operator);
-        vm.expectRevert(HedgoraEscrow.StopNotLocked.selector);
+        vm.expectRevert(PayAgentEscrow.StopNotLocked.selector);
         escrow.refund(ID, 0);
     }
 
@@ -284,7 +284,7 @@ contract HedgoraEscrowTest is Test {
         _deposit();
         vm.prank(operator);
         escrow.refund(ID, 0);
-        vm.expectRevert(HedgoraEscrow.StopNotLocked.selector);
+        vm.expectRevert(PayAgentEscrow.StopNotLocked.selector);
         escrow.release(ID, 0, C1);
     }
 
@@ -313,14 +313,14 @@ contract HedgoraEscrowTest is Test {
 
     function test_setOperator_revertsOnZero() public {
         vm.prank(owner);
-        vm.expectRevert(HedgoraEscrow.InvalidInput.selector);
+        vm.expectRevert(PayAgentEscrow.InvalidInput.selector);
         escrow.setOperator(address(0));
     }
 
     function testFuzz_onlyTheRightCodeReleases(bytes32 guess) public {
         vm.assume(guess != C1);
         _deposit();
-        vm.expectRevert(HedgoraEscrow.WrongCode.selector);
+        vm.expectRevert(PayAgentEscrow.WrongCode.selector);
         escrow.release(ID, 0, guess);
     }
 }

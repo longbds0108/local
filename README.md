@@ -50,7 +50,7 @@ Every prepaid stop's money can only end up in two places: the merchant fixed at 
 Pay-at-venue money never passes through PAY AGENT: it goes from the traveller's wallet to the venue's wallet
 (address from the server's database, never from the client), and a stop is only marked paid when the chain
 shows that transfer — each transfer can count for one stop only.
-Contract: [`contracts/src/HedgoraEscrow.sol`](contracts/src/HedgoraEscrow.sol) (escrow v2).
+Contract: [`contracts/src/PayAgentEscrow.sol`](contracts/src/PayAgentEscrow.sol) (escrow v2).
 
 ## Built on Arc + Circle
 
@@ -70,7 +70,7 @@ Contract: [`contracts/src/HedgoraEscrow.sol`](contracts/src/HedgoraEscrow.sol) (
 ## Run locally
 
 ```bash
-git clone --recursive https://github.com/longbds0108/local.git hedgora-travel && cd hedgora-travel
+git clone --recursive https://github.com/longbds0108/local.git pay-agent && cd pay-agent
 cp .env.example apps/web/.env          # fill ANTHROPIC_API_KEY, CIRCLE_API_KEY, NEXT_PUBLIC_CIRCLE_APP_ID
 cd apps/web && npm install && npm run setup && npm run dev     # http://localhost:3000
 ```

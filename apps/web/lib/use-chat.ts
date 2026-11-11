@@ -10,9 +10,9 @@ import { rememberDraft } from "./drafts";
 export type ToolState = { name: string; status: "start" | "done" | "error"; summary?: string };
 export type ChatMessage = { id: string; role: "user" | "assistant"; text: string; tools: ToolState[]; error?: string };
 
-const SESSION_KEY = "hedgora.chat.session";
-const TRANSCRIPT_KEY = "hedgora.chat.transcript";
-const ITINERARY_KEY = "hedgora.chat.itinerary";
+const SESSION_KEY = "payagent.chat.session";
+const TRANSCRIPT_KEY = "payagent.chat.transcript";
+const ITINERARY_KEY = "payagent.chat.itinerary";
 
 function readJSON<T>(key: string): T | null {
   try {

@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-/// @title HedgoraEscrow (v2)
+/// @title PayAgentEscrow (v2)
 /// @notice Per-stop escrow for a travel itinerary, paid in Arc's native USDC (msg.value, 18 decimals),
 ///         so paying is a single transaction — no ERC-20 approve step.
 ///
@@ -13,10 +13,10 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 ///         - Releasing to the merchant needs the stop's check-in code: a random secret created on the
 ///           traveller's device; only its hash is stored here. The traveller hands it over by showing
 ///           the QR code at the venue. Anyone may submit it (the venue, or a gas-paying relayer), but
-///           nobody — the Hedgora operator included — can release a stop without it.
+///           nobody — the PAY AGENT operator included — can release a stop without it.
 ///         - Unreleased stops go back to the payer: by the payer after the deadline, or by the operator
 ///           at any time (a traveller-requested cancellation). A refund can only pay the payer.
-contract HedgoraEscrow is ReentrancyGuard, Ownable {
+contract PayAgentEscrow is ReentrancyGuard, Ownable {
     uint8 public constant STATUS_LOCKED = 0;
     uint8 public constant STATUS_RELEASED = 1;
     uint8 public constant STATUS_REFUNDED = 2;

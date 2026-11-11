@@ -81,7 +81,7 @@ export async function findUsdcTransfer(from: Address, to: Address, fromBlock: bi
 }
 
 export function onchainIdFor(itineraryId: string): Hex {
-  return keccak256(stringToBytes(`hedgora:${itineraryId}`));
+  return keccak256(stringToBytes(`payagent:${itineraryId}`));
 }
 
 /** Native balance (18 decimals) — the canonical USDC balance on Arc. */

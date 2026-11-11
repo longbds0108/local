@@ -110,22 +110,22 @@ body {
   cursor: pointer;
 }
 
-.hedgora-popup {
+.payagent-popup {
   font-family: var(--font-sans);
   color: #10211e;
   display: grid;
   gap: 2px;
 }
-.hedgora-popup .hp-title {
+.payagent-popup .hp-title {
   font-weight: 700;
   font-size: 13px;
 }
-.hedgora-popup .hp-meta,
-.hedgora-popup .hp-hours {
+.payagent-popup .hp-meta,
+.payagent-popup .hp-hours {
   font-size: 11px;
   color: #64736f;
 }
-.hedgora-popup .hp-price {
+.payagent-popup .hp-price {
   font-size: 12px;
   font-weight: 600;
 }

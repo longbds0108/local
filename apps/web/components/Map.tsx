@@ -79,7 +79,7 @@ const EMPTY: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: 
 /** Popup content built with DOM APIs (OSM names are untrusted text — no innerHTML). */
 function popupNode(p: MapPlace, t: Dict): HTMLElement {
   const root = document.createElement("div");
-  root.className = "hedgora-popup";
+  root.className = "payagent-popup";
   const title = document.createElement("div");
   title.className = "hp-title";
   title.textContent = `${CATEGORY_EMOJI[p.category] ?? "📍"} ${p.name}`;

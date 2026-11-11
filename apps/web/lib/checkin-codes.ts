@@ -6,7 +6,7 @@
 // can't be checked in, but its money is still refundable to the payer.
 import { bytesToHex, keccak256, type Hex } from "viem";
 
-const key = (itineraryId: string) => `hedgora.codes.${itineraryId}`;
+const key = (itineraryId: string) => `payagent.codes.${itineraryId}`;
 
 export function codesFor(itineraryId: string): Record<string, Hex> {
   try {
@@ -35,5 +35,5 @@ export function codeHashes(codes: Record<string, Hex>): Record<string, Hex> {
 
 /** What the venue scans: stop id + code. */
 export function checkinPayload(stopId: string, code: Hex): string {
-  return `hedgora://checkin?s=${encodeURIComponent(stopId)}&c=${code.slice(2)}`;
+  return `payagent://checkin?s=${encodeURIComponent(stopId)}&c=${code.slice(2)}`;
 }

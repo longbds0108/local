@@ -16,6 +16,8 @@ const appFont = Be_Vietnam_Pro({
   display: "swap",
 });
 
+const MIGRATE_STORAGE = `try{for(const st of [localStorage,sessionStorage]){for(const k of Object.keys(st)){if(k.indexOf("hedgora.")===0){const n="payagent."+k.slice(8);if(st.getItem(n)===null)st.setItem(n,st.getItem(k));st.removeItem(k);}}}}catch(e){}`;
+
 export const metadata: Metadata = {
   description: "PAY AGENT — AI travel planner that pays each place in USDC only when you arrive",
   applicationName: "PAY AGENT",
@@ -33,6 +35,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="vi" className={appFont.variable}>
+      <head>
+        {/* Runs before the app: moves data saved under the old name (wallet session, check-in
+            codes, drafts, language) to the new keys, so nobody loses a wallet or a code. */}
+        <script dangerouslySetInnerHTML={{ __html: MIGRATE_STORAGE }} />
+      </head>
       <body className="min-h-dvh bg-bg text-ink">
         <I18nProvider>
           <Header />

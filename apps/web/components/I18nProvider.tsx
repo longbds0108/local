@@ -8,7 +8,7 @@ type Ctx = { locale: Locale; t: Dict; setLocale: (l: Locale) => void };
 
 const I18nContext = createContext<Ctx>({ locale: "vi", t: dictionaries.vi, setLocale: () => {} });
 
-const KEY = "hedgora.locale";
+const KEY = "payagent.locale";
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("vi");

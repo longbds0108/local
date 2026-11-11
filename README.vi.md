@@ -8,7 +8,7 @@ Trợ lý AI du lịch Vũng Tàu: tìm địa điểm **thật** (OpenStreetMap
 
 ```
 apps/web/      Next.js 15 (App Router) + Tailwind 4 + Prisma/SQLite + MapLibre
-contracts/     Foundry — HedgoraEscrow.sol (+ tests, deploy script)
+contracts/     Foundry — PayAgentEscrow.sol (+ tests, deploy script)
 data/          vungtau_pois.json (18 POI, toạ độ/osmId lấy từ OSM), merchants.json
 .env.example   copy sang apps/web/.env
 ```
@@ -22,7 +22,7 @@ data/          vungtau_pois.json (18 POI, toạ độ/osmId lấy từ OSM), mer
 ## 2. Chạy local (M1–M3 chỉ cần Anthropic key)
 
 ```bash
-git clone --recursive https://github.com/longbds0108/local.git hedgora-travel && cd hedgora-travel
+git clone --recursive https://github.com/longbds0108/local.git pay-agent && cd pay-agent
 # (đã clone không có --recursive? chạy: git submodule update --init --recursive)
 cp .env.example apps/web/.env       # rồi điền ANTHROPIC_API_KEY
 cd apps/web
@@ -93,8 +93,8 @@ Private key của user không bao giờ đi qua server: mọi chữ ký diễn r
   - Chuyến không có khoản trả trước thì bấm **Bắt đầu chuyến đi** (không có giao dịch, chỉ gắn chuyến với ví) rồi trả từng quán khi tới nơi.
 
 - **Trả tại quán, 2 cách** (`/trips/[id]`, bước Đi & quét mã):
-  - **Khách quét mã QR của quán** (cách chính, như VietQR): mã quán in ở quầy (`hedgora://venue?m={merchantId}`, lấy ở cổng đối tác) → app tìm điểm khớp → điểm trả trước: "Trả 24 USDC cho …?" → gửi mã check-in của điểm đó; điểm trả tại quán: nhập số tiền trên hoá đơn rồi trả thẳng.
-  - **Quán quét mã của khách**: `hedgora://checkin?s={stopId}&c={code}` — mã chỉ được tạo trên máy khách, nên link chuyến đi chia sẻ được mà không lộ mã. Có nút "Lưu ảnh mã QR".
+  - **Khách quét mã QR của quán** (cách chính, như VietQR): mã quán in ở quầy (`payagent://venue?m={merchantId}`, lấy ở cổng đối tác) → app tìm điểm khớp → điểm trả trước: "Trả 24 USDC cho …?" → gửi mã check-in của điểm đó; điểm trả tại quán: nhập số tiền trên hoá đơn rồi trả thẳng.
+  - **Quán quét mã của khách**: `payagent://checkin?s={stopId}&c={code}` — mã chỉ được tạo trên máy khách, nên link chuyến đi chia sẻ được mà không lộ mã. Có nút "Lưu ảnh mã QR".
   - Hợp đồng kiểm tra `keccak256(code)` và **chỉ trả cho đúng quán đã chọn lúc ký quỹ**; ai gửi cũng được, server chỉ chuyển tiếp + trả gas.
 - Cấu trúc trang của khách: `/` (Khám phá · Bản đồ · Hỏi AI) → `/trips` (mọi chuyến đi) → `/trips/[id]` (một trang cho mỗi chuyến: Lên lịch → Thanh toán → Đi & quét mã → Xong) · `/wallet` (số dư, tiền đang giữ, lịch sử). Link cũ `/pay/[id]`, `/itinerary/[id]`, `/dashboard` tự chuyển sang trang mới.
 - `/merchant` (mở trên máy khác) — mở từ chân trang ("Bạn là chủ quán?"): chọn quán → hiện **mã QR của quán** (in/lưu ảnh) hoặc quét mã của khách (hoặc dán nội dung QR) → server kiểm tra mã, đúng quán, `PENDING`, itinerary `PAID`, chưa quá deadline → chuyển tiếp `release(id, i, code)` → quán nhận USDC (xem số dư + link explorer).

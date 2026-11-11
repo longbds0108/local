@@ -74,7 +74,7 @@ model Stop {
   // How this stop is paid:
   //   ESCROW — prepaid into the escrow, released to the venue with the check-in code
   //   VENUE  — paid directly to the venue's wallet on arrival (traveller scans the venue QR)
-  //   SELF   — venue isn't a Hedgora partner: estimate only, traveller pays it themselves
+  //   SELF   — venue isn't a PAY AGENT partner: estimate only, traveller pays it themselves
   //   NONE   — free
   payMode       String    @default("ESCROW")
   paidUsdc      Decimal? // VENUE: amount actually paid at the venue

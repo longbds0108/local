@@ -19,11 +19,11 @@ type Detail = {
 };
 type Result = { ok: true; name: string; amount: string; txHash: string; url: string | null } | { ok: false; message: string };
 
-const MERCHANT_KEY = "hedgora.merchant";
+const MERCHANT_KEY = "payagent.merchant";
 
-/** hedgora://checkin?s={stopId}&c={code hex} → { stopId, code } (the code the escrow checks) */
+/** payagent://checkin?s={stopId}&c={code hex} → { stopId, code } (the code the escrow checks; old hedgora:// codes still work) */
 function parsePayload(text: string): { stopId: string; code: string } | null {
-  const m = text.trim().match(/^hedgora:\/\/checkin\?(.+)$/);
+  const m = text.trim().match(/^(?:payagent|hedgora):\/\/checkin\?(.+)$/);
   if (!m) return null;
   const q = new URLSearchParams(m[1]);
   const stopId = q.get("s");

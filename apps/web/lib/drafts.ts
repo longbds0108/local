@@ -3,10 +3,10 @@
 // (paying is what attaches a trip to a wallet), so they live here — like the
 // PIN wallet itself, they are tied to this browser. Ids are unguessable cuids.
 
-const LIST_KEY = "hedgora.drafts";
-const CHAT_KEY = "hedgora.chat.itinerary"; // the draft the current chat is editing
+const LIST_KEY = "payagent.drafts";
+const CHAT_KEY = "payagent.chat.itinerary"; // the draft the current chat is editing
 const MAX = 10;
-export const DRAFTS_EVENT = "hedgora-drafts";
+export const DRAFTS_EVENT = "payagent-drafts";
 
 function read<T>(key: string): T | null {
   try {
