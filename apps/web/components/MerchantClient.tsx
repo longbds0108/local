@@ -126,7 +126,7 @@ export default function MerchantClient() {
             setMerchantId(e.target.value);
             setResult(null);
           }}
-          className="min-h-[44px] w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink"
+          className="min-h-11 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink"
         >
           {merchants.map((m) => (
             <option key={m.id} value={m.id}>
@@ -173,7 +173,7 @@ export default function MerchantClient() {
               value={paste}
               onChange={(e) => setPaste(e.target.value)}
               placeholder="hedgora://checkin?s=…&sig=…"
-              className="min-h-[44px] min-w-0 flex-1 rounded-xl border border-line bg-bg px-3 font-mono text-base text-ink sm:text-xs"
+              className="min-h-[44px] min-w-0 flex-1 rounded-xl border border-line bg-bg px-3 font-mono text-base text-ink"
             />
             <button
               type="submit"

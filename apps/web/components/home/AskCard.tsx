@@ -33,7 +33,7 @@ export default function AskCard({ messages, busy, hasItinerary, onSend, onReset 
       <div className="row-span-2 grid h-[42px] w-[42px] place-items-center rounded-[13px] bg-gradient-to-br from-[#86ffd2] to-[#1ab884] text-[#073526]">
         ✦
       </div>
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex flex-col items-start gap-1 sm:flex-row sm:justify-between sm:gap-2">
         <div className="flex flex-col">
           <b>{t.askTitle}</b>
           <span className="text-xs text-[#9bb0aa]">{t.askSubtitle}</span>
@@ -104,7 +104,7 @@ export default function AskCard({ messages, busy, hasItinerary, onSend, onReset 
           onChange={(e) => setInput(e.target.value)}
           maxLength={2000}
           placeholder={t.askPlaceholder}
-          className="mb-2 h-12 w-full min-w-0 rounded-[10px] bg-white px-3 text-base text-[#10211e] sm:text-sm outline-none placeholder:text-[#84918d] sm:mb-0 sm:h-auto sm:flex-1 sm:rounded-none sm:bg-transparent"
+          className="mb-2 h-12 w-full min-w-0 rounded-[10px] bg-white px-3 text-base text-[#10211e] outline-none placeholder:text-[#84918d] sm:mb-0 sm:h-auto sm:flex-1 sm:rounded-none sm:bg-transparent"
         />
         <button
           type="submit"

@@ -57,7 +57,7 @@ function MiniWallet() {
       <div className="mt-3 flex items-center gap-1.5 text-[11px] text-[#b9cbc5]">
         <i className="inline-block h-[7px] w-[7px] rounded-full bg-accent" /> Arc Testnet
       </div>
-      {!addr && <p className="mt-2 text-[10px] text-[#84a59b]">{t.walletHint}</p>}
+      {!addr && <p className="mt-2 text-[11px] text-[#84a59b]">{t.walletHint}</p>}
     </div>
   );
 }
@@ -324,7 +324,7 @@ export default function HomeClient() {
             <button
               type="button"
               onClick={() => setTab(tab === "map" ? "discover" : "map")}
-              className="hidden text-sm font-semibold text-[#168162] hover:underline md:block"
+              className="hidden min-h-11 items-center text-sm font-semibold text-[#168162] hover:underline md:inline-flex"
             >
               {tab === "map" ? t.viewCards : `${t.viewMap} ↗`}
             </button>

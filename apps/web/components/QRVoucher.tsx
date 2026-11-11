@@ -23,7 +23,7 @@ export default function QRVoucher({ payload, label }: { payload: string; label: 
         <div className="h-[200px] w-[200px] animate-pulse rounded bg-neutral-200" />
       )}
       <p className="text-center text-xs text-neutral-600">{t.voucherHint}</p>
-      <details className="w-full text-[10px] text-neutral-500">
+      <details className="w-full text-[11px] text-neutral-500">
         <summary className="cursor-pointer">QR text</summary>
         <code className="block break-all select-all">{payload}</code>
       </details>

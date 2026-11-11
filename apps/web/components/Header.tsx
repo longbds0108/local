@@ -21,14 +21,14 @@ export default function Header() {
           H
         </span>
         <span className="font-display text-lg font-extrabold md:text-xl">Hedgora</span>
-        <small className="hidden text-[10px] font-medium text-ink-2 sm:block">{t.brandTagline}</small>
+        <small className="hidden text-[11px] font-medium text-ink-2 sm:block">{t.brandTagline}</small>
       </Link>
       <nav className="hidden items-center gap-8 md:flex">
         {nav.map((n) => (
           <Link
             key={n.href}
             href={n.href}
-            className={`text-sm ${path === n.href ? "text-accent" : "text-[#a7bbb5] hover:text-white"}`}
+            className={`inline-flex min-h-11 items-center text-sm ${path === n.href ? "text-accent" : "text-[#a7bbb5] hover:text-white"}`}
           >
             {n.label}
           </Link>

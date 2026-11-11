@@ -45,7 +45,7 @@ export default function ItineraryTimeline({ itinerary }: { itinerary: ItineraryV
             {itinerary.stops.map((s, i) => (
               <Fragment key={s.id}>
                 {i > 0 && (
-                  <div className="ml-[62px] flex h-9 items-center border-l border-dashed border-[#4e6c63] pl-4 text-[10px] text-[#6f8a82] md:ml-[81px]">
+                  <div className="ml-[62px] flex h-9 items-center border-l border-dashed border-[#4e6c63] pl-4 text-[11px] text-[#6f8a82] md:ml-[81px]">
                     🛵 {s.travelMin} {t.minutes}
                   </div>
                 )}
@@ -53,14 +53,14 @@ export default function ItineraryTimeline({ itinerary }: { itinerary: ItineraryV
                   <time className="font-bold">{hhmm(s.arriveAt)}</time>
                   <i className="h-3 w-3 rounded-full bg-accent shadow-[0_0_0_5px_#70efc01c]" />
                   <div className="min-w-0">
-                    <small className="text-[9px] tracking-[1px] text-accent uppercase">
+                    <small className="text-[11px] tracking-[1px] text-accent uppercase">
                       {t.category[s.category] ?? s.category} · {s.durationMin} {t.minutes}
                     </small>
                     <h3 className="my-1 font-display text-[17px] font-bold">{s.name}</h3>
                     <p className="text-xs text-[#859d95]">
                       {s.note ?? (i === 0 ? t.fromStart.replace("{min}", String(s.travelMin)) : "")}
                       <span className="md:hidden">
-                        {s.note ? " · " : ""}
+                        {s.note || i === 0 ? " · " : ""}
                         {Number(s.priceUsdc) > 0 ? usdc(s.priceUsdc) : t.free}
                       </span>
                     </p>
@@ -69,7 +69,7 @@ export default function ItineraryTimeline({ itinerary }: { itinerary: ItineraryV
                     {Number(s.priceUsdc) > 0 ? (
                       <>
                         {Number(s.priceUsdc).toFixed(2)}
-                        <span className="block text-right text-[9px] font-normal text-ink-2">{s.priceSource === "estimate" ? t.estimate : t.demoPrice}</span>
+                        <span className="block text-right text-[11px] font-normal text-ink-2">{s.priceSource === "estimate" ? t.estimate : t.demoPrice}</span>
                       </>
                     ) : (
                       <span className="text-accent">{t.free}</span>
