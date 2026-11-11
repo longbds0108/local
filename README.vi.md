@@ -148,3 +148,30 @@ Trạng thái itinerary: `DRAFT → PAID → COMPLETED | REFUNDED | PARTIAL`. St
 - "Mũi Nghinh Phong" và "Bến Đình" chưa có trong seed vì không lấy được osmId xác thực lúc tạo dữ liệu (Overpass/Nominatim bị giới hạn) — thay bằng Bãi Vọng Nguyệt (cạnh Nghinh Phong) và Nhà hàng Gành Hào. Thêm bằng cách tra OSM rồi bổ sung vào `data/vungtau_pois.json`.
 
 © OpenStreetMap contributors — dữ liệu bản đồ theo ODbL.
+
+## 9. Triển khai lên Vercel
+
+Code đã sẵn cho Vercel: trên Vercel dùng **Postgres** (máy local vẫn dùng SQLite), dữ liệu trong `data/` được đóng gói vào bản build, bộ nhớ đệm bản đồ ghi vào `/tmp`, việc hoàn tiền khi mở chuyến quá hạn chạy bằng `after()` của Next.js, và có cron hằng ngày (`apps/web/vercel.json`) làm lưới an toàn.
+
+1. **Deploy hợp đồng trước** (nếu chưa): `cd apps/web && npm run deploy:arc` → lấy `ESCROW_ADDRESS` trong `.env`. Chưa có thì web vẫn chạy, chỉ phần thanh toán báo "chưa cấu hình".
+2. Vercel → **Add New → Project** → import repo GitHub.
+3. **Root Directory: `apps/web`** (bắt buộc). Framework: Next.js. Giữ bật "Include files outside the root directory" (mặc định) vì dữ liệu nằm ở `data/`. Lệnh build lấy từ `vercel.json` (`npm run vercel-build`).
+4. **Storage → Create Database → Postgres (Neon)** → connect vào project. Vercel tự thêm `DATABASE_URL` và `DATABASE_URL_UNPOOLED`. (Hoặc dán URL Postgres của Neon/Supabase vào `DATABASE_URL`.)
+5. **Settings → Environment Variables**, thêm (lấy giá trị từ `apps/web/.env`, **trừ** `DATABASE_URL`):
+
+   | Biến | Ghi chú |
+   |---|---|
+   | `ANTHROPIC_API_KEY` | chat AI |
+   | `CIRCLE_API_KEY`, `NEXT_PUBLIC_CIRCLE_APP_ID` | ví Circle (biến `NEXT_PUBLIC_*` được nhúng lúc build — đổi thì phải deploy lại) |
+   | `ARC_RPC_URL`, `ARC_CHAIN_ID`, `ARC_EXPLORER_URL`, `NEXT_PUBLIC_FAUCET_URL` | như `.env.example` |
+   | `ESCROW_ADDRESS`, `OPERATOR_PRIVATE_KEY` | `OPERATOR_PRIVATE_KEY` là khoá bí mật — chỉ dán vào Vercel, không commit |
+   | `CRON_SECRET` | chuỗi ngẫu nhiên bất kỳ; bật cron hoàn tiền hằng ngày |
+   | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | chỉ khi dùng đăng nhập Google — nhớ thêm `https://<tên-miền>/auth/callback` vào redirect URI của Google |
+
+6. **Deploy**. Lệnh build sẽ: tạo `prisma/schema.postgres.prisma` → `prisma db push` (tạo/cập nhật bảng) → nạp 4 quán từ `data/merchants.json` → `next build`. Nếu một thay đổi schema có thể làm mất dữ liệu, build sẽ dừng thay vì tự xoá.
+
+Ghi chú:
+- Dữ liệu chuyến đi trong `dev.db` ở máy không được chuyển lên — Postgres trên Vercel bắt đầu trống (trừ danh sách quán).
+- Thử build Vercel ngay trên máy: `DATABASE_URL=postgresql://… npm run vercel-build` (cần một Postgres).
+- Giới hạn tần suất (`lib/rate-limit.ts`) nằm trong bộ nhớ từng instance — đủ cho demo; production nên dùng Redis/Upstash.
+- Route chat để `maxDuration = 300` giây; nếu gói Vercel của bạn báo vượt giới hạn thời gian, bật **Fluid compute** trong Settings → Functions hoặc giảm con số này.

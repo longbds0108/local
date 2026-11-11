@@ -6,7 +6,7 @@ import { getArcWallet } from "@/lib/circle";
 import { prisma } from "@/lib/db";
 import { config } from "@/lib/env";
 import { rateLimit } from "@/lib/rate-limit";
-import { refundStop } from "@/lib/refunds";
+import { refundStop, sweepItinerary } from "@/lib/refunds";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -67,4 +67,23 @@ export const POST = handle(async (req: Request) => {
     }
   }
   return NextResponse.json({ processed: results.length, results });
+});
+
+/**
+ * Vercel Cron (see vercel.json): closes overdue trips — refunds unused prepaid stops to
+ * the payer and marks unpaid pay-at-venue stops as skipped. Vercel sends
+ * "Authorization: Bearer $CRON_SECRET"; without CRON_SECRET configured this is disabled.
+ * Opening an overdue trip does the same, so the cron is only a safety net.
+ */
+export const GET = handle(async (req: Request) => {
+  const secret = config.cronSecret;
+  if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) throw new ApiError(403, "FORBIDDEN", "Bad cron secret");
+  const overdue = await prisma.itinerary.findMany({
+    where: { status: "PAID", deadline: { lte: Math.floor(Date.now() / 1000) } },
+    select: { id: true },
+    orderBy: { deadline: "asc" },
+    take: SWEEP_BATCH,
+  });
+  for (const it of overdue) await sweepItinerary(it.id);
+  return NextResponse.json({ processed: overdue.length });
 });

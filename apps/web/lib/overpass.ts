@@ -53,7 +53,7 @@ async function overpass(query: string): Promise<{ elements: { type: string; id: 
 // ---- disk cache: osmId → opening_hours (null = OSM has no tag) ---------------
 type HoursCache = Record<string, { at: number; v: string | null }>;
 let memo: HoursCache | null = null;
-const cacheFile = () => path.join(config.dataDir, "cache", "opening-hours.json");
+const cacheFile = () => path.join(config.cacheDir, "opening-hours.json");
 
 async function loadCache(): Promise<HoursCache> {
   if (memo) return memo;

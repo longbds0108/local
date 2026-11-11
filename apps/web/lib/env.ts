@@ -1,5 +1,6 @@
 // Server-side configuration. Values come from .env only — nothing chain-specific is
 // hardcoded here (see .env.example for where each value comes from).
+import os from "node:os";
 import path from "node:path";
 
 export class ConfigError extends Error {
@@ -24,6 +25,13 @@ export function required(...names: string[]): string[] {
 export const config = {
   get dataDir() {
     return read("DATA_DIR") ?? path.resolve(process.cwd(), "../../data");
+  },
+  /**
+   * Best-effort disk cache for public map services. Serverless platforms (Vercel)
+   * only allow writing to the temp dir, and it doesn't outlive the instance.
+   */
+  get cacheDir() {
+    return read("CACHE_DIR") ?? (process.env.VERCEL ? path.join(os.tmpdir(), "hedgora-cache") : path.join(this.dataDir, "cache"));
   },
   get anthropicModel() {
     return read("ANTHROPIC_MODEL") ?? "claude-opus-5-5";

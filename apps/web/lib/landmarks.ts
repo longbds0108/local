@@ -1,6 +1,4 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { config } from "./env";
+import { landmarksData } from "./data";
 
 export type Landmark = {
   id: string;
@@ -19,8 +17,7 @@ type Entry = Omit<Landmark, "id"> & { keys: string[] };
 let cache: Record<string, Entry> | null = null;
 function load(): Record<string, Entry> {
   if (!cache) {
-    const raw = readFileSync(path.join(config.dataDir, "landmarks.json"), "utf8");
-    cache = (JSON.parse(raw) as { landmarks: Record<string, Entry> }).landmarks;
+    cache = (landmarksData as { landmarks: Record<string, Entry> }).landmarks;
   }
   return cache;
 }

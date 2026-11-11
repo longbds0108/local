@@ -85,6 +85,14 @@ cd ../apps/web && npm run deploy:arc   # deploys and writes ESCROW_ADDRESS into 
 
 Arc testnet: chain `5042002`, RPC `https://rpc.testnet.arc.io`, explorer `https://explorer.testnet.arc.io`.
 
+## Deploy to Vercel
+
+Root Directory **`apps/web`**, add a **Postgres** database (Vercel Storage → Neon, or any Postgres URL as `DATABASE_URL`),
+copy the other variables from `apps/web/.env` (`OPERATOR_PRIVATE_KEY` only in Vercel's environment settings, never in git),
+set `CRON_SECRET`, deploy. `npm run vercel-build` (from `vercel.json`) derives a Postgres schema from the SQLite one,
+creates the tables, seeds the partner venues and builds. Local development stays on SQLite.
+Step by step (Vietnamese): [README.vi.md → Triển khai lên Vercel](README.vi.md#9-triển-khai-lên-vercel).
+
 ## What's verified
 
 - `forge test` — 24/24: one-transaction native deposit, wrong amount, release needs the exact code, operator without code is refused, replay, after-deadline, re-entrancy, a merchant that rejects payment, 256 fuzzed code guesses.
@@ -108,13 +116,13 @@ Arc testnet: chain `5042002`, RPC `https://rpc.testnet.arc.io`, explorer `https:
 | Chain (viem): read escrow, relay release, refunds, auto-sweep | `lib/chain.ts`, `lib/refunds.ts` |
 | Circle REST (server) / Web SDK (client) | `lib/circle.ts`, `lib/circle-client.ts` |
 
-Stack: Next.js 15, React 19, Tailwind 4, Prisma (SQLite), MapLibre, viem, Foundry, OpenZeppelin.
+Stack: Next.js 15, React 19, Tailwind 4, Prisma (SQLite locally, Postgres on Vercel), MapLibre, viem, Foundry, OpenZeppelin.
 
 ## Limits (MVP)
 
 - Check-in codes live in the browser that paid (like the PIN wallet). Losing browser data means that stop can't be checked in — its money is still refundable.
 - Pay-at-venue: the traveller types the bill; nothing stops them paying less than the venue asks (as with any QR transfer — the venue sees the amount arrive). Only three demo venues are partners; every other place is "pay yourself".
 - The partner portal has no login. Funds are safe (the contract only pays the right venue), but anyone can view a venue's revenue.
-- SQLite + in-memory rate limits: single instance. Public OSM services are for demo use.
+- In-memory rate limits (per instance). Public OSM services are for demo use.
 
 Map data © OpenStreetMap contributors (ODbL).

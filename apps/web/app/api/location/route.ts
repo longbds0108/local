@@ -1,9 +1,7 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { clientIp, handle, jsonError, parseQuery } from "@/lib/api";
-import { config } from "@/lib/env";
+import { specialtiesData } from "@/lib/data";
 import { placeLabel, reverseGeocode } from "@/lib/geocode";
 import { findLandmark, type Landmark } from "@/lib/landmarks";
 import { rateLimit } from "@/lib/rate-limit";
@@ -24,7 +22,7 @@ const Query = z.object({
 
 let specialties: { default: string[]; dishes: Record<string, string[]> } | null = null;
 function dishesFor(landmarkId: string | undefined): string[] {
-  specialties ??= JSON.parse(readFileSync(path.join(config.dataDir, "specialties.json"), "utf8"));
+  specialties ??= specialtiesData as { default: string[]; dishes: Record<string, string[]> };
   return (landmarkId && specialties!.dishes[landmarkId]) || specialties!.default;
 }
 

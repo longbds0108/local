@@ -1,6 +1,5 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { CITY, config } from "./env";
+import { CITY } from "./env";
+import { merchantsData, poisData } from "./data";
 import { haversineKm, type LatLon } from "./geo";
 import { openDuringWindow } from "./hours";
 import { normalizeVi } from "./landmarks";
@@ -48,16 +47,14 @@ let merchantCache: MerchantSeed[] | null = null;
 
 export function loadSeedPois(): SeedPoi[] {
   if (!seedCache) {
-    const raw = readFileSync(path.join(config.dataDir, "vungtau_pois.json"), "utf8");
-    seedCache = (JSON.parse(raw) as { pois: SeedPoi[] }).pois;
+    seedCache = (poisData as { pois: SeedPoi[] }).pois;
   }
   return seedCache;
 }
 
 export function loadMerchantSeed(): MerchantSeed[] {
   if (!merchantCache) {
-    const raw = readFileSync(path.join(config.dataDir, "merchants.json"), "utf8");
-    merchantCache = (JSON.parse(raw) as { merchants: MerchantSeed[] }).merchants;
+    merchantCache = (merchantsData as { merchants: MerchantSeed[] }).merchants;
   }
   return merchantCache;
 }

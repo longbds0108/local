@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { getAddress, type Address } from "viem";
 import { z } from "zod";
 import { clientIp, handle, jsonError, parseJson } from "@/lib/api";
@@ -82,7 +82,10 @@ export const POST = handle(async (req: Request) => {
   activity.sort((a, b) => (a.at < b.at ? 1 : -1));
 
   const views = paid.map(toView);
-  for (const v of views) if (isOverdue(v)) void sweepItinerary(v.id);
+  const overdue = views.filter(isOverdue);
+  if (overdue.length) after(async () => {
+    for (const v of overdue) await sweepItinerary(v.id);
+  });
   const data: DashboardData = {
     wallet: { id: wallet.id, address },
     balanceUsdc: balance,

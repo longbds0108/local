@@ -1,13 +1,11 @@
 // Seeds merchants (demo testnet wallets) from data/merchants.json.
 import { PrismaClient } from "@prisma/client";
-import { readFileSync } from "node:fs";
-import path from "node:path";
+import merchantsData from "../../../data/merchants.json";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const dataDir = process.env.DATA_DIR ?? path.resolve(process.cwd(), "../../data");
-  const { merchants } = JSON.parse(readFileSync(path.join(dataDir, "merchants.json"), "utf8")) as {
+  const { merchants } = merchantsData as {
     merchants: { id: string; name: string; osmId: string; walletAddress: string; prepay?: boolean }[];
   };
   for (const m of merchants) {

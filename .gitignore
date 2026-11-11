@@ -14,3 +14,4 @@ contracts/broadcast/
 *.tsbuildinfo
 next-env.d.ts
 apps/web/public/maplibre/
+apps/web/prisma/schema.postgres.prisma

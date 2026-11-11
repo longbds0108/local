@@ -22,7 +22,7 @@ function base(): string | null {
 }
 
 function cacheFile(key: string) {
-  return path.join(config.dataDir, "cache", `photon-${createHash("sha1").update(key).digest("hex").slice(0, 16)}.json`);
+  return path.join(config.cacheDir, `photon-${createHash("sha1").update(key).digest("hex").slice(0, 16)}.json`);
 }
 
 async function readCache<T>(key: string, ttlMs: number): Promise<T | undefined> {
@@ -37,7 +37,7 @@ async function readCache<T>(key: string, ttlMs: number): Promise<T | undefined> 
 
 async function writeCache(key: string, value: unknown) {
   try {
-    await fs.mkdir(path.join(config.dataDir, "cache"), { recursive: true });
+    await fs.mkdir(config.cacheDir, { recursive: true });
     await fs.writeFile(cacheFile(key), JSON.stringify({ at: Date.now(), value }));
   } catch {
     /* best effort */

@@ -74,7 +74,7 @@ function decode(buf: ArrayBuffer, x: number, y: number): OsmPoi[] {
 }
 
 async function tilePois(x: number, y: number): Promise<OsmPoi[]> {
-  const file = path.join(config.dataDir, "cache", `ofm-${Z}-${x}-${y}.json`);
+  const file = path.join(config.cacheDir, `ofm-${Z}-${x}-${y}.json`);
   try {
     const { at, pois } = JSON.parse(await fs.readFile(file, "utf8")) as { at: number; pois: OsmPoi[] };
     if (Date.now() - at < TILE_TTL_MS) return pois;
