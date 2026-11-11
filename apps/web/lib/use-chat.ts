@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/components/I18nProvider";
 import type { ChatEvent, ItineraryView, MapPlace } from "./types";
 import { errorText } from "@/lib/error-text";
+import { rememberDraft } from "./drafts";
 
 export type ToolState = { name: string; status: "start" | "done" | "error"; summary?: string };
 export type ChatMessage = { id: string; role: "user" | "assistant"; text: string; tools: ToolState[]; error?: string };
@@ -150,6 +151,7 @@ export function useChat(opts: {
               case "itinerary":
                 optsRef.current.onItinerary(ev.itinerary);
                 writeJSON(ITINERARY_KEY, ev.itinerary.id);
+                rememberDraft(ev.itinerary.id);
                 break;
               case "error":
                 patchLast((m) => ({ ...m, error: errorText(t, ev.code, ev.message) }));

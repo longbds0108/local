@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { CATEGORY_EMOJI, hhmm, usdc } from "@/lib/format";
 import type { DashboardData, ItineraryView, StopView } from "@/lib/types";
-import { useAccount } from "@/lib/use-account";
+import { isExpiredDraft, useAccount, useDrafts } from "@/lib/use-account";
 import { useI18n } from "../I18nProvider";
 import { AccountPage, ConnectCard, DateBlock, ErrorNote, fill } from "./shared";
 
-type Kind = "draft" | "active" | "past";
+type Kind = "draft" | "active" | "past" | "expired";
 type T = ReturnType<typeof useI18n>["t"];
 
 export const tripHref = (id: string) => `/trips/${id}`;
@@ -36,13 +36,16 @@ function TripCard({ it, kind }: { it: ItineraryView; kind: Kind }) {
   const pill =
     kind === "draft"
       ? { text: t.dashUnpaid, cls: "bg-warn-soft text-warn" }
-      : { text: t.status[it.status] ?? it.status, cls: kind === "active" ? "bg-accent-soft text-accent" : "bg-surface-2 text-ink-2" };
+      : kind === "expired"
+        ? { text: t.dashExpired, cls: "bg-surface-2 text-ink-2" }
+        : { text: t.status[it.status] ?? it.status, cls: kind === "active" ? "bg-accent-soft text-accent" : "bg-surface-2 text-ink-2" };
+  const muted = kind === "past" || kind === "expired";
 
   // The whole card opens the trip; one page per trip, whatever its state.
   return (
     <Link
       href={tripHref(it.id)}
-      className={`block min-w-0 rounded-[20px] border bg-surface p-4 transition-colors hover:border-accent/50 ${kind === "past" ? "border-line/60" : "border-line"}`}
+      className={`block min-w-0 rounded-[20px] border bg-surface p-4 transition-colors hover:border-accent/50 ${muted ? "border-line/60" : "border-line"}`}
     >
       <div className="flex items-start gap-3">
         <DateBlock iso={it.startAt} />
@@ -57,7 +60,7 @@ function TripCard({ it, kind }: { it: ItineraryView; kind: Kind }) {
         </div>
       </div>
 
-      {kind !== "past" && (
+      {!muted && (
         <ol className="mt-3 space-y-1.5 border-t border-line pt-3">
           {it.stops.map((s) => {
             const st = stopState(s, t);
@@ -86,30 +89,33 @@ function TripCard({ it, kind }: { it: ItineraryView; kind: Kind }) {
       <div className="mt-4 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <b className="block text-lg leading-tight text-white">{usdc(it.totalUsdc)}</b>
-          {kind !== "draft" && paidStops.length > 0 && (
+          {(kind === "active" || kind === "past") && paidStops.length > 0 && (
             <span className="text-xs text-ink-2">{fill(t.dashProgress, { done, total: paidStops.length })}</span>
           )}
         </div>
         <span
           className={`inline-flex min-h-11 shrink-0 items-center rounded-xl px-4 text-sm font-bold ${
-            kind === "past" ? "border border-line text-ink" : "bg-accent text-accent-ink"
+            muted ? "border border-line text-ink" : "bg-accent text-accent-ink"
           }`}
         >
-          {kind === "draft" ? t.dashPay : kind === "active" ? t.dashOpenQr : t.dashDetails} →
+          {kind === "draft" ? t.dashPay : kind === "active" ? t.dashOpenQr : kind === "expired" ? t.dashReplan : t.dashDetails} →
         </span>
       </div>
     </Link>
   );
 }
 
-function Group({ title, count, children }: { title: string; count: number; children: React.ReactNode }) {
+function Group({ title, count, note, children }: { title: string; count: number; note?: string; children: React.ReactNode }) {
   if (!count) return null;
   return (
     <section className="space-y-3">
-      <h2 className="flex items-center gap-2 text-sm font-bold text-ink-2">
-        {title}
-        <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-bold">{count}</span>
-      </h2>
+      <div>
+        <h2 className="flex items-center gap-2 text-sm font-bold text-ink-2">
+          {title}
+          <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-bold">{count}</span>
+        </h2>
+        {note && <p className="mt-0.5 text-xs text-ink-2/80">{note}</p>}
+      </div>
       <div className="grid grid-cols-1 gap-3">{children}</div>
     </section>
   );
@@ -117,10 +123,10 @@ function Group({ title, count, children }: { title: string; count: number; child
 
 type NextAction = { title: string; body: string; cta: string; href: string; external?: boolean };
 
-function nextAction(data: DashboardData, t: T): NextAction {
+function nextAction(data: DashboardData | null, drafts: ItineraryView[], t: T): NextAction {
   const now = Date.now() / 1000;
   let best: { it: ItineraryView; s: StopView } | null = null;
-  for (const it of data.active) {
+  for (const it of data?.active ?? []) {
     if ((it.deadline ?? Infinity) < now) continue;
     for (const s of it.stops) {
       if (s.status !== "PENDING") continue;
@@ -135,7 +141,7 @@ function nextAction(data: DashboardData, t: T): NextAction {
       href: tripHref(best.it.id),
     };
   }
-  const draft = data.drafts[0];
+  const draft = drafts[0];
   if (draft) {
     return {
       title: fill(t.dashNextPay, { trip: draft.title }),
@@ -144,7 +150,7 @@ function nextAction(data: DashboardData, t: T): NextAction {
       href: tripHref(draft.id),
     };
   }
-  if (data.balanceUsdc !== null && Number(data.balanceUsdc) < 1) {
+  if (data && data.balanceUsdc !== null && Number(data.balanceUsdc) < 1) {
     return { title: t.dashNextTopUp, body: t.dashNextTopUpBody, cta: t.dashTopUp, href: data.faucetUrl ?? "https://faucet.circle.com", external: true };
   }
   return { title: t.dashNextPlan, body: t.dashNextPlanBody, cta: t.dashNextPlanCta, href: "/#ask" };
@@ -154,9 +160,15 @@ function nextAction(data: DashboardData, t: T): NextAction {
 export default function TripsClient() {
   const { t } = useI18n();
   const { session, checked, data, loading, error, connecting, connect, balance } = useAccount("/trips");
+  const drafts = useDrafts();
+  const liveDrafts = useMemo(() => (drafts ?? []).filter((d) => !isExpiredDraft(d)), [drafts]);
+  const expiredDrafts = useMemo(() => (drafts ?? []).filter(isExpiredDraft), [drafts]);
   const upcoming = useMemo(() => [...(data?.active ?? [])].sort((a, b) => (a.startAt < b.startAt ? -1 : 1)), [data]);
-  const tripCount = (data?.drafts.length ?? 0) + (data?.active.length ?? 0) + (data?.history.length ?? 0);
-  const next = data?.wallet ? nextAction(data, t) : null;
+  const pastCount = (data?.history.length ?? 0) + expiredDrafts.length;
+  const tripCount = liveDrafts.length + upcoming.length + pastCount;
+  // With a wallet: wait for its data. Without: drafts alone decide.
+  const ready = drafts !== null && checked && (!session || !!data);
+  const next = ready && (!session || data?.wallet) ? nextAction(session ? data : null, liveDrafts, t) : null;
 
   return (
     <AccountPage
@@ -175,51 +187,50 @@ export default function TripsClient() {
       }
     >
       <ErrorNote text={error} />
-      {checked && !session && <ConnectCard onConnect={() => void connect()} connecting={connecting} />}
       {session && data && !data.wallet && <p className="rounded-xl bg-warn-soft px-4 py-3 text-sm text-warn">{t.dashNoWallet}</p>}
 
-      {session && (
-        <>
-          {next ? (
-            <section className="rounded-[24px] bg-gradient-to-br from-[#0f3a32] via-[#0b2a24] to-[#081d19] p-5 md:p-6">
-              <div className="text-[11px] font-extrabold tracking-[2px] text-accent">{t.dashNext}</div>
-              <h2 className="mt-2 font-display text-xl leading-snug font-extrabold text-white md:text-2xl">{next.title}</h2>
-              <p className="mt-1.5 text-sm text-[#b8cdc6]">{next.body}</p>
-              {next.external ? (
-                <a href={next.href} target="_blank" rel="noreferrer" className="mt-4 inline-flex min-h-12 items-center rounded-xl bg-accent px-5 text-base font-bold text-accent-ink">
-                  {next.cta} ↗
-                </a>
-              ) : (
-                <Link href={next.href} className="mt-4 inline-flex min-h-12 items-center rounded-xl bg-accent px-5 text-base font-bold text-accent-ink">
-                  {next.cta} →
-                </Link>
-              )}
-            </section>
+      {next ? (
+        <section className="rounded-[24px] bg-gradient-to-br from-[#0f3a32] via-[#0b2a24] to-[#081d19] p-5 md:p-6">
+          <div className="text-[11px] font-extrabold tracking-[2px] text-accent">{t.dashNext}</div>
+          <h2 className="mt-2 font-display text-xl leading-snug font-extrabold text-white md:text-2xl">{next.title}</h2>
+          <p className="mt-1.5 text-sm text-[#b8cdc6]">{next.body}</p>
+          {next.external ? (
+            <a href={next.href} target="_blank" rel="noreferrer" className="mt-4 inline-flex min-h-12 items-center rounded-xl bg-accent px-5 text-base font-bold text-accent-ink">
+              {next.cta} ↗
+            </a>
           ) : (
-            loading && <div className="h-[168px] animate-pulse rounded-[24px] bg-surface" />
-          )}
-
-          <div className="space-y-6">
-            {data && tripCount === 0 && <p className="rounded-[20px] border border-dashed border-[#2b4a43] p-5 text-sm text-ink-2">{t.dashNoTrips}</p>}
-            {!data && loading && <div className="h-40 animate-pulse rounded-[20px] bg-surface" />}
-            <Group title={t.dashUnpaid} count={data?.drafts.length ?? 0}>
-              {data?.drafts.map((it) => <TripCard key={it.id} it={it} kind="draft" />)}
-            </Group>
-            <Group title={t.dashUpcoming} count={upcoming.length}>
-              {upcoming.map((it) => <TripCard key={it.id} it={it} kind="active" />)}
-            </Group>
-            <Group title={t.dashPast} count={data?.history.length ?? 0}>
-              {data?.history.map((it) => <TripCard key={it.id} it={it} kind="past" />)}
-            </Group>
-            <Link
-              href="/#ask"
-              className="flex min-h-12 items-center justify-center gap-2 rounded-[20px] border border-dashed border-[#2b4a43] text-sm font-bold text-accent hover:bg-white/[0.03]"
-            >
-              ✦ {t.dashNewTrip}
+            <Link href={next.href} className="mt-4 inline-flex min-h-12 items-center rounded-xl bg-accent px-5 text-base font-bold text-accent-ink">
+              {next.cta} →
             </Link>
-          </div>
-        </>
+          )}
+        </section>
+      ) : (
+        !ready && <div className="h-[168px] animate-pulse rounded-[24px] bg-surface" />
       )}
+
+      {/* Planning needs no wallet; paying does. */}
+      {checked && !session && <ConnectCard compact onConnect={() => void connect()} connecting={connecting} />}
+
+      <div className="space-y-6">
+        {ready && tripCount === 0 && <p className="rounded-[20px] border border-dashed border-[#2b4a43] p-5 text-sm text-ink-2">{t.dashNoTrips}</p>}
+        {session && !data && loading && <div className="h-40 animate-pulse rounded-[20px] bg-surface" />}
+        <Group title={t.dashUnpaid} count={liveDrafts.length} note={t.draftsNote}>
+          {liveDrafts.map((it) => <TripCard key={it.id} it={it} kind="draft" />)}
+        </Group>
+        <Group title={t.dashUpcoming} count={upcoming.length}>
+          {upcoming.map((it) => <TripCard key={it.id} it={it} kind="active" />)}
+        </Group>
+        <Group title={t.dashPast} count={pastCount}>
+          {data?.history.map((it) => <TripCard key={it.id} it={it} kind="past" />)}
+          {expiredDrafts.map((it) => <TripCard key={it.id} it={it} kind="expired" />)}
+        </Group>
+        <Link
+          href="/#ask"
+          className="flex min-h-12 items-center justify-center gap-2 rounded-[20px] border border-dashed border-[#2b4a43] text-sm font-bold text-accent hover:bg-white/[0.03]"
+        >
+          ✦ {t.dashNewTrip}
+        </Link>
+      </div>
     </AccountPage>
   );
 }

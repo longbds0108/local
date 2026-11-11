@@ -52,8 +52,27 @@ export function AccountPage({ title, subtitle, aside, children }: { title: strin
   );
 }
 
-export function ConnectCard({ onConnect, connecting }: { onConnect: () => void; connecting: boolean }) {
+export function ConnectCard({ onConnect, connecting, compact = false }: { onConnect: () => void; connecting: boolean; compact?: boolean }) {
   const { t } = useI18n();
+  if (compact) {
+    // One line: planning works without a wallet; a wallet is only needed to pay.
+    return (
+      <section className="flex items-center gap-3 rounded-[20px] border border-line bg-surface p-4">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm font-bold text-white">{t.noWalletTitle}</h2>
+          <p className="mt-0.5 text-xs text-ink-2">{t.noWalletBody}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onConnect}
+          disabled={connecting}
+          className="min-h-11 shrink-0 rounded-xl bg-accent px-4 text-sm font-bold text-accent-ink disabled:opacity-60"
+        >
+          {connecting ? t.connecting : t.connectWallet}
+        </button>
+      </section>
+    );
+  }
   return (
     <section className="rounded-[24px] border border-line bg-surface p-6 text-center md:p-10">
       <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-[#86ffd2] to-[#1ab884] text-2xl text-[#073526]">✦</div>

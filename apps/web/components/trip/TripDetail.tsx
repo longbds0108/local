@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { hhmm, usdc } from "@/lib/format";
+import { isExpiredDraft } from "@/lib/use-account";
 import type { ItineraryView } from "@/lib/types";
 import { BackLink, DateBlock } from "../account/shared";
 import { useI18n } from "../I18nProvider";
@@ -63,8 +64,10 @@ export default function TripDetail({ initial, vouchers, explorerUrl, faucetUrl, 
   const onPaid = useCallback(() => router.refresh(), [router]);
 
   const step = currentStep(it);
-  const pill =
-    it.status === "DRAFT"
+  const expired = it.status === "DRAFT" && isExpiredDraft(it);
+  const pill = expired
+    ? { text: t.dashExpired, cls: "bg-surface-2 text-ink-2" }
+    : it.status === "DRAFT"
       ? { text: t.dashUnpaid, cls: "bg-warn-soft text-warn" }
       : { text: t.status[it.status] ?? it.status, cls: it.status === "PAID" ? "bg-accent-soft text-accent" : "bg-surface-2 text-ink-2" };
 
@@ -86,7 +89,7 @@ export default function TripDetail({ initial, vouchers, explorerUrl, faucetUrl, 
         </div>
       </header>
 
-      <Stepper step={step} />
+      {!expired && <Stepper step={step} />}
 
       {it.status === "DRAFT" ? (
         <PaymentPanel initial={it} faucetUrl={faucetUrl} feeEstimate={feeEstimate} paymentsConfigured={paymentsConfigured} onPaid={onPaid} />

@@ -20,6 +20,7 @@ import type { ItineraryView } from "@/lib/types";
 import { useI18n } from "../I18nProvider";
 import { PriceLabel } from "../ItineraryCard";
 import { errorText } from "@/lib/error-text";
+import { isExpiredDraft } from "@/lib/use-account";
 
 type Phase =
   | "idle"
@@ -75,14 +76,30 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
   const paidStops = itinerary.stops.filter((s) => Number(s.priceUsdc) > 0);
   const isFree = paidStops.length === 0;
 
-  const refreshBalance = useCallback(async (addr: string) => {
+  const refreshBalance = useCallback(async (addr: string): Promise<number | null> => {
     try {
       const j = await api<{ usdc: string }>(`/api/balance?address=${addr}`);
       setBalance(j.usdc);
+      return Number(j.usdc);
     } catch {
       setBalance(null);
+      return null;
     }
   }, []);
+
+  // What the wallet must hold: the trip plus the network fee (gas is paid in USDC on Arc).
+  const need = Number(itinerary.totalUsdc) + (feeEstimate ? Number(feeEstimate) : 0);
+  const short = session?.walletAddress && balance !== null ? Math.max(0, need - Number(balance)) : 0;
+  const expired = isExpiredDraft(itinerary);
+  const [copied, setCopied] = useState(false);
+
+  // While short of USDC, watch the balance so the page unlocks by itself after a top-up.
+  useEffect(() => {
+    if (!(short > 0) || phase !== "idle" || !session?.walletAddress) return;
+    const addr = session.walletAddress;
+    const timer = setInterval(() => void refreshBalance(addr), 8000);
+    return () => clearInterval(timer);
+  }, [short, phase, session?.walletAddress, refreshBalance]);
 
   const showError = useCallback(
     (err: unknown) => {
@@ -123,7 +140,13 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
         const status = await api<{ balanceOk: boolean; allowanceOk: boolean }>(
           `/api/circle/payment-status?itineraryId=${itinerary.id}&address=${addr}`,
         );
-        if (!status.balanceOk) throw new FlowError("INSUFFICIENT_USDC");
+        if (!status.balanceOk) {
+          // Show the top-up steps instead of an error; they explain what to do.
+          const now = await refreshBalance(addr);
+          if (now === null || now >= need) throw new FlowError("INSUFFICIENT_USDC");
+          setPhase("idle");
+          return;
+        }
 
         if (!status.allowanceOk) {
           setPhase("approve");
@@ -167,7 +190,7 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
         showError(err);
       }
     },
-    [itinerary.id, refreshBalance, showError],
+    [itinerary.id, need, refreshBalance, showError],
   );
 
   // Follow connects/disconnects made elsewhere (e.g. the header wallet button).
@@ -237,6 +260,15 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
 
   return (
     <div className="space-y-5">
+      {expired && (
+        <section className="rounded-[20px] border border-line bg-surface p-4">
+          <h2 className="font-bold text-white">{t.draftExpiredTitle}</h2>
+          <p className="mt-1 text-sm text-ink-2">{t.draftExpiredBody}</p>
+          <Link href="/#ask" className="mt-3 inline-flex min-h-11 items-center rounded-xl bg-accent px-4 text-sm font-bold text-accent-ink">
+            ✦ {t.dashReplan} →
+          </Link>
+        </section>
+      )}
       <section className="rounded-[20px] border border-line bg-surface p-4">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-bold text-ink-2">{t.tripStops}</h2>
@@ -259,19 +291,24 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
             </li>
           ))}
         </ul>
+        {!expired && (
+        <>
         <dl className="mt-3 space-y-1 border-t border-line pt-3 text-sm">
           <div className="flex justify-between">
             <dt className="text-ink-2">{t.total}</dt>
             <dd className="text-lg font-bold text-ink">{usdc(itinerary.totalUsdc)}</dd>
           </div>
-          <div className="flex justify-between text-xs">
+          <div className="flex items-baseline justify-between gap-3 text-xs">
             <dt className="text-ink-2">
-              {t.networkFee} <span className="opacity-80">({t.feeNote})</span>
+              {t.networkFee}
+              <span className="block opacity-80">{t.feeNote}</span>
             </dt>
-            <dd className="text-ink-2">{feeEstimate ? `~${Number(feeEstimate).toFixed(4)} USDC` : "—"}</dd>
+            <dd className="shrink-0 whitespace-nowrap text-ink-2">{feeEstimate ? `~${Number(feeEstimate).toFixed(4)} USDC` : "—"}</dd>
           </div>
         </dl>
         <p className="mt-3 rounded-xl bg-surface-2 p-3 text-xs text-ink-2">🔒 {t.escrowExplain}</p>
+        </>
+        )}
       </section>
 
       {phase === "done" ? (
@@ -282,7 +319,7 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
             <p className="text-sm text-ink">{t.openingQr}</p>
           </div>
         </section>
-      ) : isFree ? (
+      ) : expired ? null : isFree ? (
         <p className="rounded-2xl bg-surface-2 p-4 text-sm text-ink">{t.freeItinerary}</p>
       ) : !paymentsConfigured || !circleConfigured() ? (
         <p role="alert" className="rounded-2xl bg-danger/10 p-4 text-sm text-danger">
@@ -296,7 +333,7 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
                 <div className="text-xs text-ink-2">{t.wallet}</div>
                 <button
                   type="button"
-                  className="tabular-nums text-ink hover:text-accent"
+                  className="min-h-10 tabular-nums text-ink hover:text-accent"
                   title={t.copy}
                   onClick={() => navigator.clipboard?.writeText(session.walletAddress!)}
                 >
@@ -309,10 +346,57 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
               </div>
             </div>
           )}
-          {faucetUrl && (
-            <a href={faucetUrl} target="_blank" rel="noreferrer" className="inline-block text-sm font-medium text-accent underline">
-              🚰 {t.faucet} ↗
-            </a>
+          {short > 0 && !busy && (
+            <div className="space-y-3 rounded-xl border border-warn/40 bg-warn-soft p-4">
+              <div>
+                <b className="text-warn">{t.shortTitle.replace("{amount}", usdc(short.toFixed(2)))}</b>
+                <p className="mt-0.5 text-xs text-[#e8dcc2]">
+                  {t.shortBody.replace("{balance}", usdc(Number(balance).toFixed(2))).replace("{need}", usdc(need.toFixed(2)))}
+                </p>
+              </div>
+              <ol className="space-y-2.5 text-sm text-ink">
+                <li className="flex items-start gap-2.5">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-warn/20 text-xs font-bold text-warn">1</span>
+                  <div className="min-w-0 flex-1">
+                    {t.shortStep1}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void navigator.clipboard?.writeText(session!.walletAddress!).then(() => {
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 1500);
+                        })
+                      }
+                      className="mt-1.5 flex min-h-10 w-full items-center justify-between gap-2 rounded-lg bg-bg/60 px-3 text-xs tabular-nums"
+                    >
+                      <span className="truncate">{session!.walletAddress}</span>
+                      <span className="shrink-0 font-bold text-accent">{copied ? `✓ ${t.copied}` : t.copy}</span>
+                    </button>
+                  </div>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-warn/20 text-xs font-bold text-warn">2</span>
+                  <div className="min-w-0 flex-1">
+                    {t.shortStep2}
+                    <a
+                      href={faucetUrl ?? "https://faucet.circle.com"}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1.5 flex min-h-10 items-center justify-center rounded-lg bg-accent px-3 text-sm font-bold text-accent-ink"
+                    >
+                      {t.faucet} ↗
+                    </a>
+                  </div>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-warn/20 text-xs font-bold text-warn">3</span>
+                  <span className="flex items-center gap-2">
+                    {t.shortStep3}
+                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-warn border-t-transparent" aria-hidden />
+                  </span>
+                </li>
+              </ol>
+            </div>
           )}
 
           {error && (
@@ -329,12 +413,19 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
 
           <button
             type="button"
-            disabled={busy}
+            disabled={busy || short > 0}
             onClick={() => (session ? void pay(session) : void login())}
             className="min-h-[48px] w-full rounded-xl bg-accent px-4 text-base font-semibold text-accent-ink disabled:opacity-50"
           >
-            {session ? `${t.pay} ${usdc(itinerary.totalUsdc)}` : authMode() === "pin" ? t.connectAndPay : t.loginAndPay}
+            {short > 0
+              ? t.payNeedMore.replace("{amount}", usdc(short.toFixed(2)))
+              : session
+                ? `${t.pay} ${usdc(itinerary.totalUsdc)}`
+                : authMode() === "pin"
+                  ? t.connectAndPay
+                  : t.loginAndPay}
           </button>
+          {!busy && short === 0 && <p className="text-center text-xs text-ink-2">{session ? t.payConfirmNote : t.payHowNote}</p>}
         </section>
       )}
     </div>

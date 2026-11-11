@@ -12,10 +12,41 @@ import {
   SESSION_EVENT,
   type CircleSession,
 } from "./circle-client";
+import { DRAFTS_EVENT, draftIds, forgetDrafts } from "./drafts";
 import { errorText } from "./error-text";
-import type { DashboardData } from "./types";
+import type { DashboardData, ItineraryView } from "./types";
 
-const DRAFT_KEY = "hedgora.chat.itinerary";
+/** Unpaid plans from this browser — readable with or without a wallet. */
+export function useDrafts() {
+  const [drafts, setDrafts] = useState<ItineraryView[] | null>(null);
+  const load = useCallback(async () => {
+    const ids = draftIds();
+    if (!ids.length) return setDrafts([]);
+    try {
+      const res = await fetch("/api/drafts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) return setDrafts((d) => d ?? []);
+      const j = (await res.json()) as { drafts: ItineraryView[]; done: string[] };
+      forgetDrafts(j.done);
+      setDrafts(j.drafts);
+    } catch {
+      setDrafts((d) => d ?? []);
+    }
+  }, []);
+  useEffect(() => {
+    void load();
+    const on = () => void load();
+    window.addEventListener(DRAFTS_EVENT, on);
+    return () => window.removeEventListener(DRAFTS_EVENT, on);
+  }, [load]);
+  return drafts;
+}
+
+/** A draft whose time window is over can't be paid any more. */
+export const isExpiredDraft = (it: ItineraryView) => new Date(it.endAt).getTime() <= Date.now();
 
 /** Session + the traveller's trips/wallet data, shared by /trips and /wallet. */
 export function useAccount(returnTo: string) {
@@ -32,17 +63,10 @@ export function useAccount(returnTo: string) {
       setLoading(true);
       setError(null);
       try {
-        let draftIds: string[] = [];
-        try {
-          const id = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? "null") as string | null;
-          if (id) draftIds = [id];
-        } catch {
-          /* ignore */
-        }
         const res = await fetch("/api/dashboard", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userToken: s.userToken, draftIds }),
+          body: JSON.stringify({ userToken: s.userToken }),
         });
         const j = await res.json().catch(() => ({}));
         if (!res.ok) {
