@@ -13,7 +13,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "setup": "prisma db push && tsx prisma/seed.ts",
     "abi": "node scripts/sync-abi.mjs",
-    "refund:sweep": "curl -s -X POST http://localhost:3000/api/refund -H 'content-type: application/json' -d '{\"mode\":\"sweep\"}'"
+    "refund:sweep": "curl -s -X POST http://localhost:3000/api/refund -H 'content-type: application/json' -d '{\"mode\":\"sweep\"}'",
+    "deploy:arc": "bash scripts/deploy-arc.sh"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
