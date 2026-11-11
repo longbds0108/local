@@ -35,7 +35,7 @@ function ActivityRow({ a }: { a: DashboardActivity }) {
   }[a.type];
   // Each row opens its trip; the blockchain record is on the trip page.
   return (
-    <Link href={tripHref(a.itineraryId)} className="flex min-h-16 items-center gap-3 px-4 py-2.5 hover:bg-white/[0.03]">
+    <Link href={tripHref(a.itineraryId)} className="flex min-h-16 items-center gap-3 px-4 py-2.5 transition-colors hover:bg-white/[0.04]">
       <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl text-base font-bold ${meta.iconCls}`} aria-hidden>
         {meta.icon}
       </span>
@@ -76,14 +76,16 @@ export default function WalletClient() {
       {session && data && !data.wallet && <p className="rounded-xl bg-warn-soft px-4 py-3 text-sm text-warn">{t.dashNoWallet}</p>}
 
       {session && (
-        <div className="space-y-6">
+        <div className="fx-stagger space-y-6">
           {/* 1. Balance */}
-          <section className="rounded-[24px] bg-gradient-to-br from-[#0f3a32] via-[#0b2a24] to-[#081d19] p-5 md:p-6">
+          <section className="fx-pan rounded-[24px] bg-gradient-to-br from-[#0f3a32] via-[#0b2a24] to-[#081d19] p-5 md:p-6">
             <div className="text-xs text-[#b8cdc6]">
               {t.usdcBalance} · {t.arcTestnet}
             </div>
             <div className="mt-1 font-display text-[40px] leading-none font-extrabold text-white">
-              {balance ?? (loading ? "…" : "—")}
+              <span key={balance ?? "none"} className="fx-pop">
+                {balance ?? (loading ? "…" : "—")}
+              </span>
               <span className="ml-2 text-base font-bold text-ink-2">USDC</span>
             </div>
             {address && (
@@ -101,7 +103,7 @@ export default function WalletClient() {
                 href={data?.faucetUrl ?? "https://faucet.circle.com"}
                 target="_blank"
                 rel="noreferrer"
-                className="flex min-h-11 items-center justify-center rounded-xl bg-accent px-3 text-sm font-bold text-accent-ink"
+                className="fx-shine flex min-h-11 items-center justify-center rounded-xl bg-accent px-3 text-sm font-bold text-accent-ink"
               >
                 {t.dashTopUp} ↗
               </a>
@@ -126,7 +128,7 @@ export default function WalletClient() {
             <h2 className="font-display text-base font-bold text-white">{t.dashMoneyTitle}</h2>
             {moneyTotal > 0 ? (
               <>
-                <div className="mt-3 flex h-3 overflow-hidden rounded-full bg-surface-2" aria-hidden>
+                <div className="fx-grow mt-3 flex h-3 overflow-hidden rounded-full bg-surface-2" aria-hidden>
                   <div className="bg-warn" style={{ width: `${(held / moneyTotal) * 100}%` }} />
                   <div className="bg-accent" style={{ width: `${(paidOut / moneyTotal) * 100}%` }} />
                   <div className="bg-[#6f8a82]" style={{ width: `${(returned / moneyTotal) * 100}%` }} />
@@ -172,7 +174,7 @@ export default function WalletClient() {
           <section className="space-y-3">
             <h2 className="text-sm font-bold text-ink-2">{t.dashHistoryTitle}</h2>
             {data?.activity.length ? (
-              <div className="divide-y divide-line overflow-hidden rounded-[20px] border border-line bg-surface">
+              <div className="fx-stagger divide-y divide-line overflow-hidden rounded-[20px] border border-line bg-surface">
                 {data.activity.map((a, i) => (
                   <ActivityRow key={`${a.type}-${a.txHash ?? i}-${a.at}`} a={a} />
                 ))}

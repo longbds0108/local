@@ -33,15 +33,15 @@ export default function ItineraryTimeline({ itinerary }: { itinerary: ItineraryV
       </div>
 
       {!itinerary ? (
-        <div className="rounded-[22px] border border-dashed border-[#2b4a43] bg-surface p-6 text-sm text-ink-2 md:p-8">
+        <div className="fx-rise rounded-[22px] border border-dashed border-[#2b4a43] bg-surface p-6 text-sm text-ink-2 md:p-8">
           <p>{t.itineraryEmptyBody}</p>
-          <a href="#ask" className="mt-4 inline-block rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-ink">
+          <a href="#ask" className="fx-shine mt-4 inline-block rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-ink">
             {t.askButton} →
           </a>
         </div>
       ) : (
         <>
-          <div className="rounded-[22px] border border-line bg-surface px-4 py-5 md:px-[30px]">
+          <div className="fx-stagger rounded-[22px] border border-line bg-surface px-4 py-5 md:px-[30px]">
             {itinerary.stops.map((s, i) => (
               <Fragment key={s.id}>
                 {i > 0 && (

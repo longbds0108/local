@@ -75,7 +75,8 @@ function fromSeed(p: SeedPoi): Place {
     tags: p.tags,
     priceUsdc: price.unit,
     priceSource: price.source,
-    merchantId: p.merchantId,
+    // Only real partner venues take USDC through Hedgora; the old partner pool is not one.
+    merchantId: p.merchantId === PARTNER_POOL_MERCHANT_ID ? undefined : p.merchantId,
     suggestedMin: p.suggestedMin,
     source: "seed",
   };

@@ -35,8 +35,8 @@ export default function AskCard({ messages, busy, hasItinerary, onSend, onReset 
   };
 
   return (
-    <div id="ask" className="grid scroll-mt-24 grid-cols-[auto_1fr] gap-x-3.5 gap-y-2.5 rounded-[22px] bg-deep p-[18px] text-white md:p-6">
-      <div className="row-span-2 grid h-[42px] w-[42px] place-items-center rounded-[13px] bg-gradient-to-br from-[#86ffd2] to-[#1ab884] text-[#073526]">
+    <div id="ask" className="fx-rise grid scroll-mt-24 grid-cols-[auto_1fr] gap-x-3.5 gap-y-2.5 rounded-[22px] bg-deep p-[18px] text-white md:p-6">
+      <div className="fx-float row-span-2 grid h-[42px] w-[42px] place-items-center rounded-[13px] bg-gradient-to-br from-[#86ffd2] to-[#1ab884] text-[#073526]">
         ✦
       </div>
       <div className="flex flex-col items-start gap-1 sm:flex-row sm:justify-between sm:gap-2">

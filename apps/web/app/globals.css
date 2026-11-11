@@ -163,3 +163,299 @@ body .maplibregl-cooperative-gesture-screen {
     font-size: 11px;
   }
 }
+
+/* ===================================================================
+   Motion — home + account pages (/trips, /wallet).
+   Short, GPU-friendly (opacity/transform only) and fully disabled for
+   people who ask their device for reduced motion.
+   =================================================================== */
+
+/* Entrance: rise + fade. `--d` staggers siblings (style={{ "--d": 2 }}).
+   fill-mode "backwards" (not "both"): once finished, hover transforms work again. */
+@keyframes fx-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fx-rise {
+  animation: fx-rise 0.65s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+  animation-delay: calc(var(--d, 0) * 90ms);
+}
+/* Children rise one after another (lists, card grids, page sections). */
+.fx-stagger > * {
+  animation: fx-rise 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+.fx-stagger > :nth-child(2) { animation-delay: 60ms; }
+.fx-stagger > :nth-child(3) { animation-delay: 120ms; }
+.fx-stagger > :nth-child(4) { animation-delay: 180ms; }
+.fx-stagger > :nth-child(5) { animation-delay: 240ms; }
+.fx-stagger > :nth-child(6) { animation-delay: 300ms; }
+.fx-stagger > :nth-child(n + 7) { animation-delay: 360ms; }
+
+/* Ambient glows drift slowly. */
+@keyframes fx-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-50px, 40px, 0) scale(1.15);
+  }
+  100% {
+    transform: translate3d(40px, -30px, 0) scale(0.95);
+  }
+}
+.glow {
+  animation: fx-drift 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Hero accent words: a slow light sweep across the text. */
+@keyframes fx-text-sheen {
+  to {
+    background-position: -220% center;
+  }
+}
+.fx-gradient-text {
+  background: linear-gradient(100deg, var(--accent) 0%, #d8fff1 30%, var(--accent) 55%, #2fd3a0 100%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: fx-text-sheen 7s linear infinite;
+}
+
+/* Hero photo: fade in, then a slow Ken Burns zoom. */
+@keyframes fx-kenburns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08) translate(-1%, -1%);
+  }
+}
+.fx-photo {
+  animation:
+    fadein 0.6s ease backwards,
+    fx-kenburns 24s ease-in-out 0.6s infinite alternate;
+}
+
+/* Gentle float (sunset card, AI badge). */
+@keyframes fx-float {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.fx-float {
+  animation: fx-float 5s ease-in-out infinite;
+}
+
+/* "Live" ring around the GPS icon. */
+@keyframes fx-ping {
+  0% {
+    box-shadow: 0 0 0 0 rgb(112 239 192 / 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgb(112 239 192 / 0);
+  }
+}
+.fx-ping {
+  border-radius: 9999px;
+  animation: fx-ping 2.2s ease-out infinite;
+}
+
+/* Cards lift on hover (mouse) and press in on tap. */
+.fx-lift {
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+@media (hover: hover) {
+  .fx-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 44px -22px rgb(112 239 192 / 0.4);
+  }
+}
+.fx-lift:active {
+  transform: scale(0.985);
+}
+
+/* Place cards: the photo zooms a little on hover. */
+.fx-zoom {
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+@media (hover: hover) {
+  .fx-card:hover .fx-zoom {
+    transform: scale(1.06);
+  }
+}
+
+/* Tap feedback for chips and small buttons. */
+.fx-press {
+  transition: transform 0.15s ease;
+}
+.fx-press:active {
+  transform: scale(0.95);
+}
+
+/* Main call to action: a light sweep every few seconds. */
+@keyframes fx-shine {
+  0%,
+  65% {
+    transform: translateX(-130%) skewX(-18deg);
+  }
+  100% {
+    transform: translateX(230%) skewX(-18deg);
+  }
+}
+.fx-shine {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.fx-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.5), transparent);
+  animation: fx-shine 4.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Hero-style panels: the gradient drifts slowly. */
+@keyframes fx-pan {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+.fx-pan {
+  background-size: 220% 220%;
+  animation: fx-pan 14s ease-in-out infinite;
+}
+/* A drifting panel that is also part of a staggered list: rise first, then drift. */
+.fx-stagger > .fx-pan {
+  animation:
+    fx-rise 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) backwards,
+    fx-pan 14s ease-in-out infinite;
+}
+
+/* Rotating light along the border of the "what to do next" card. */
+@property --fx-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes fx-spin {
+  to {
+    --fx-angle: 360deg;
+  }
+}
+.fx-aurora {
+  position: relative;
+  isolation: isolate;
+}
+.fx-aurora::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(from var(--fx-angle), transparent 0 55%, rgb(112 239 192 / 0.85) 72%, transparent 88%);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: fx-spin 6s linear infinite;
+  pointer-events: none;
+}
+
+/* Loading placeholders: a shimmer instead of a blink. */
+@keyframes fx-skeleton {
+  to {
+    transform: translateX(100%);
+  }
+}
+.fx-skeleton {
+  position: relative;
+  overflow: hidden;
+}
+.fx-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, var(--fx-skeleton, rgb(255 255 255 / 0.07)), transparent);
+  animation: fx-skeleton 1.4s ease-in-out infinite;
+}
+.fx-skeleton-light {
+  --fx-skeleton: rgb(8 123 90 / 0.08);
+}
+
+/* Bars grow in from the left; big numbers pop in. */
+@keyframes fx-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+.fx-grow {
+  transform-origin: left center;
+  animation: fx-grow 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.25s backwards;
+}
+@keyframes fx-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+.fx-pop {
+  display: inline-block;
+  animation: fx-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .fx-rise,
+  .fx-stagger > *,
+  .glow,
+  .fx-gradient-text,
+  .fx-photo,
+  .fx-float,
+  .fx-ping,
+  .fx-shine::after,
+  .fx-pan,
+  .fx-aurora::before,
+  .fx-skeleton::after,
+  .fx-grow,
+  .fx-pop {
+    animation: none !important;
+  }
+  .fx-shine::after,
+  .fx-aurora::before {
+    display: none;
+  }
+  .fx-lift,
+  .fx-zoom,
+  .fx-press {
+    transition: none;
+  }
+  .fx-lift:hover,
+  .fx-lift:active,
+  .fx-card:hover .fx-zoom,
+  .fx-press:active {
+    transform: none;
+  }
+}

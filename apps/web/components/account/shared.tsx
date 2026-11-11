@@ -38,7 +38,7 @@ export function AccountPage({ title, subtitle, aside, children }: { title: strin
   return (
     <div className="relative overflow-x-clip">
       <div className="glow -top-[260px] -right-[100px] bg-[#28d7a4]" aria-hidden />
-      <div className="mx-auto max-w-[760px] space-y-6 px-[18px] pt-6 pb-10 md:px-8 md:pt-10">
+      <div className="fx-stagger mx-auto max-w-[760px] space-y-6 px-[18px] pt-6 pb-10 md:px-8 md:pt-10">
         <header className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="font-display text-[28px] leading-tight font-extrabold text-white md:text-[36px]">{title}</h1>
@@ -75,14 +75,14 @@ export function ConnectCard({ onConnect, connecting, compact = false }: { onConn
   }
   return (
     <section className="rounded-[24px] border border-line bg-surface p-6 text-center md:p-10">
-      <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-[#86ffd2] to-[#1ab884] text-2xl text-[#073526]">✦</div>
+      <div className="fx-float mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-[#86ffd2] to-[#1ab884] text-2xl text-[#073526]">✦</div>
       <h2 className="mt-4 font-display text-xl font-extrabold text-white">{t.dashConnectTitle}</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-ink-2">{t.dashConnectBody}</p>
       <button
         type="button"
         onClick={onConnect}
         disabled={connecting}
-        className="mt-5 min-h-12 rounded-xl bg-accent px-6 text-base font-bold text-accent-ink disabled:opacity-60"
+        className="fx-shine mt-5 min-h-12 rounded-xl bg-accent px-6 text-base font-bold text-accent-ink disabled:opacity-60"
       >
         {connecting ? t.connecting : t.connectWallet}
       </button>

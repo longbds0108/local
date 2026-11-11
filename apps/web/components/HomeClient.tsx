@@ -12,6 +12,7 @@ import ItineraryTimeline from "./home/ItineraryTimeline";
 import PlaceCards from "./home/PlaceCards";
 import { useI18n } from "./I18nProvider";
 import { dishLabel } from "@/lib/dish-names";
+import { fxDelay } from "@/lib/fx";
 
 const MapView = dynamic(() => import("./Map"), { ssr: false });
 
@@ -284,7 +285,8 @@ export default function HomeClient() {
 
       <section
         id="explore"
-        className="mx-auto grid min-h-[700px] max-w-[1440px] scroll-mt-20 rounded-t-[24px] bg-cream text-cream-ink md:grid-cols-[210px_1fr] md:rounded-t-[34px]"
+        style={fxDelay(4)}
+        className="fx-rise mx-auto grid min-h-[700px] max-w-[1440px] scroll-mt-20 rounded-t-[24px] bg-cream text-cream-ink md:grid-cols-[210px_1fr] md:rounded-t-[34px]"
       >
         <aside className="hidden flex-col gap-2 border-r border-cream-line px-5 py-10 md:flex">
           {tabs.map((x) => (
@@ -356,7 +358,7 @@ export default function HomeClient() {
                   type="button"
                   onClick={() => void pickDish(d)}
                   aria-pressed={dish === d}
-                  className={`min-h-10 shrink-0 rounded-full border px-4 text-sm font-semibold whitespace-nowrap transition ${
+                  className={`fx-press min-h-10 shrink-0 rounded-full border px-4 text-sm font-semibold whitespace-nowrap transition ${
                     dish === d ? "border-forest bg-forest text-white" : "border-cream-line bg-white text-cream-ink hover:border-forest"
                   }`}
                 >
@@ -402,7 +404,7 @@ export default function HomeClient() {
           ) : (placesState === "loading" && places.length === 0) || (dish && dishState === "loading") ? (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-[18px] lg:grid-cols-3" aria-busy>
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-[150px] animate-pulse rounded-2xl bg-white sm:h-[300px] sm:rounded-[17px]" />
+                <div key={i} className="fx-skeleton fx-skeleton-light h-[150px] rounded-2xl bg-white sm:h-[300px] sm:rounded-[17px]" />
               ))}
             </div>
           ) : visible.length === 0 ? (

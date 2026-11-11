@@ -5,6 +5,7 @@ import { hhmm } from "@/lib/format";
 import { sunset } from "@/lib/sun";
 import { describeWeather, weatherTip } from "@/lib/weather-codes";
 import { useI18n } from "../I18nProvider";
+import { fxDelay } from "@/lib/fx";
 
 export type GpsState = "locating" | "ok" | "denied" | "far";
 
@@ -75,16 +76,16 @@ export default function Hero({ gps, here, info, infoLoading, onUpdateLocation }:
   return (
     <section className="mx-auto grid max-w-[1440px] items-center gap-7 px-[18px] pt-7 pb-10 md:min-h-[600px] md:grid-cols-[1.05fr_.95fr] md:gap-[7vw] md:px-[7vw] md:pt-[78px] md:pb-[62px]">
       <div>
-        <div className="text-[11px] font-extrabold tracking-[2px] text-accent">✦ {t.heroEyebrow}</div>
-        <h1 className="my-4 font-display text-[34px] leading-[1.02] md:my-6 md:leading-[0.98] font-extrabold text-white md:text-[clamp(48px,6vw,82px)]">
+        <div className="fx-rise text-[11px] font-extrabold tracking-[2px] text-accent">✦ {t.heroEyebrow}</div>
+        <h1 style={fxDelay(1)} className="fx-rise my-4 font-display text-[34px] leading-[1.02] md:my-6 md:leading-[0.98] font-extrabold text-white md:text-[clamp(48px,6vw,82px)]">
           {t.heroTitle1}
           <br />
-          <em className="text-accent not-italic">{t.heroTitle2}</em>
+          <em className="fx-gradient-text not-italic">{t.heroTitle2}</em>
         </h1>
-        <p className="max-w-[590px] text-[15px] leading-relaxed text-[#a7bbb5] md:text-lg md:leading-[1.7]">{t.heroBody}</p>
-        <div className="mt-6 flex max-w-[460px] items-center gap-3.5 md:mt-8 rounded-[15px] border border-[#25423d] bg-[#0b211e] px-3.5 py-3">
+        <p style={fxDelay(2)} className="fx-rise max-w-[590px] text-[15px] leading-relaxed text-[#a7bbb5] md:text-lg md:leading-[1.7]">{t.heroBody}</p>
+        <div style={fxDelay(3)} className="fx-rise mt-6 flex max-w-[460px] items-center gap-3.5 md:mt-8 rounded-[15px] border border-[#25423d] bg-[#0b211e] px-3.5 py-3">
           <span
-            className={`text-2xl ${gps === "ok" ? "text-accent" : gps === "locating" || infoLoading ? "animate-pulse text-ink-2" : "text-warn"}`}
+            className={`grid h-9 w-9 shrink-0 place-items-center text-2xl ${gps === "ok" ? "fx-ping text-accent" : gps === "locating" || infoLoading ? "animate-pulse text-ink-2" : "text-warn"}`}
             aria-hidden
           >
             ◎
@@ -105,19 +106,19 @@ export default function Hero({ gps, here, info, infoLoading, onUpdateLocation }:
         </div>
       </div>
 
-      <div className="relative">
+      <div style={fxDelay(2)} className="fx-rise relative">
         <div className="relative h-[260px] overflow-hidden rounded-[28px] border border-white/10 bg-[#0b211e] shadow-[0_30px_90px_#0008] md:h-[430px] md:rounded-[36px]">
           {shown && (
             // Background layer swaps with a fade when the location changes.
             <div
               key={shown}
-              className="absolute inset-0 animate-[fadein_.6s_ease]"
+              className="fx-photo absolute inset-0"
               style={{ background: `linear-gradient(0deg, rgba(4,28,24,.8), transparent 60%), url('${shown}') center/cover` }}
               role="img"
               aria-label={lm && shown === lm.image ? (locale === "vi" ? lm.nameVi : lm.nameEn) : t.heroImgAlt}
             />
           )}
-          {!shown && <div className="absolute inset-0 animate-pulse bg-[#12312b]" />}
+          {!shown && <div className="fx-skeleton absolute inset-0 bg-[#12312b]" />}
 
           {/* Landmark name + required photo credit (Wikimedia Commons license). */}
           {lm && shown === lm.image && (
@@ -158,7 +159,7 @@ export default function Hero({ gps, here, info, infoLoading, onUpdateLocation }:
         </div>
 
         {sun && (
-          <div className="absolute right-3 bottom-3 left-3 flex items-center gap-3 rounded-2xl bg-[#f0f4ed] p-3 text-[#10211e] shadow-[0_18px_45px_#0008] md:right-auto md:bottom-7 md:-left-10 md:p-4">
+          <div className="fx-float absolute right-3 bottom-3 left-3 flex items-center gap-3 rounded-2xl bg-[#f0f4ed] p-3 text-[#10211e] shadow-[0_18px_45px_#0008] md:right-auto md:bottom-7 md:-left-10 md:p-4">
             <span className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-[10px] bg-[#d7fbed] text-[#08795a]">✦</span>
             <div className="flex flex-col">
               <b>{t.heroSunsetToday}</b>

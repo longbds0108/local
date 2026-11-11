@@ -57,7 +57,7 @@ function TripCard({ it, kind }: { it: ItineraryView; kind: Kind }) {
   return (
     <Link
       href={tripHref(it.id)}
-      className={`block min-w-0 rounded-[20px] border bg-surface p-4 transition-colors hover:border-accent/50 ${muted ? "border-line/60" : "border-line"}`}
+      className={`fx-lift block min-w-0 rounded-[20px] border bg-surface p-4 hover:border-accent/50 ${muted ? "border-line/60" : "border-line"}`}
     >
       <div className="flex items-start gap-3">
         <DateBlock iso={it.startAt} />
@@ -128,7 +128,7 @@ function Group({ title, count, note, children }: { title: string; count: number;
         </h2>
         {note && <p className="mt-0.5 text-xs text-ink-2/80">{note}</p>}
       </div>
-      <div className="grid grid-cols-1 gap-3">{children}</div>
+      <div className="fx-stagger grid grid-cols-1 gap-3">{children}</div>
     </section>
   );
 }
@@ -188,7 +188,7 @@ export default function TripsClient() {
         session && (
           <Link
             href="/wallet"
-            className="flex min-h-11 shrink-0 flex-col items-end justify-center rounded-xl border border-line bg-surface px-3 py-1.5 text-right hover:border-accent/50"
+            className="fx-lift flex min-h-11 shrink-0 flex-col items-end justify-center rounded-xl border border-line bg-surface px-3 py-1.5 text-right hover:border-accent/50"
           >
             <span className="text-[11px] text-ink-2">{t.dashBalance}</span>
             <b className="text-sm text-white">{balance !== null ? `${balance} USDC` : loading ? "…" : "—"}</b>
@@ -200,22 +200,22 @@ export default function TripsClient() {
       {session && data && !data.wallet && <p className="rounded-xl bg-warn-soft px-4 py-3 text-sm text-warn">{t.dashNoWallet}</p>}
 
       {next ? (
-        <section className="rounded-[24px] bg-gradient-to-br from-[#0f3a32] via-[#0b2a24] to-[#081d19] p-5 md:p-6">
+        <section className="fx-aurora fx-pan rounded-[24px] bg-gradient-to-br from-[#0f3a32] via-[#0b2a24] to-[#081d19] p-5 md:p-6">
           <div className="text-[11px] font-extrabold tracking-[2px] text-accent">{t.dashNext}</div>
           <h2 className="mt-2 font-display text-xl leading-snug font-extrabold text-white md:text-2xl">{next.title}</h2>
           <p className="mt-1.5 text-sm text-[#b8cdc6]">{next.body}</p>
           {next.external ? (
-            <a href={next.href} target="_blank" rel="noreferrer" className="mt-4 inline-flex min-h-12 items-center rounded-xl bg-accent px-5 text-base font-bold text-accent-ink">
+            <a href={next.href} target="_blank" rel="noreferrer" className="fx-shine mt-4 inline-flex min-h-12 items-center rounded-xl bg-accent px-5 text-base font-bold text-accent-ink">
               {next.cta} ↗
             </a>
           ) : (
-            <Link href={next.href} className="mt-4 inline-flex min-h-12 items-center rounded-xl bg-accent px-5 text-base font-bold text-accent-ink">
+            <Link href={next.href} className="fx-shine mt-4 inline-flex min-h-12 items-center rounded-xl bg-accent px-5 text-base font-bold text-accent-ink">
               {next.cta} →
             </Link>
           )}
         </section>
       ) : (
-        !ready && <div className="h-[168px] animate-pulse rounded-[24px] bg-surface" />
+        !ready && <div className="fx-skeleton h-[168px] rounded-[24px] bg-surface" />
       )}
 
       {/* Planning needs no wallet; paying does. */}
@@ -223,7 +223,7 @@ export default function TripsClient() {
 
       <div className="space-y-6">
         {ready && tripCount === 0 && <p className="rounded-[20px] border border-dashed border-[#2b4a43] p-5 text-sm text-ink-2">{t.dashNoTrips}</p>}
-        {session && !data && loading && <div className="h-40 animate-pulse rounded-[20px] bg-surface" />}
+        {session && !data && loading && <div className="fx-skeleton h-40 rounded-[20px] bg-surface" />}
         <Group title={t.dashUnpaid} count={liveDrafts.length} note={t.draftsNote}>
           {liveDrafts.map((it) => <TripCard key={it.id} it={it} kind="draft" />)}
         </Group>
@@ -236,7 +236,7 @@ export default function TripsClient() {
         </Group>
         <Link
           href="/#ask"
-          className="flex min-h-12 items-center justify-center gap-2 rounded-[20px] border border-dashed border-[#2b4a43] text-sm font-bold text-accent hover:bg-white/[0.03]"
+          className="fx-lift flex min-h-12 items-center justify-center gap-2 rounded-[20px] border border-dashed border-[#2b4a43] text-sm font-bold text-accent hover:border-accent/60 hover:bg-white/[0.03]"
         >
           ✦ {t.dashNewTrip}
         </Link>

@@ -30,7 +30,7 @@ type Props = {
 export default function PlaceCards({ places, saved, onToggleSave, onAdd, busy }: Props) {
   const { t, locale } = useI18n();
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-[18px] lg:grid-cols-3">
+    <div className="fx-stagger grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-[18px] lg:grid-cols-3">
       {places.map((p) => {
         const free = p.priceUsdc === 0;
         const tag =
@@ -56,16 +56,18 @@ export default function PlaceCards({ places, saved, onToggleSave, onAdd, busy }:
         return (
           <article
             key={p.osmId}
-            className="flex overflow-hidden rounded-2xl border border-[#dfe5df] bg-white text-cream-ink transition duration-200 sm:block sm:rounded-[17px] sm:hover:-translate-y-1 sm:hover:shadow-[0_15px_40px_#52645e20]"
+            className="fx-card flex overflow-hidden rounded-2xl border border-[#dfe5df] bg-white text-cream-ink transition duration-200 sm:block sm:rounded-[17px] sm:hover:-translate-y-1 sm:hover:shadow-[0_15px_40px_#52645e20]"
           >
+            <div className="relative w-[104px] shrink-0 overflow-hidden sm:h-[165px] sm:w-full">
             <div
-              className="relative grid w-[104px] shrink-0 place-items-center bg-cover bg-center sm:h-[165px] sm:w-full"
+              className="fx-zoom absolute inset-0 bg-cover bg-center"
               style={
                 imgId
                   ? { backgroundImage: `url('${IMG(imgId, 700)}')` }
                   : { background: "radial-gradient(circle at 30% 20%, #86ffd2 0%, #25b78a 45%, #0c3028 100%)" }
               }
-            >
+            />
+            <div className="relative grid h-full place-items-center">
               {!imgId && (
                 <span className="text-4xl drop-shadow sm:text-6xl" aria-hidden>
                   {CATEGORY_EMOJI[p.category] ?? "📍"}
@@ -75,6 +77,7 @@ export default function PlaceCards({ places, saved, onToggleSave, onAdd, busy }:
                 {tag.text}
               </span>
               {heart("absolute top-3 right-3 hidden h-10 w-10 bg-white sm:grid")}
+            </div>
             </div>
 
             <div className="flex min-w-0 flex-1 flex-col p-3 sm:p-4">
@@ -111,7 +114,7 @@ export default function PlaceCards({ places, saved, onToggleSave, onAdd, busy }:
                   type="button"
                   disabled={busy}
                   onClick={() => onAdd(p)}
-                  className="min-h-11 flex-1 rounded-[10px] bg-[#e5f8f1] px-3 text-sm font-bold text-[#08795a] hover:bg-[#d4f3e7] disabled:opacity-50"
+                  className="fx-press min-h-11 flex-1 rounded-[10px] bg-[#e5f8f1] px-3 text-sm font-bold text-[#08795a] hover:bg-[#d4f3e7] disabled:opacity-50"
                 >
                   <span className="sm:hidden">{t.addShort}</span>
                   <span className="hidden sm:inline">{t.addToPlan}</span>
