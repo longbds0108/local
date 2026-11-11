@@ -22,6 +22,7 @@ export class CircleError extends Error {
 
 /** Circle error codes we handle explicitly. */
 export const CIRCLE_CODES = {
+  userAlreadyExists: 155101,
   userAlreadyInitialized: 155106,
   userTokenExpired: 155104,
   userTokenNotFound: 155103,
@@ -60,6 +61,27 @@ export async function createDeviceToken(deviceId: string) {
   return circleFetch<{ deviceToken: string; deviceEncryptionKey: string }>("/v1/w3s/users/social/token", {
     method: "POST",
     body: { idempotencyKey: randomUUID(), deviceId },
+  });
+}
+
+// ---- PIN users (no social login) -------------------------------------------
+// POST /v1/w3s/users        create a user identified by our own userId
+// POST /v1/w3s/users/token  short-lived userToken + encryptionKey for that user
+// The user sets a PIN + security questions in Circle's UI on the first
+// challenge and confirms every later transaction with that PIN.
+
+export async function createPinUser(userId: string): Promise<void> {
+  try {
+    await circleFetch("/v1/w3s/users", { method: "POST", body: { userId } });
+  } catch (err) {
+    if (!(err instanceof CircleError && err.code === CIRCLE_CODES.userAlreadyExists)) throw err;
+  }
+}
+
+export async function createUserToken(userId: string) {
+  return circleFetch<{ userToken: string; encryptionKey: string }>("/v1/w3s/users/token", {
+    method: "POST",
+    body: { userId },
   });
 }
 

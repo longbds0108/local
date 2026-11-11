@@ -2,20 +2,52 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { circleConfigured, getSession, logout, startGoogleLogin, type CircleSession } from "@/lib/circle-client";
+import {
+  authMode,
+  CircleClientError,
+  circleConfigured,
+  connectWallet,
+  getOrRefreshSession,
+  getSession,
+  hasPinWallet,
+  logout,
+  SESSION_EVENT,
+  type CircleSession,
+} from "@/lib/circle-client";
 import { shortAddr } from "@/lib/format";
 import { useI18n } from "./I18nProvider";
 
-/** Real Circle wallet state (Google login). Shows the Arc wallet address once connected. */
+/**
+ * Header wallet button. PIN mode (no Google client id configured): connects a
+ * Circle wallet tied to this browser — Circle's own UI asks for a PIN.
+ * Google mode: redirects to Google sign-in.
+ */
 export default function WalletButton() {
   const { t } = useI18n();
   const path = usePathname();
   const [session, setSession] = useState<CircleSession | null>(null);
+  const [balance, setBalance] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => setSession(getSession()), [path]);
+  // Keep in sync with connects/disconnects anywhere on the page; silently renew PIN sessions.
+  useEffect(() => {
+    const read = () => setSession(getSession());
+    read();
+    if (!getSession() && hasPinWallet()) void getOrRefreshSession().then((s) => s && setSession(s)).catch(() => {});
+    window.addEventListener(SESSION_EVENT, read);
+    return () => window.removeEventListener(SESSION_EVENT, read);
+  }, [path]);
+
+  useEffect(() => {
+    if (!open || !session?.walletAddress) return;
+    fetch(`/api/balance?address=${session.walletAddress}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => j && setBalance(Number(j.usdc).toFixed(2)))
+      .catch(() => {});
+  }, [open, session?.walletAddress]);
 
   useEffect(() => {
     if (!open) return;
@@ -23,6 +55,11 @@ export default function WalletButton() {
     document.addEventListener("click", close);
     return () => document.removeEventListener("click", close);
   }, [open]);
+
+  const flash = (msg: string) => {
+    setNote(msg);
+    setTimeout(() => setNote(null), 4000);
+  };
 
   const connected = !!session?.walletAddress;
 
@@ -32,15 +69,18 @@ export default function WalletButton() {
       return;
     }
     if (!circleConfigured()) {
-      setNote(t.walletNotConfigured);
-      setTimeout(() => setNote(null), 3500);
+      flash(t.walletNotConfigured);
       return;
     }
+    setBusy(true);
     try {
-      await startGoogleLogin(path || "/");
+      const s = await connectWallet(path || "/");
+      if (s) setSession(s);
     } catch (err) {
-      setNote((err as Error).message);
-      setTimeout(() => setNote(null), 3500);
+      const code = err instanceof CircleClientError ? err.code : "";
+      flash(t.err[code] ?? (err as Error).message);
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -49,23 +89,37 @@ export default function WalletButton() {
       <button
         type="button"
         onClick={() => void onClick()}
-        className="flex min-h-[40px] items-center rounded-xl border border-[#295047] bg-[#12312b] px-3 text-xs font-bold text-[#dffff4] md:px-4 md:text-sm"
+        disabled={busy}
+        className="flex min-h-11 items-center rounded-xl border border-[#295047] bg-[#12312b] px-3 text-xs font-bold text-[#dffff4] disabled:opacity-70 md:px-4 md:text-sm"
       >
         {connected && <span className="mr-2 inline-block h-[7px] w-[7px] rounded-full bg-accent" />}
-        {connected ? shortAddr(session!.walletAddress!) : t.connectWallet}
+        {busy ? t.connecting : connected ? shortAddr(session!.walletAddress!) : t.connectWallet}
       </button>
       {open && connected && (
-        <div className="absolute right-0 mt-2 w-60 space-y-2 rounded-2xl border border-line bg-surface p-3 text-sm shadow-2xl">
-          <div className="text-[10px] font-bold tracking-widest text-ink-2">ARC TESTNET · CIRCLE</div>
+        <div className="absolute right-0 mt-2 w-64 space-y-2 rounded-2xl border border-line bg-surface p-3 text-sm shadow-2xl">
+          <div className="text-[11px] font-bold tracking-widest text-ink-2">ARC TESTNET · CIRCLE</div>
           <button
             type="button"
-            className="w-full truncate text-left font-mono text-xs text-ink hover:text-accent"
+            className="min-h-10 w-full truncate text-left font-mono text-xs text-ink hover:text-accent"
             onClick={() => navigator.clipboard?.writeText(session!.walletAddress!)}
             title={t.copy}
           >
             {session!.walletAddress} ⧉
           </button>
+          <div className="flex items-baseline justify-between">
+            <span className="text-xs text-ink-2">{t.balance}</span>
+            <b>{balance !== null ? `${balance} USDC` : "…"}</b>
+          </div>
           {session?.email && <div className="truncate text-xs text-ink-2">{session.email}</div>}
+          {authMode() === "pin" && <p className="text-[11px] leading-snug text-ink-2">{t.walletBrowserNote}</p>}
+          <a
+            href={process.env.NEXT_PUBLIC_FAUCET_URL || "https://faucet.circle.com"}
+            target="_blank"
+            rel="noreferrer"
+            className="flex min-h-10 items-center text-xs font-semibold text-accent underline"
+          >
+            🚰 {t.faucet} ↗
+          </a>
           <button
             type="button"
             onClick={() => {
@@ -73,9 +127,9 @@ export default function WalletButton() {
               setSession(null);
               setOpen(false);
             }}
-            className="w-full rounded-lg bg-surface-2 py-2 text-xs font-semibold text-ink hover:text-accent"
+            className="min-h-10 w-full rounded-lg bg-surface-2 text-xs font-semibold text-ink hover:text-accent"
           >
-            {t.logout}
+            {authMode() === "pin" ? t.disconnect : t.logout}
           </button>
         </div>
       )}

@@ -10,7 +10,10 @@ import {
   getSession,
   logout,
   saveSession,
-  startGoogleLogin,
+  authMode,
+  connectWallet,
+  getOrRefreshSession,
+  SESSION_EVENT,
   type CircleSession,
 } from "@/lib/circle-client";
 import { CATEGORY_EMOJI, hhmm, shortAddr, usdc } from "@/lib/format";
@@ -162,9 +165,21 @@ export default function PaymentPreview({ initial, explorerUrl, faucetUrl, feeEst
     [itinerary.id, refreshBalance, showError],
   );
 
-  // Restore the Circle session; auto-continue after returning from Google login.
+  // Follow connects/disconnects made elsewhere (e.g. the header wallet button).
   useEffect(() => {
-    const s = getSession();
+    const read = () => {
+      const s = getSession();
+      setSession(s);
+      if (s?.walletAddress) void refreshBalance(s.walletAddress);
+    };
+    window.addEventListener(SESSION_EVENT, read);
+    return () => window.removeEventListener(SESSION_EVENT, read);
+  }, [refreshBalance]);
+
+  // Restore the Circle session (PIN sessions renew silently); auto-continue after Google login.
+  useEffect(() => {
+    void (async () => {
+    const s = await getOrRefreshSession().catch(() => null);
     setSession(s);
     if (!s) return;
     if (s.walletAddress) void refreshBalance(s.walletAddress);
@@ -183,13 +198,20 @@ export default function PaymentPreview({ initial, explorerUrl, faucetUrl, feeEst
         })
         .catch(showError);
     }
+    })();
   }, [initial.status, pay, refreshBalance, showError]);
 
+  // PIN mode: connect in place (Circle UI asks for the PIN) then pay.
+  // Google mode: redirect to Google; payment resumes via ?autopay=1.
   const login = async () => {
     setError(null);
-    setPhase("login");
+    setPhase(authMode() === "pin" ? "creating" : "login");
     try {
-      await startGoogleLogin(`/pay/${itinerary.id}?autopay=1`);
+      const s = await connectWallet(`/pay/${itinerary.id}?autopay=1`);
+      if (!s) return;
+      setSession(s);
+      if (s.walletAddress) void refreshBalance(s.walletAddress);
+      await pay(s);
     } catch (err) {
       showError(err);
     }
@@ -322,7 +344,7 @@ export default function PaymentPreview({ initial, explorerUrl, faucetUrl, feeEst
             onClick={() => (session ? void pay(session) : void login())}
             className="min-h-[48px] w-full rounded-xl bg-accent px-4 text-base font-semibold text-accent-ink disabled:opacity-50"
           >
-            {session ? `${t.pay} ${usdc(itinerary.totalUsdc)}` : t.loginAndPay}
+            {session ? `${t.pay} ${usdc(itinerary.totalUsdc)}` : authMode() === "pin" ? t.connectAndPay : t.loginAndPay}
           </button>
           {session && (
             <button

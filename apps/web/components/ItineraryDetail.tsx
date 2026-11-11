@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { CircleClientError, ensureWallet, getSession, logout, startGoogleLogin } from "@/lib/circle-client";
+import { authMode, CircleClientError, connectWallet, ensureWallet, getOrRefreshSession, getSession, hasPinWallet, logout } from "@/lib/circle-client";
 import { CATEGORY_EMOJI, hhmm, usdc } from "@/lib/format";
 import type { ItineraryView, StopView } from "@/lib/types";
 import { useI18n } from "./I18nProvider";
@@ -40,7 +40,7 @@ export default function ItineraryDetail({ initial, vouchers, explorerUrl }: Prop
   const [error, setError] = useState<string | null>(null);
   // Read after mount (localStorage) to avoid a hydration mismatch.
   const [hasSession, setHasSession] = useState(false);
-  useEffect(() => setHasSession(!!getSession()), []);
+  useEffect(() => setHasSession(!!getSession() || hasPinWallet()), []);
 
   const refresh = useCallback(async () => {
     const res = await fetch(`/api/itinerary?id=${encodeURIComponent(it.id)}`, { cache: "no-store" });
@@ -57,10 +57,16 @@ export default function ItineraryDetail({ initial, vouchers, explorerUrl }: Prop
 
   const cancel = async (stop: StopView) => {
     setError(null);
-    let session = getSession();
+    let session = await getOrRefreshSession().catch(() => null);
     if (!session) {
-      await startGoogleLogin(`/itinerary/${it.id}`).catch((e: Error) => setError(e.message));
-      return;
+      try {
+        session = await connectWallet(`/itinerary/${it.id}`);
+      } catch (e) {
+        setError((e as Error).message);
+        return;
+      }
+      if (!session) return; // Google mode: redirected
+      setHasSession(true);
     }
     if (!window.confirm(t.cancelConfirm)) return;
     setBusyStop(stop.id);
@@ -149,7 +155,7 @@ export default function ItineraryDetail({ initial, vouchers, explorerUrl }: Prop
                     onClick={() => void cancel(s)}
                     className="w-full rounded-xl border border-danger/40 px-3 py-2 text-sm font-medium text-danger disabled:opacity-50"
                   >
-                    {busyStop === s.id ? t.loading : hasSession ? t.cancelStop : t.cancelLogin}
+                    {busyStop === s.id ? t.loading : hasSession ? t.cancelStop : authMode() === "pin" ? t.connectToCancel : t.cancelLogin}
                   </button>
                 )}
               </div>

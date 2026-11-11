@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getSession } from "@/lib/circle-client";
+import { getSession, SESSION_EVENT } from "@/lib/circle-client";
 import { clientReverse } from "@/lib/client-geocode";
 import type { ItineraryView, MapPlace } from "@/lib/types";
 import { useChat } from "@/lib/use-chat";
@@ -33,17 +33,23 @@ function MiniWallet() {
   const [addr, setAddr] = useState<string | null>(null);
   const [balance, setBalance] = useState<string | null>(null);
   useEffect(() => {
-    const s = getSession();
-    if (!s?.walletAddress) return;
-    setAddr(s.walletAddress);
-    fetch(`/api/balance?address=${s.walletAddress}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => j && setBalance(Number(j.usdc).toFixed(2)))
-      .catch(() => {});
+    const read = () => {
+      const s = getSession();
+      setAddr(s?.walletAddress ?? null);
+      setBalance(null);
+      if (!s?.walletAddress) return;
+      fetch(`/api/balance?address=${s.walletAddress}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => j && setBalance(Number(j.usdc).toFixed(2)))
+        .catch(() => {});
+    };
+    read();
+    window.addEventListener(SESSION_EVENT, read);
+    return () => window.removeEventListener(SESSION_EVENT, read);
   }, []);
   return (
     <div className="mt-auto rounded-2xl bg-[#0c2621] p-4 text-white">
-      <small className="text-[9px] tracking-[1px] text-[#84a59b]">{t.travelWallet}</small>
+      <small className="text-[11px] tracking-[1px] text-[#84a59b]">{t.travelWallet}</small>
       <div className="mt-3 flex items-baseline justify-between gap-2">
         <span className="text-xs">{t.usdcBalance}</span>
         <b className="text-[22px]">{addr ? (balance ?? "…") : "—"}</b>

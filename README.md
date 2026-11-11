@@ -63,7 +63,11 @@ Deployer = operator = owner (đổi operator sau bằng `setOperator`). Arc khuy
 
 Sau khi sửa contract: `forge build && (cd ../apps/web && npm run abi)` để cập nhật ABI.
 
-## 4. Circle wallet + Google login (M5–M6)
+## 4. Circle wallet (M5–M6)
+
+**Chế độ hiện tại — ví PIN (không cần Google):** chỉ cần `CIRCLE_API_KEY` + `NEXT_PUBLIC_CIRCLE_APP_ID` (lấy App ID: `curl -H "Authorization: Bearer $CIRCLE_API_KEY" https://api.circle.com/v1/w3s/config/entity`). Bấm **Bắt đầu / Get started** → server tạo Circle user cho id ngẫu nhiên của trình duyệt (`/api/circle/pin-session`) → cửa sổ Circle yêu cầu đặt PIN + câu hỏi bảo mật → ví SCA trên ARC-TESTNET được tạo. Mọi giao dịch sau đó xác nhận bằng PIN trong UI của Circle; token hết hạn được cấp lại tự động. Lưu ý: ví gắn với trình duyệt (localStorage) — xoá dữ liệu trình duyệt là mất liên kết tới ví.
+
+**Chế độ Google (sau này):** điền `NEXT_PUBLIC_GOOGLE_CLIENT_ID` là app tự chuyển sang đăng nhập Google:
 
 1. **Google Cloud Console** → APIs & Services → Credentials → OAuth client ID (Web):
    - Authorized JavaScript origins: `http://localhost:3000`
