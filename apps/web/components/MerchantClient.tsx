@@ -19,11 +19,11 @@ type Detail = {
 };
 type Result = { ok: true; name: string; amount: string; txHash: string; url: string | null } | { ok: false; message: string };
 
-const MERCHANT_KEY = "payagent.merchant";
+const MERCHANT_KEY = "toura.merchant";
 
-/** payagent://checkin?s={stopId}&c={code hex} → { stopId, code } (the code the escrow checks; old hedgora:// codes still work) */
+/** toura://checkin?s={stopId}&c={code hex} → { stopId, code } (the code the escrow checks; old payagent:// and hedgora:// codes still work) */
 function parsePayload(text: string): { stopId: string; code: string } | null {
-  const m = text.trim().match(/^(?:payagent|hedgora):\/\/checkin\?(.+)$/);
+  const m = text.trim().match(/^(?:toura|payagent|hedgora):\/\/checkin\?(.+)$/);
   if (!m) return null;
   const q = new URLSearchParams(m[1]);
   const stopId = q.get("s");
@@ -177,7 +177,7 @@ export default function MerchantClient() {
               payload={venuePayload(merchantId)}
               label={merchantName(t, merchants.find((m) => m.id === merchantId))}
               hint={t.venueQrCaption}
-              download={`payagent-venue-${merchantId}.png`}
+              download={`toura-venue-${merchantId}.png`}
               showText={false}
             />
           </div>

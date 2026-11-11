@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy PayAgentEscrow v2 to Arc testnet with the operator key from apps/web/.env,
+# Deploy TouraEscrow v2 to Arc testnet with the operator key from apps/web/.env,
 # then write ESCROW_ADDRESS back into that .env. Never prints the private key.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -26,6 +26,6 @@ if grep -qE '^ESCROW_ADDRESS=' .env; then
 else
   echo "ESCROW_ADDRESS=$ADDR" >> .env
 fi
-echo "PayAgentEscrow v2 deployed: $ADDR"
+echo "TouraEscrow v2 deployed: $ADDR"
 [ -n "${ARC_EXPLORER_URL:-}" ] && echo "explorer: $ARC_EXPLORER_URL/address/$ADDR"
 echo "ESCROW_ADDRESS written to apps/web/.env — restart the dev server."

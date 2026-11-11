@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "PAY AGENT",
-    short_name: "PAY AGENT",
-    description: "PAY AGENT — AI travel planner that pays each place in USDC only when you arrive",
+    name: "Toura",
+    short_name: "Toura",
+    description: "Toura — AI travel planner that pays each place in USDC only when you arrive",
     start_url: "/",
     display: "standalone",
     background_color: "#061513",

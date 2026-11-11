@@ -4,11 +4,11 @@
 // It carries only the venue id — no secret — so it is safe to print.
 
 export function venuePayload(merchantId: string): string {
-  return `payagent://venue?m=${encodeURIComponent(merchantId)}`;
+  return `toura://venue?m=${encodeURIComponent(merchantId)}`;
 }
 
 export function parseVenue(text: string): string | null {
-  const m = text.trim().match(/^(?:payagent|hedgora):\/\/venue\?(.+)$/); // old hedgora:// QRs still work
+  const m = text.trim().match(/^(?:toura|payagent|hedgora):\/\/venue\?(.+)$/); // old payagent:// and hedgora:// QRs still work
   if (!m) return null;
   const id = new URLSearchParams(m[1]).get("m");
   return id && /^[a-z0-9_-]{1,64}$/i.test(id) ? id : null;

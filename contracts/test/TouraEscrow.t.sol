@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
-import {PayAgentEscrow} from "../src/PayAgentEscrow.sol";
+import {TouraEscrow} from "../src/TouraEscrow.sol";
 
 /// A merchant contract that refuses native transfers.
 contract Rejecter {
@@ -13,12 +13,12 @@ contract Rejecter {
 
 /// Tries to re-enter release() when paid.
 contract Reenterer {
-    PayAgentEscrow escrow;
+    TouraEscrow escrow;
     bytes32 id;
     bytes32 code;
     bool tried;
 
-    function arm(PayAgentEscrow e, bytes32 i, bytes32 c) external {
+    function arm(TouraEscrow e, bytes32 i, bytes32 c) external {
         escrow = e;
         id = i;
         code = c;
@@ -32,8 +32,8 @@ contract Reenterer {
     }
 }
 
-contract PayAgentEscrowTest is Test {
-    PayAgentEscrow escrow;
+contract TouraEscrowTest is Test {
+    TouraEscrow escrow;
 
     address owner = makeAddr("owner");
     address operator = makeAddr("operator");
@@ -54,7 +54,7 @@ contract PayAgentEscrowTest is Test {
     event Refunded(bytes32 indexed itineraryId, uint256 stopIndex, address payer, uint256 amount);
 
     function setUp() public {
-        escrow = new PayAgentEscrow(operator, owner);
+        escrow = new TouraEscrow(operator, owner);
         vm.deal(payer, 100 ether);
         deadline = uint64(block.timestamp + 4 hours);
     }
@@ -90,7 +90,7 @@ contract PayAgentEscrowTest is Test {
 
         assertEq(address(escrow).balance, A1 + A2);
         assertEq(payer.balance, 100 ether - A1 - A2);
-        (address p, uint64 d, PayAgentEscrow.StopInfo[] memory stops) = escrow.getItinerary(ID);
+        (address p, uint64 d, TouraEscrow.StopInfo[] memory stops) = escrow.getItinerary(ID);
         assertEq(p, payer);
         assertEq(d, deadline);
         assertEq(stops.length, 2);
@@ -108,13 +108,13 @@ contract PayAgentEscrowTest is Test {
         bytes32[] memory hashes = new bytes32[](1);
         hashes[0] = _hash(C1);
         vm.prank(payer);
-        vm.expectRevert(PayAgentEscrow.WrongAmount.selector);
+        vm.expectRevert(TouraEscrow.WrongAmount.selector);
         escrow.deposit{value: A1 - 1}(ID, merchants, amounts, hashes, deadline);
     }
 
     function test_deposit_revertsOnDuplicateId() public {
         _deposit();
-        vm.expectRevert(PayAgentEscrow.ItineraryExists.selector);
+        vm.expectRevert(TouraEscrow.ItineraryExists.selector);
         _deposit();
     }
 
@@ -128,7 +128,7 @@ contract PayAgentEscrowTest is Test {
         bytes32[] memory hashes = new bytes32[](1);
         hashes[0] = _hash(C1);
         vm.prank(payer);
-        vm.expectRevert(PayAgentEscrow.InvalidInput.selector);
+        vm.expectRevert(TouraEscrow.InvalidInput.selector);
         escrow.deposit{value: A1 + A2}(ID, merchants, amounts, hashes, deadline);
     }
 
@@ -139,7 +139,7 @@ contract PayAgentEscrowTest is Test {
         amounts[0] = A1;
         bytes32[] memory hashes = new bytes32[](1);
         vm.prank(payer);
-        vm.expectRevert(PayAgentEscrow.InvalidInput.selector);
+        vm.expectRevert(TouraEscrow.InvalidInput.selector);
         escrow.deposit{value: A1}(ID, merchants, amounts, hashes, deadline);
     }
 
@@ -150,13 +150,13 @@ contract PayAgentEscrowTest is Test {
         bytes32[] memory hashes = new bytes32[](1);
         hashes[0] = _hash(C1);
         vm.prank(payer);
-        vm.expectRevert(PayAgentEscrow.InvalidInput.selector);
+        vm.expectRevert(TouraEscrow.InvalidInput.selector);
         escrow.deposit{value: A1}(ID, merchants, amounts, hashes, deadline);
 
         merchants[0] = m1;
         amounts[0] = 0;
         vm.prank(payer);
-        vm.expectRevert(PayAgentEscrow.InvalidInput.selector);
+        vm.expectRevert(TouraEscrow.InvalidInput.selector);
         escrow.deposit{value: 0}(ID, merchants, amounts, hashes, deadline);
     }
 
@@ -168,7 +168,7 @@ contract PayAgentEscrowTest is Test {
         bytes32[] memory hashes = new bytes32[](1);
         hashes[0] = _hash(C1);
         vm.prank(payer);
-        vm.expectRevert(PayAgentEscrow.InvalidDeadline.selector);
+        vm.expectRevert(TouraEscrow.InvalidDeadline.selector);
         escrow.deposit{value: A1}(ID, merchants, amounts, hashes, uint64(block.timestamp));
     }
 
@@ -183,49 +183,49 @@ contract PayAgentEscrowTest is Test {
 
         assertEq(m1.balance, A1);
         assertEq(address(escrow).balance, A2);
-        (,, PayAgentEscrow.StopInfo[] memory stops) = escrow.getItinerary(ID);
+        (,, TouraEscrow.StopInfo[] memory stops) = escrow.getItinerary(ID);
         assertEq(stops[0].status, escrow.STATUS_RELEASED());
     }
 
     function test_release_operatorCannotReleaseWithoutCode() public {
         _deposit();
         vm.prank(operator);
-        vm.expectRevert(PayAgentEscrow.WrongCode.selector);
+        vm.expectRevert(TouraEscrow.WrongCode.selector);
         escrow.release(ID, 0, bytes32(0));
     }
 
     function test_release_revertsOnWrongCode() public {
         _deposit();
-        vm.expectRevert(PayAgentEscrow.WrongCode.selector);
+        vm.expectRevert(TouraEscrow.WrongCode.selector);
         escrow.release(ID, 0, C2); // code of the other stop
     }
 
     function test_release_revertsTwice() public {
         _deposit();
         escrow.release(ID, 0, C1);
-        vm.expectRevert(PayAgentEscrow.StopNotLocked.selector);
+        vm.expectRevert(TouraEscrow.StopNotLocked.selector);
         escrow.release(ID, 0, C1);
     }
 
     function test_release_revertsAfterDeadline() public {
         _deposit();
         vm.warp(deadline + 1);
-        vm.expectRevert(PayAgentEscrow.DeadlinePassed.selector);
+        vm.expectRevert(TouraEscrow.DeadlinePassed.selector);
         escrow.release(ID, 0, C1);
     }
 
     function test_release_revertsOnUnknownItineraryOrIndex() public {
-        vm.expectRevert(PayAgentEscrow.ItineraryNotFound.selector);
+        vm.expectRevert(TouraEscrow.ItineraryNotFound.selector);
         escrow.release(ID, 0, C1);
         _deposit();
-        vm.expectRevert(PayAgentEscrow.StopIndexOutOfRange.selector);
+        vm.expectRevert(TouraEscrow.StopIndexOutOfRange.selector);
         escrow.release(ID, 2, C1);
     }
 
     function test_release_revertsWhenMerchantRejectsPayment() public {
         Rejecter r = new Rejecter();
         _depositTo(address(r), m2);
-        vm.expectRevert(PayAgentEscrow.TransferFailed.selector);
+        vm.expectRevert(TouraEscrow.TransferFailed.selector);
         escrow.release(ID, 0, C1);
         // Still locked, so it can be refunded later.
         vm.prank(operator);
@@ -237,7 +237,7 @@ contract PayAgentEscrowTest is Test {
         Reenterer r = new Reenterer();
         _depositTo(address(r), m2);
         r.arm(escrow, ID, C1);
-        vm.expectRevert(PayAgentEscrow.TransferFailed.selector);
+        vm.expectRevert(TouraEscrow.TransferFailed.selector);
         escrow.release(ID, 0, C1);
     }
 
@@ -255,7 +255,7 @@ contract PayAgentEscrowTest is Test {
     function test_refund_byPayerOnlyAfterDeadline() public {
         _deposit();
         vm.prank(payer);
-        vm.expectRevert(PayAgentEscrow.DeadlineNotReached.selector);
+        vm.expectRevert(TouraEscrow.DeadlineNotReached.selector);
         escrow.refund(ID, 0);
 
         vm.warp(deadline + 1);
@@ -268,7 +268,7 @@ contract PayAgentEscrowTest is Test {
         _deposit();
         vm.warp(deadline + 1);
         vm.prank(stranger);
-        vm.expectRevert(PayAgentEscrow.NotAuthorized.selector);
+        vm.expectRevert(TouraEscrow.NotAuthorized.selector);
         escrow.refund(ID, 0);
     }
 
@@ -276,7 +276,7 @@ contract PayAgentEscrowTest is Test {
         _deposit();
         escrow.release(ID, 0, C1);
         vm.prank(operator);
-        vm.expectRevert(PayAgentEscrow.StopNotLocked.selector);
+        vm.expectRevert(TouraEscrow.StopNotLocked.selector);
         escrow.refund(ID, 0);
     }
 
@@ -284,7 +284,7 @@ contract PayAgentEscrowTest is Test {
         _deposit();
         vm.prank(operator);
         escrow.refund(ID, 0);
-        vm.expectRevert(PayAgentEscrow.StopNotLocked.selector);
+        vm.expectRevert(TouraEscrow.StopNotLocked.selector);
         escrow.release(ID, 0, C1);
     }
 
@@ -313,14 +313,14 @@ contract PayAgentEscrowTest is Test {
 
     function test_setOperator_revertsOnZero() public {
         vm.prank(owner);
-        vm.expectRevert(PayAgentEscrow.InvalidInput.selector);
+        vm.expectRevert(TouraEscrow.InvalidInput.selector);
         escrow.setOperator(address(0));
     }
 
     function testFuzz_onlyTheRightCodeReleases(bytes32 guess) public {
         vm.assume(guess != C1);
         _deposit();
-        vm.expectRevert(PayAgentEscrow.WrongCode.selector);
+        vm.expectRevert(TouraEscrow.WrongCode.selector);
         escrow.release(ID, 0, guess);
     }
 }

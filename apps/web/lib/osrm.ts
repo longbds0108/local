@@ -57,7 +57,7 @@ export async function getRoute(points: LatLon[], profile: Profile = "driving"): 
   const url = `${config.osrmUrl}/route/v1/${osrmProfile}/${coords}?overview=full&geometries=geojson&steps=false`;
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": "PayAgent/0.1 (demo)" },
+      headers: { "User-Agent": "Toura/0.1 (demo)" },
       signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) throw new Error(`OSRM HTTP ${res.status}`);

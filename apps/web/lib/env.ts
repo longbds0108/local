@@ -31,7 +31,7 @@ export const config = {
    * only allow writing to the temp dir, and it doesn't outlive the instance.
    */
   get cacheDir() {
-    return read("CACHE_DIR") ?? (process.env.VERCEL ? path.join(os.tmpdir(), "payagent-cache") : path.join(this.dataDir, "cache"));
+    return read("CACHE_DIR") ?? (process.env.VERCEL ? path.join(os.tmpdir(), "toura-cache") : path.join(this.dataDir, "cache"));
   },
   get anthropicModel() {
     return read("ANTHROPIC_MODEL") ?? "claude-opus-5-5";

@@ -16,12 +16,13 @@ const appFont = Be_Vietnam_Pro({
   display: "swap",
 });
 
-const MIGRATE_STORAGE = `try{for(const st of [localStorage,sessionStorage]){for(const k of Object.keys(st)){if(k.indexOf("hedgora.")===0){const n="payagent."+k.slice(8);if(st.getItem(n)===null)st.setItem(n,st.getItem(k));st.removeItem(k);}}}}catch(e){}`;
+// Older builds stored keys as hedgora.* and then payagent.*; move them to toura.* before the app starts.
+const MIGRATE_STORAGE = `try{for(const st of [localStorage,sessionStorage]){for(const k of Object.keys(st)){const p=k.indexOf("hedgora.")===0?8:k.indexOf("payagent.")===0?9:0;if(p){const n="toura."+k.slice(p);if(st.getItem(n)===null)st.setItem(n,st.getItem(k));st.removeItem(k);}}}}catch(e){}`;
 
 export const metadata: Metadata = {
-  description: "PAY AGENT — AI travel planner that pays each place in USDC only when you arrive",
-  applicationName: "PAY AGENT",
-  appleWebApp: { capable: true, title: "PAY AGENT", statusBarStyle: "black-translucent" },
+  description: "Toura — AI travel planner that pays each place in USDC only when you arrive",
+  applicationName: "Toura",
+  appleWebApp: { capable: true, title: "Toura", statusBarStyle: "black-translucent" },
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
 };
 

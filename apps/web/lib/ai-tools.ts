@@ -1,4 +1,4 @@
-// Tools the PAY AGENT agent can call. Every input is validated with zod here
+// Tools the Toura agent can call. Every input is validated with zod here
 // (eager input streaming means the API no longer validates tool input for us),
 // and build_itinerary re-derives times and prices on the server rather than
 // trusting numbers from the model.
@@ -345,7 +345,7 @@ async function runBuild(raw: unknown, ctx: ToolContext) {
 const PAYMENT_LABEL: Record<PayMode, string> = {
   ESCROW: "prepay (deposit held in escrow, released to the venue on arrival)",
   VENUE: "pay_at_venue (traveller scans the venue's QR and pays in USDC on arrival)",
-  SELF: "pay_yourself (not a PAY AGENT partner; price is an estimate, paid outside the app)",
+  SELF: "pay_yourself (not a Toura partner; price is an estimate, paid outside the app)",
   NONE: "free",
 };
 

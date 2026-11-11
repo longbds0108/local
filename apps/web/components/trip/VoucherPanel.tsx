@@ -182,7 +182,7 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
             <>
               <div className="mt-4 text-center text-xs font-semibold text-[#9bb0aa]">{t.orShowYourQr}</div>
               <div className="mt-2 flex justify-center">
-                <QRVoucher payload={vouchers[next.id]} label={next.name} download={`payagent-${next.id}.png`} />
+                <QRVoucher payload={vouchers[next.id]} label={next.name} download={`toura-${next.id}.png`} />
               </div>
               <div className="mt-3">{cancelButton(next)}</div>
             </>
@@ -265,7 +265,7 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
                 {showQr && (
                   <div className="mt-3 space-y-2">
                     <div className="flex justify-center">
-                      <QRVoucher payload={vouchers[s.id]} label={s.name} download={`payagent-${s.id}.png`} />
+                      <QRVoucher payload={vouchers[s.id]} label={s.name} download={`toura-${s.id}.png`} />
                     </div>
                     {cancelButton(s)}
                   </div>

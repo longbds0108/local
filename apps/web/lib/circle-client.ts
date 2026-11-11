@@ -8,12 +8,12 @@ import type { SocialLoginProvider } from "@circle-fin/w3s-pw-web-sdk/dist/src/ty
 const APP_ID = process.env.NEXT_PUBLIC_CIRCLE_APP_ID ?? "";
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 
-const DEVICE_KEY = "payagent.circle.device";
-const PIN_USER_KEY = "payagent.circle.userId";
+const DEVICE_KEY = "toura.circle.device";
+const PIN_USER_KEY = "toura.circle.userId";
 /** Fired on window whenever the stored session changes (connect / refresh / logout). */
-export const SESSION_EVENT = "payagent-session";
-const SESSION_KEY = "payagent.circle.session";
-const RETURN_KEY = "payagent.circle.returnTo";
+export const SESSION_EVENT = "toura-session";
+const SESSION_KEY = "toura.circle.session";
+const RETURN_KEY = "toura.circle.returnTo";
 
 export type CircleSession = {
   authMode?: "pin" | "google";
@@ -219,7 +219,7 @@ export function logout() {
 function pinUserId(): string {
   let id = load<string>(PIN_USER_KEY);
   if (!id) {
-    id = `payagent-${crypto.randomUUID()}`;
+    id = `toura-${crypto.randomUUID()}`;
     store(PIN_USER_KEY, id);
   }
   return id;

@@ -112,7 +112,7 @@ export const ESCROW_ABI = [
       {
         "name": "stops",
         "type": "tuple[]",
-        "internalType": "struct PayAgentEscrow.StopInfo[]",
+        "internalType": "struct TouraEscrow.StopInfo[]",
         "components": [
           {
             "name": "merchant",

@@ -64,7 +64,7 @@ export default function AskCard({ messages, busy, hasItinerary, onSend, onReset 
               </div>
             ) : (
               <div key={m.id} className="space-y-2">
-                <b className="text-accent">PAY AGENT ✦</b>
+                <b className="text-accent">Toura ✦</b>
                 {m.tools.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {m.tools.map((tool, k) => (

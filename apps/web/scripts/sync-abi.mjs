@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const artifact = join(here, "../../../contracts/out/PayAgentEscrow.sol/PayAgentEscrow.json");
+const artifact = join(here, "../../../contracts/out/TouraEscrow.sol/TouraEscrow.json");
 const { abi } = JSON.parse(readFileSync(artifact, "utf8"));
 const out = join(here, "../lib/escrow-abi.ts");
 writeFileSync(

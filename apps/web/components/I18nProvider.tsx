@@ -8,7 +8,7 @@ type Ctx = { locale: Locale; t: Dict; setLocale: (l: Locale) => void };
 
 const I18nContext = createContext<Ctx>({ locale: "vi", t: dictionaries.vi, setLocale: () => {} });
 
-const KEY = "payagent.locale";
+const KEY = "toura.locale";
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("vi");
@@ -29,7 +29,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   // Tab title in the UI language (React hoists <title> into <head>).
   const section = "/" + (pathname?.split("/")[1] ?? "");
   const pageName = dictionaries[locale].pageTitle[section];
-  const title = pageName ? `${pageName} · PAY AGENT` : "PAY AGENT";
+  const title = pageName ? `${pageName} · Toura` : "Toura";
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);

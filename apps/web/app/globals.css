@@ -110,22 +110,22 @@ body {
   cursor: pointer;
 }
 
-.payagent-popup {
+.toura-popup {
   font-family: var(--font-sans);
   color: #10211e;
   display: grid;
   gap: 2px;
 }
-.payagent-popup .hp-title {
+.toura-popup .hp-title {
   font-weight: 700;
   font-size: 13px;
 }
-.payagent-popup .hp-meta,
-.payagent-popup .hp-hours {
+.toura-popup .hp-meta,
+.toura-popup .hp-hours {
   font-size: 11px;
   color: #64736f;
 }
-.payagent-popup .hp-price {
+.toura-popup .hp-price {
   font-size: 12px;
   font-weight: 600;
 }

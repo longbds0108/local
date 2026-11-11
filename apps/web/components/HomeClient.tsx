@@ -17,7 +17,7 @@ import { fxDelay } from "@/lib/fx";
 const MapView = dynamic(() => import("./Map"), { ssr: false });
 
 const CENTER = { lat: 10.346, lon: 107.0843 };
-const SAVED_KEY = "payagent.saved";
+const SAVED_KEY = "toura.saved";
 const PAGE = 9;
 
 type Tab = "discover" | "map" | "saved";

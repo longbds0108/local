@@ -10,9 +10,9 @@ import { rememberDraft } from "./drafts";
 export type ToolState = { name: string; status: "start" | "done" | "error"; summary?: string };
 export type ChatMessage = { id: string; role: "user" | "assistant"; text: string; tools: ToolState[]; error?: string };
 
-const SESSION_KEY = "payagent.chat.session";
-const TRANSCRIPT_KEY = "payagent.chat.transcript";
-const ITINERARY_KEY = "payagent.chat.itinerary";
+const SESSION_KEY = "toura.chat.session";
+const TRANSCRIPT_KEY = "toura.chat.transcript";
+const ITINERARY_KEY = "toura.chat.itinerary";
 
 function readJSON<T>(key: string): T | null {
   try {
