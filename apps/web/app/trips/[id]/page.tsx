@@ -3,6 +3,7 @@ import TripDetail from "@/components/trip/TripDetail";
 import { estimatePaymentFeeUsdc } from "@/lib/chain";
 import { config } from "@/lib/env";
 import { getItineraryWithStops, toView } from "@/lib/itinerary";
+import { isOverdue, sweepItinerary } from "@/lib/refunds";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   const it = await getItineraryWithStops(id);
   if (!it) notFound();
   const view = toView(it);
+  if (isOverdue(view)) void sweepItinerary(view.id);
 
   // Check-in QR codes are built in the traveller's browser from codes only it
   // holds, so this link can be shared without exposing them.

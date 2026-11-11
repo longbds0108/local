@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { getAddress, type Hex } from "viem";
+import { getAddress } from "viem";
 import { z } from "zod";
 import { ApiError, clientIp, handle, jsonError, parseJson } from "@/lib/api";
-import { operatorRefund } from "@/lib/chain";
 import { getArcWallet } from "@/lib/circle";
 import { prisma } from "@/lib/db";
 import { config } from "@/lib/env";
-import { recomputeItineraryStatus } from "@/lib/itinerary";
 import { rateLimit } from "@/lib/rate-limit";
+import { refundStop } from "@/lib/refunds";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,21 +22,6 @@ const Body = z.discriminatedUnion("mode", [
 
 const GRACE_MS = 2 * 3600_000;
 const SWEEP_BATCH = 20;
-
-async function refundStop(stop: { id: string; itineraryId: string; onchainIndex: number | null }, onchainId: string) {
-  if (stop.onchainIndex === null) throw new ApiError(409, "CONFLICT", "Stop is not escrowed on-chain");
-  const locked = await prisma.stop.updateMany({ where: { id: stop.id, status: "PENDING" }, data: { status: "REFUNDING" } });
-  if (locked.count !== 1) throw new ApiError(409, "CONFLICT", "Stop is not refundable (already used, refunded or in progress)");
-  try {
-    const txHash = await operatorRefund(onchainId as Hex, stop.onchainIndex);
-    await prisma.stop.update({ where: { id: stop.id }, data: { status: "REFUNDED", refundTx: txHash, refundedAt: new Date() } });
-    await recomputeItineraryStatus(stop.itineraryId);
-    return txHash;
-  } catch (err) {
-    await prisma.stop.update({ where: { id: stop.id }, data: { status: "PENDING" } });
-    throw new ApiError(502, "CHAIN_ERROR", `On-chain refund failed: ${(err as Error).message.split("\n")[0]}`);
-  }
-}
 
 export const POST = handle(async (req: Request) => {
   if (!rateLimit(`refund:${clientIp(req)}`, 20, 60_000).ok) return jsonError(429, "RATE_LIMITED", "Too many requests");

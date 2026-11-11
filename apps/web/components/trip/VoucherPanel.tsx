@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { authMode, CircleClientError, connectWallet, ensureWallet, getOrRefreshSession, getSession, hasPinWallet, logout } from "@/lib/circle-client";
 import { checkinPayload, codesFor } from "@/lib/checkin-codes";
+import { directionsUrl, stopOffer } from "@/lib/stop-info";
+import { dayMonth } from "../account/shared";
 import { errorText } from "@/lib/error-text";
 import { CATEGORY_EMOJI, hhmm, usdc } from "@/lib/format";
 import { merchantName } from "@/lib/i18n";
@@ -22,7 +24,7 @@ type Props = {
 
 /** Paid trip: the next stop's QR first, every stop's state, then the blockchain record. */
 export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [busyStop, setBusyStop] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openQr, setOpenQr] = useState<string | null>(null);
@@ -119,6 +121,18 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
         </p>
       )}
 
+      {/* When unused money comes back — stated with the real time. */}
+      {it.status === "PAID" && it.deadline && it.stops.some((s) => s.status === "PENDING") && (
+        <p className="rounded-xl bg-surface-2 px-4 py-3 text-sm text-[#c5d8d1]">
+          ↩{" "}
+          {it.deadline * 1000 > Date.now()
+            ? t.refundBy
+                .replace("{time}", hhmm(new Date(it.deadline * 1000)))
+                .replace("{date}", dayMonth(new Date(it.deadline * 1000).toISOString(), locale))
+            : t.refundingNow}
+        </p>
+      )}
+
       {missing.length > 0 && (
         <p className="rounded-xl bg-warn-soft px-4 py-3 text-sm text-warn">{t.codesMissing}</p>
       )}
@@ -133,10 +147,20 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
           <p className="mt-1 text-sm text-[#b8cdc6]">
             {hhmm(next.arriveAt)} · {usdc(next.priceUsdc)}
           </p>
+          {stopOffer(t, next) && <p className="mt-1 text-xs text-[#9bb0aa]">{stopOffer(t, next)}</p>}
+
           {/* Two ways to pay at the venue: scan theirs (primary), or let them scan yours. */}
           <div className="mt-4">
             <PayByScan it={it} codes={codes} onPaid={() => void refresh()} />
           </div>
+          <a
+            href={directionsUrl(next)}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white"
+          >
+            🧭 {t.directions} ↗
+          </a>
           <div className="mt-4 text-center text-xs font-semibold text-[#9bb0aa]">{t.orShowYourQr}</div>
           <div className="mt-2 flex justify-center">
             <QRVoucher payload={vouchers[next.id]} label={next.name} download={`hedgora-${next.id}.png`} />
@@ -184,10 +208,27 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
                       {hhmm(s.arriveAt)} · {s.durationMin} {t.minutes}
                       {s.merchant && Number(s.priceUsdc) > 0 ? ` · ${merchantName(t, s.merchant)}` : ""}
                     </p>
+                    {s.note && (
+                      <p className="mt-1 text-xs text-[#c5d8d1]">
+                        <span className="text-ink-2">{t.whyThis}: </span>
+                        {s.note}
+                      </p>
+                    )}
+                    {stopOffer(t, s) && <p className="mt-0.5 text-xs text-ink-2">{stopOffer(t, s)}</p>}
                     <p className={`mt-1 text-xs font-semibold ${s.status === "PENDING" ? "text-accent" : "text-ink-2"}`}>
                       {isNext ? `${st.label} · ${t.nextStopShort}` : s.status === "FREE" ? t.noVoucherFree : st.label}
                     </p>
                     {it.status === "PAID" && s.status === "PENDING" && !vouchers[s.id] && <div className="mt-2">{cancelButton(s)}</div>}
+                    {it.status === "PAID" && s.status === "PENDING" && !isNext && (
+                      <a
+                        href={directionsUrl(s)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 mr-2 inline-flex min-h-10 items-center rounded-lg border border-line px-3 text-sm font-semibold text-ink"
+                      >
+                        🧭 {t.directions}
+                      </a>
+                    )}
                     {canUse(s) && !isNext && (
                       <button
                         type="button"

@@ -96,7 +96,7 @@ export const TOOLS: Anthropic.Beta.BetaTool[] = [
               arriveAt: { type: "string", description: "Planned arrival, ISO 8601 with offset" },
               durationMin: { type: "integer", minimum: 10, maximum: 300 },
               priceUsdc: { type: "number", description: "Your expected price for the party (informational; server recomputes)" },
-              note: { type: "string", description: "One short tip in the user's language" },
+              note: { type: "string", description: "Why this stop fits the request, one short sentence (max ~90 chars) in the UI language, e.g. 'Ven biển, hợp ngắm hoàng hôn, rẻ hơn ngân sách'" },
             },
             required: ["osmId", "arriveAt", "durationMin"],
           },

@@ -8,6 +8,7 @@ import { placeLabel, reverseGeocode } from "./geocode";
 import type { LatLon } from "./geo";
 import { executeTool, TOOLS } from "./ai-tools";
 import { hhmm, localNowString } from "./time";
+import { currentWeather } from "./weather";
 import type { ChatEvent } from "./types";
 
 const SYSTEM_PROMPT = `Bạn là Hedgora, trợ lý du lịch địa phương tại khu vực hiện tại của user (xem "Khu vực" trong [Ngữ cảnh]; mặc định ${CITY.name}). Chỉ gợi ý địa điểm có trong kết quả tool search_places.
@@ -23,6 +24,8 @@ Khi lịch trình xong, gọi build_itinerary để lưu và trả JSON.
 Cách làm việc:
 - Mỗi tin nhắn của user có khối [Ngữ cảnh] gồm giờ địa phương, điểm xuất phát và lịch trình nháp hiện tại. Dùng giờ địa phương để suy ra startAt/endAt (ISO 8601, múi giờ +07:00). Ví dụ "chiều nay có 4 tiếng" = bắt đầu từ giờ hiện tại làm tròn lên 15 phút, kết thúc sau 4 tiếng.
 - Mặc định 4 điểm nếu user không nói số điểm.
+- Nếu [Ngữ cảnh] báo đang mưa/dông: ưu tiên điểm trong nhà (cà phê, nhà hàng, bảo tàng) và nói ngắn gọn lý do.
+- Mỗi điểm trong build_itinerary có note = lý do chọn điểm đó (một câu ngắn), để user hiểu vì sao.
 - Gọi search_places quanh điểm xuất phát, truyền windowStart/windowEnd để loại các nơi đóng cửa. Dùng category, tags, cuisine để khớp sở thích (biển, hải sản, cà phê nhìn ra biển, bánh khọt...).
 - Gọi get_route với điểm xuất phát rồi các điểm theo thứ tự đi; sắp thứ tự hợp lý, tránh đi vòng.
 - priceUsdcPerPerson là giá mỗi người; chi phí điểm = giá × số người. Nếu user nêu ngân sách, tổng phải ≤ ngân sách.
@@ -59,12 +62,16 @@ async function contextBlock(sessionId: string, start: LatLon, startIsGps: boolea
         ? `id=${it.id}, ${it.partySize} người, ${hhmm(it.startAt)}–${hhmm(it.endAt)}, tổng ${it.totalUsdc} USDC: ${stops}`
         : `id=${it.id} đã thanh toán (${it.status}) — không sửa được; nếu user muốn thay đổi, tạo lịch trình mới`;
   }
+  const w = await currentWeather(start.lat, start.lon).catch(() => null);
+  const wet = w && ((w.code >= 51 && w.code <= 67) || (w.code >= 80 && w.code <= 99));
+  const weather = w ? `${Math.round(w.tempC)}°C, mã WMO ${w.code}${wet ? " (đang mưa/dông)" : ""}` : "không rõ";
   return [
     "[Ngữ cảnh]",
     `Giờ địa phương: ${localNowString()}`,
     `Khu vực: ${area ?? (startIsGps ? "không xác định được tên" : CITY.name)}`,
     `Điểm xuất phát: ${start.lat.toFixed(5)}, ${start.lon.toFixed(5)} (${startIsGps ? "GPS của user" : `mặc định: trung tâm ${CITY.name}`})`,
     `Ngôn ngữ giao diện: ${locale}`,
+    `Thời tiết hiện tại: ${weather}`,
     `Lịch trình nháp hiện tại: ${current}`,
     "[/Ngữ cảnh]",
   ].join("\n");

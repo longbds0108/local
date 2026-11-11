@@ -93,9 +93,24 @@ export default function AskCard({ messages, busy, hasItinerary, onSend, onReset 
             ),
           )}
           {hasItinerary && !busy && (
-            <a href="#itinerary" className="inline-flex min-h-10 items-center rounded-lg bg-accent/15 px-3 text-sm font-semibold text-accent">
-              {t.askItineraryReady} ↓
-            </a>
+            <>
+              <a href="#itinerary" className="inline-flex min-h-10 items-center rounded-lg bg-accent/15 px-3 text-sm font-semibold text-accent">
+                {t.askItineraryReady} ↓
+              </a>
+              {/* One-tap edits instead of typing. */}
+              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                {t.quickEdits.map((q) => (
+                  <button
+                    key={q.label}
+                    type="button"
+                    onClick={() => onSend(q.prompt)}
+                    className="min-h-10 shrink-0 rounded-full border border-white/15 px-3 text-sm whitespace-nowrap text-[#dffff4] hover:border-accent"
+                  >
+                    {q.label}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}

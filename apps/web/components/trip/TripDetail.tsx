@@ -61,6 +61,18 @@ export default function TripDetail({ initial, explorerUrl, faucetUrl, feeEstimat
   // A server refresh (after paying) brings a new itinerary + signed QR codes.
   useEffect(() => setIt(initial), [initial]);
   const onPaid = useCallback(() => router.refresh(), [router]);
+  const [shared, setShared] = useState(false);
+  const share = async () => {
+    const url = window.location.href.split("?")[0];
+    try {
+      if (navigator.share) return await navigator.share({ title: it.title, url });
+      await navigator.clipboard.writeText(url);
+      setShared(true);
+      setTimeout(() => setShared(false), 1500);
+    } catch {
+      /* user dismissed the share sheet */
+    }
+  };
 
   const step = currentStep(it);
   const expired = it.status === "DRAFT" && isExpiredDraft(it);
@@ -72,7 +84,16 @@ export default function TripDetail({ initial, explorerUrl, faucetUrl, feeEstimat
 
   return (
     <div className="mx-auto w-full max-w-xl space-y-5 px-[18px] pt-4 pb-10">
-      <BackLink href="/trips" label={t.dashTitle} />
+      <div className="flex items-center justify-between gap-3">
+        <BackLink href="/trips" label={t.dashTitle} />
+        <button
+          type="button"
+          onClick={() => void share()}
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-line px-3 text-sm font-semibold text-ink hover:border-accent/50"
+        >
+          ⤴ {shared ? t.linkCopied : t.share}
+        </button>
+      </div>
 
       <header className="flex items-start gap-3">
         <DateBlock iso={it.startAt} size="lg" />

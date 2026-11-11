@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db";
 import { config } from "@/lib/env";
 import { toView } from "@/lib/itinerary";
 import { rateLimit } from "@/lib/rate-limit";
+import { isOverdue, sweepItinerary } from "@/lib/refunds";
 import type { DashboardActivity, DashboardData } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -71,6 +72,7 @@ export const POST = handle(async (req: Request) => {
   activity.sort((a, b) => (a.at < b.at ? 1 : -1));
 
   const views = paid.map(toView);
+  for (const v of views) if (isOverdue(v)) void sweepItinerary(v.id);
   const data: DashboardData = {
     wallet: { id: wallet.id, address },
     balanceUsdc: balance,

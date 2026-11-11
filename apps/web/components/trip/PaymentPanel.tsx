@@ -21,6 +21,7 @@ import { useI18n } from "../I18nProvider";
 import { PriceLabel } from "../ItineraryCard";
 import { errorText } from "@/lib/error-text";
 import { codeHashes, ensureCodes } from "@/lib/checkin-codes";
+import { stopOffer } from "@/lib/stop-info";
 import { isExpiredDraft } from "@/lib/use-account";
 
 type Phase =
@@ -277,6 +278,8 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
                 <div className="text-xs text-ink-2">
                   {hhmm(s.arriveAt)} · {s.durationMin} {t.minutes}
                 </div>
+                {s.note && <div className="mt-0.5 text-xs text-[#c5d8d1]">{s.note}</div>}
+                {stopOffer(t, s) && <div className="mt-0.5 text-xs text-ink-2">{stopOffer(t, s)}</div>}
               </div>
               <PriceLabel price={s.priceUsdc} source={s.priceSource} />
             </li>
