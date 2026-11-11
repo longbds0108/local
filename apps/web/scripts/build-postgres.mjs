@@ -2,25 +2,36 @@
 // (prisma/schema.prisma); this derives prisma/schema.postgres.prisma from it,
 // creates/updates the tables, seeds the partner venues, then builds Next.js.
 //
-//   DATABASE_URL            postgres://…  (pooled URL is fine at runtime)
-//   DIRECT_URL or DATABASE_URL_UNPOOLED   optional direct URL for schema changes
-//                                          (Neon / Supabase / Vercel Postgres provide one)
+//   DATABASE_URL            postgres://…  (pooled URL is fine at runtime). POSTGRES_URL,
+//                           POSTGRES_PRISMA_URL or prefixed names (lib/database-url.mjs) work too.
+//   DIRECT_URL / DATABASE_URL_UNPOOLED / POSTGRES_URL_NON_POOLING   optional direct URL
+//                           for schema changes (Neon / Supabase / Vercel Postgres provide one)
 import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { findDirectPostgresUrl, findPostgresUrl } from "../lib/database-url.mjs";
+
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const url = process.env.DATABASE_URL ?? "";
-if (!/^postgres(ql)?:\/\//.test(url)) {
+const found = findPostgresUrl();
+if (!found) {
+  const current = process.env.DATABASE_URL?.trim();
+  const dbish = Object.keys(process.env).filter((k) => /DATABASE|POSTGRES|PG|NEON|SUPABASE/.test(k));
   console.error(
-    "\n✖ DATABASE_URL must be a Postgres connection string for this build (got " +
-      (url ? url.split(":")[0] + ":…" : "nothing") +
-      ").\n  On Vercel: Storage → create a Postgres database (Neon) and connect it to the project,\n  or paste a Postgres URL from Neon/Supabase into Settings → Environment Variables.\n",
+    "\n✖ No Postgres connection string found for this build" +
+      (current ? ` (DATABASE_URL is "${current.split(":")[0]}:…", not postgres://).` : ".") +
+      `\n  Environment: ${process.env.VERCEL_ENV ?? "local"}. Database-like variables present: ${dbish.length ? dbish.join(", ") : "none"}.` +
+      "\n  On Vercel: Storage → create a Postgres database (Neon) → Connect Project, ticking Production AND Preview,\n  or paste a Postgres URL from Neon/Supabase into Settings → Environment Variables as DATABASE_URL.\n  Then redeploy.\n",
   );
   process.exit(1);
 }
-const directVar = ["DIRECT_URL", "DATABASE_URL_UNPOOLED"].find((n) => process.env[n]?.trim());
+// Prisma and the seed read DATABASE_URL; point it at the Postgres URL whatever its original name.
+process.env.DATABASE_URL = found.url;
+console.log(`Using Postgres from ${found.name}`);
+const direct = findDirectPostgresUrl();
+if (direct) process.env.DIRECT_URL = direct.url;
+const directVar = direct ? "DIRECT_URL" : undefined;
 
 let schema = readFileSync(join(root, "prisma/schema.prisma"), "utf8");
 if (!/provider\s*=\s*"sqlite"/.test(schema)) throw new Error("prisma/schema.prisma: expected the sqlite datasource");
