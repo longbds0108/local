@@ -6,6 +6,8 @@ import { merchantName } from "@/lib/i18n";
 import { useI18n } from "./I18nProvider";
 import Scanner from "./Scanner";
 import { errorText } from "@/lib/error-text";
+import QRVoucher from "./QRVoucher";
+import { venuePayload } from "@/lib/venue-qr";
 
 type Merchant = { id: string; name: string; walletAddress: string };
 type Detail = {
@@ -164,7 +166,26 @@ export default function MerchantClient() {
         </section>
       )}
 
+      {merchantId && (
+        <section className="space-y-3 rounded-2xl border border-line bg-surface p-4">
+          <div>
+            <h2 className="font-bold text-ink">{t.venueQrTitle}</h2>
+            <p className="mt-0.5 text-xs text-ink-2">{t.venueQrHint}</p>
+          </div>
+          <div className="flex justify-center">
+            <QRVoucher
+              payload={venuePayload(merchantId)}
+              label={merchantName(t, merchants.find((m) => m.id === merchantId))}
+              hint={t.venueQrCaption}
+              download={`hedgora-venue-${merchantId}.png`}
+              showText={false}
+            />
+          </div>
+        </section>
+      )}
+
       <section className="space-y-3 rounded-2xl border border-line bg-surface p-4">
+        <h2 className="font-bold text-ink">{t.scanGuestQr}</h2>
         <Scanner onScan={(text) => void checkin(text)} disabled={!merchantId} />
         <form onSubmit={onPaste} className="space-y-2">
           <label htmlFor="qr-paste" className="text-xs text-ink-2">

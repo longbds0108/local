@@ -6,7 +6,20 @@ import { useI18n } from "./I18nProvider";
 type Html5QrcodeT = import("html5-qrcode").Html5Qrcode;
 
 /** Camera QR scanner (html5-qrcode). Calls onScan with each decoded text. */
-export default function Scanner({ onScan, disabled }: { onScan: (text: string) => void; disabled?: boolean }) {
+/** `once`: stop the camera after the first decoded code (late frames are ignored). */
+export default function Scanner({
+  onScan,
+  disabled,
+  label,
+  autoStart = false,
+  once = false,
+}: {
+  onScan: (text: string) => void;
+  disabled?: boolean;
+  label?: string;
+  autoStart?: boolean;
+  once?: boolean;
+}) {
   const { t } = useI18n();
   const id = "qr-" + useId().replace(/[^a-zA-Z0-9]/g, "");
   const scannerRef = useRef<Html5QrcodeT | null>(null);
@@ -39,7 +52,13 @@ export default function Scanner({ onScan, disabled }: { onScan: (text: string) =
       await s.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 230, height: 230 } },
-        (text) => onScanRef.current(text),
+        (text) => {
+          if (once) {
+            if (scannerRef.current !== s) return; // already handled / stopping
+            void stop();
+          }
+          onScanRef.current(text);
+        },
         () => {
           /* no QR in frame */
         },
@@ -52,6 +71,7 @@ export default function Scanner({ onScan, disabled }: { onScan: (text: string) =
   };
 
   useEffect(() => {
+    if (autoStart) void start();
     return () => {
       void stop();
     };
@@ -67,7 +87,7 @@ export default function Scanner({ onScan, disabled }: { onScan: (text: string) =
         onClick={() => (running ? void stop() : void start())}
         className="min-h-[44px] w-full rounded-xl bg-accent px-4 text-sm font-semibold text-accent-ink disabled:opacity-50"
       >
-        📷 {running ? t.scanStop : t.scanStart}
+        📷 {running ? t.scanStop : (label ?? t.scanStart)}
       </button>
       {error && (
         <p role="alert" className="text-sm text-danger">

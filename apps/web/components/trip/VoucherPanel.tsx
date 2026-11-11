@@ -11,6 +11,8 @@ import { stopState } from "../account/TripsClient";
 import { useI18n } from "../I18nProvider";
 import { PriceLabel } from "../ItineraryCard";
 import QRVoucher from "../QRVoucher";
+import PayByScan from "./PayByScan";
+import type { Hex } from "viem";
 
 type Props = {
   it: ItineraryView;
@@ -25,11 +27,11 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [openQr, setOpenQr] = useState<string | null>(null);
   // QR payloads come from codes kept on this device (read after mount: localStorage).
-  const [vouchers, setVouchers] = useState<Record<string, string>>({});
-  useEffect(() => {
-    const codes = codesFor(it.id);
-    setVouchers(Object.fromEntries(Object.entries(codes).map(([stopId, code]) => [stopId, checkinPayload(stopId, code)])));
-  }, [it.id]);
+  const [codes, setCodes] = useState<Record<string, Hex>>({});
+  useEffect(() => setCodes(codesFor(it.id)), [it.id]);
+  const vouchers: Record<string, string> = Object.fromEntries(
+    Object.entries(codes).map(([stopId, code]) => [stopId, checkinPayload(stopId, code)]),
+  );
   // Read after mount (localStorage) to avoid a hydration mismatch.
   const [hasSession, setHasSession] = useState(false);
   useEffect(() => setHasSession(!!getSession() || hasPinWallet()), []);
@@ -131,8 +133,13 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
           <p className="mt-1 text-sm text-[#b8cdc6]">
             {hhmm(next.arriveAt)} · {usdc(next.priceUsdc)}
           </p>
-          <div className="mt-4 flex justify-center">
-            <QRVoucher payload={vouchers[next.id]} label={next.name} />
+          {/* Two ways to pay at the venue: scan theirs (primary), or let them scan yours. */}
+          <div className="mt-4">
+            <PayByScan it={it} codes={codes} onPaid={() => void refresh()} />
+          </div>
+          <div className="mt-4 text-center text-xs font-semibold text-[#9bb0aa]">{t.orShowYourQr}</div>
+          <div className="mt-2 flex justify-center">
+            <QRVoucher payload={vouchers[next.id]} label={next.name} download={`hedgora-${next.id}.png`} />
           </div>
           <div className="mt-3">{cancelButton(next)}</div>
         </section>
@@ -196,7 +203,7 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
                 {showQr && (
                   <div className="mt-3 space-y-2">
                     <div className="flex justify-center">
-                      <QRVoucher payload={vouchers[s.id]} label={s.name} />
+                      <QRVoucher payload={vouchers[s.id]} label={s.name} download={`hedgora-${s.id}.png`} />
                     </div>
                     {cancelButton(s)}
                   </div>
