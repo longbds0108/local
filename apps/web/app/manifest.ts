@@ -2,13 +2,13 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Hedgora Travel",
-    short_name: "Hedgora",
-    description: "Hedgora Travel",
+    name: "PAY AGENT",
+    short_name: "PAY AGENT",
+    description: "PAY AGENT — AI travel planner that pays each place in USDC only when you arrive",
     start_url: "/",
     display: "standalone",
-    background_color: "#f6f3ec",
-    theme_color: "#0e7c86",
+    background_color: "#061513",
+    theme_color: "#061513",
     icons: [{ src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" }],
   };
 }

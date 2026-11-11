@@ -177,7 +177,7 @@ export default function MerchantClient() {
               payload={venuePayload(merchantId)}
               label={merchantName(t, merchants.find((m) => m.id === merchantId))}
               hint={t.venueQrCaption}
-              download={`hedgora-venue-${merchantId}.png`}
+              download={`payagent-venue-${merchantId}.png`}
               showText={false}
             />
           </div>

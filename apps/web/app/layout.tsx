@@ -17,9 +17,9 @@ const appFont = Be_Vietnam_Pro({
 });
 
 export const metadata: Metadata = {
-  description: "Hedgora Travel",
-  applicationName: "Hedgora Travel",
-  appleWebApp: { capable: true, title: "Hedgora", statusBarStyle: "black-translucent" },
+  description: "PAY AGENT — AI travel planner that pays each place in USDC only when you arrive",
+  applicationName: "PAY AGENT",
+  appleWebApp: { capable: true, title: "PAY AGENT", statusBarStyle: "black-translucent" },
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
 };
 

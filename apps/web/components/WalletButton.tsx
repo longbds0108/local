@@ -92,7 +92,7 @@ export default function WalletButton() {
         type="button"
         onClick={() => void onClick()}
         disabled={busy}
-        className="flex min-h-11 items-center rounded-xl border border-[#295047] bg-[#12312b] px-3 text-xs font-bold text-[#dffff4] disabled:opacity-70 md:px-4 md:text-sm"
+        className="flex min-h-11 items-center rounded-xl border border-[#295047] bg-[#12312b] px-2.5 text-xs font-bold whitespace-nowrap text-[#dffff4] tabular-nums disabled:opacity-70 min-[400px]:px-3 md:px-4 md:text-sm"
       >
         {connected && <span className="mr-2 inline-block h-[7px] w-[7px] rounded-full bg-accent" />}
         {busy ? t.connecting : connected ? shortAddr(session!.walletAddress!) : t.connectWallet}

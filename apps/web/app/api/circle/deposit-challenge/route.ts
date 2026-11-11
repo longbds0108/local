@@ -46,7 +46,7 @@ export const POST = handle(async (req: Request) => {
 
   const deadline = Math.floor(it.endAt.getTime() / 1000) + REFUND_GRACE_SEC;
   if (deadline <= Math.floor(Date.now() / 1000) + 60) {
-    throw new ApiError(410, "EXPIRED", "This itinerary's time window has passed — ask Hedgora for a new plan");
+    throw new ApiError(410, "EXPIRED", "This itinerary's time window has passed — ask PAY AGENT for a new plan");
   }
 
   const wallet = await getArcWallet(userToken);

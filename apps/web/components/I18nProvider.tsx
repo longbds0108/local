@@ -29,7 +29,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   // Tab title in the UI language (React hoists <title> into <head>).
   const section = "/" + (pathname?.split("/")[1] ?? "");
   const pageName = dictionaries[locale].pageTitle[section];
-  const title = pageName ? `${pageName} · Hedgora Travel` : "Hedgora Travel";
+  const title = pageName ? `${pageName} · PAY AGENT` : "PAY AGENT";
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);

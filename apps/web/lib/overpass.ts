@@ -36,7 +36,7 @@ async function overpass(query: string): Promise<{ elements: { type: string; id: 
     try {
       const res = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "HedgoraTravel/0.1 (demo)" },
+        headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "PayAgent/0.1 (demo)" },
         body: new URLSearchParams({ data: query }),
         signal: AbortSignal.timeout(12_000),
       });

@@ -55,7 +55,7 @@ export async function photonGet<T>(pathAndQuery: string, ttlMs: number): Promise
   if (!b || !photonHealthy()) return null;
   try {
     const res = await fetch(`${b}${pathAndQuery}`, {
-      headers: { "User-Agent": "HedgoraTravel/0.1 (demo)" },
+      headers: { "User-Agent": "PayAgent/0.1 (demo)" },
       signal: AbortSignal.timeout(10_000),
     });
     if (res.status === 429 || res.status === 403 || res.status >= 500) {

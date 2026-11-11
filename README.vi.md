@@ -1,4 +1,4 @@
-# Hedgora Travel — MVP (tiếng Việt)
+# PAY AGENT — MVP (tiếng Việt)
 
 > English: [README.md](README.md)
 
@@ -101,7 +101,7 @@ Private key của user không bao giờ đi qua server: mọi chữ ký diễn r
 - **Huỷ điểm** (nút trên `/trips/[id]`): user chứng minh quyền bằng Circle user token (ví của user phải là payer on-chain) → operator `refund()`.
 - **Hết hạn**: điểm trả tại quán chưa trả được ghi "Không ghé" (không có tiền nào bị giữ); điểm trả trước tự hoàn khi chuyến quá hạn được mở (trang chuyến đi, danh sách chuyến đi); ngoài ra `npm run refund:sweep` (hoặc cron `POST /api/refund {"mode":"sweep"}`, header `x-cron-secret` nếu đặt `CRON_SECRET`) hoàn các điểm `PENDING` của lịch trình đã qua `endAt + 2h`. Payer cũng tự gọi `refund()` trực tiếp trên contract được sau deadline.
 
-Ví merchant demo (chỉ địa chỉ) ở `data/merchants.json`; private key tương ứng ở `data/merchant-keys.local.json` (gitignored — dùng nếu muốn rút USDC testnet). Quán chưa có ví riêng không còn được ký quỹ vào ví chung "Hedgora Partner Pool" nữa — các điểm đó là "tự trả".
+Ví merchant demo (chỉ địa chỉ) ở `data/merchants.json`; private key tương ứng ở `data/merchant-keys.local.json` (gitignored — dùng nếu muốn rút USDC testnet). Quán chưa có ví riêng không còn được ký quỹ vào ví chung "PAY AGENT Partner Pool" nữa — các điểm đó là "tự trả".
 
 ## 6. Kiến trúc nhanh
 

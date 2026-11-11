@@ -1,4 +1,4 @@
-# Hedgora Travel
+# PAY AGENT
 
 **An AI local guide that plans your next few hours — and pays each place only when you actually show up.**
 USDC on Arc testnet · Circle user-controlled wallets (PIN, no extension) · escrow for bookings, scan-to-pay for everything else.
@@ -8,13 +8,13 @@ USDC on Arc testnet · Circle user-controlled wallets (PIN, no extension) · esc
 ## The problem
 
 Travellers don't want to prepay for places they may never reach; small venues lose money on no-shows.
-Hedgora sits in the middle, and each stop is paid the way that venue works:
+PAY AGENT sits in the middle, and each stop is paid the way that venue works:
 
 | Stop | When you pay | How |
 |---|---|---|
 | **Prepaid** — the venue takes bookings (restaurant table, tickets) | Now, once, for all such stops | Held in the escrow; released to the venue **when you arrive**, refunded if you don't |
 | **Pay at venue** — a partner venue you just walk into (cafe, street food) | When you arrive | Scan the venue's QR, enter the bill, confirm with your PIN — USDC goes straight to the venue |
-| **Pay yourself** — not a Hedgora partner | When you arrive | Shown as an estimate; you pay there directly (no fake "partner pool") |
+| **Pay yourself** — not a PAY AGENT partner | When you arrive | Shown as an estimate; you pay there directly (no fake "partner pool") |
 
 The venue decides: `prepay: true` in [`data/merchants.json`](data/merchants.json) means it takes bookings. A trip with
 nothing to prepay is simply **started** (no transaction) and paid stop by stop.
@@ -43,11 +43,11 @@ nothing to prepay is simply **started** (no transaction) and paid stop by stop.
 |---|---|---|
 | Traveller's device | Release a stop to **its** venue by revealing the code (QR) | — |
 | Venue | Receive its stop's money when shown the code | Take another stop's money, or any money without the code |
-| Hedgora operator key | Relay transactions (pay gas); refund a stop **to the payer** | Release a stop without the traveller's code; send money anywhere else |
+| PAY AGENT operator key | Relay transactions (pay gas); refund a stop **to the payer** | Release a stop without the traveller's code; send money anywhere else |
 | Payer | Refund any unused stop after the deadline, directly on-chain | — |
 
 Every prepaid stop's money can only end up in two places: the merchant fixed at deposit, or back with the payer.
-Pay-at-venue money never passes through Hedgora: it goes from the traveller's wallet to the venue's wallet
+Pay-at-venue money never passes through PAY AGENT: it goes from the traveller's wallet to the venue's wallet
 (address from the server's database, never from the client), and a stop is only marked paid when the chain
 shows that transfer — each transfer can count for one stop only.
 Contract: [`contracts/src/HedgoraEscrow.sol`](contracts/src/HedgoraEscrow.sol) (escrow v2).

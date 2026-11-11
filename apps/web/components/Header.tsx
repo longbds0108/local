@@ -15,12 +15,12 @@ export default function Header() {
     { href: "/wallet", label: t.navWallet, active: path === "/wallet" },
   ];
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center md:h-[72px] justify-between gap-3 border-b border-line bg-bg/85 px-[18px] backdrop-blur-xl md:px-[5vw]">
-      <Link href="/" className="flex min-h-11 items-center gap-2.5 text-white">
+    <header className="sticky top-0 z-30 flex h-16 items-center md:h-[72px] justify-between gap-2 border-b border-line bg-bg/85 px-[18px] min-[400px]:gap-3 backdrop-blur-xl md:px-[5vw]">
+      <Link href="/" className="flex min-h-11 shrink-0 items-center gap-2 text-white min-[400px]:gap-2.5">
         <span className="grid h-[34px] w-[34px] -rotate-6 place-items-center rounded-[10px] bg-accent font-display text-lg font-extrabold text-accent-ink">
-          H
+          P
         </span>
-        <span className="font-display text-lg font-extrabold md:text-xl">Hedgora</span>
+        <span className="font-display text-base font-extrabold tracking-tight whitespace-nowrap min-[400px]:text-lg md:text-xl">PAY AGENT</span>
         <small className="hidden text-[11px] font-medium text-ink-2 sm:block">{t.brandTagline}</small>
       </Link>
       <nav className="hidden items-center gap-8 md:flex">
@@ -35,7 +35,7 @@ export default function Header() {
           </Link>
         ))}
       </nav>
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-1.5 min-[400px]:gap-2">
         <LangToggle />
         <WalletButton />
       </div>
