@@ -55,7 +55,7 @@ export const config = {
   },
   /** True when everything needed for on-chain payment is configured. */
   get paymentsConfigured() {
-    return ["CIRCLE_API_KEY", "ARC_RPC_URL", "ARC_CHAIN_ID", "USDC_ADDRESS", "ESCROW_ADDRESS"].every((n) => !!read(n));
+    return ["CIRCLE_API_KEY", "ARC_RPC_URL", "ARC_CHAIN_ID", "ESCROW_ADDRESS"].every((n) => !!read(n));
   },
 };
 

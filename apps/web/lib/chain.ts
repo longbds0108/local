@@ -6,7 +6,6 @@ import {
   formatUnits,
   http,
   keccak256,
-  parseAbi,
   parseGwei,
   stringToBytes,
   type Address,
@@ -15,12 +14,6 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import { required } from "./env";
 import { ESCROW_ABI } from "./escrow-abi";
-
-export const ERC20_ABI = parseAbi([
-  "function balanceOf(address) view returns (uint256)",
-  "function allowance(address owner, address spender) view returns (uint256)",
-  "function approve(address spender, uint256 amount) returns (bool)",
-]);
 
 /** Arc rejects/drops transactions with maxFeePerGas below its 20 gwei minimum base fee. */
 const MIN_FEE_PER_GAS = parseGwei("25");
@@ -48,28 +41,22 @@ export function publicClient() {
 }
 
 export function addresses() {
-  const [usdc, escrow] = required("USDC_ADDRESS", "ESCROW_ADDRESS");
-  return { usdc: usdc as Address, escrow: escrow as Address };
+  const [escrow] = required("ESCROW_ADDRESS");
+  return { escrow: escrow as Address };
 }
 
 export function onchainIdFor(itineraryId: string): Hex {
   return keccak256(stringToBytes(`hedgora:${itineraryId}`));
 }
 
-export async function usdcBalance(owner: Address): Promise<bigint> {
-  const { usdc } = addresses();
-  return publicClient().readContract({ address: usdc, abi: ERC20_ABI, functionName: "balanceOf", args: [owner] });
+/** Native balance (18 decimals) — the canonical USDC balance on Arc. */
+export async function nativeUsdcWei(owner: Address): Promise<bigint> {
+  return publicClient().getBalance({ address: owner });
 }
 
-export async function usdcAllowance(owner: Address): Promise<bigint> {
-  const { usdc, escrow } = addresses();
-  return publicClient().readContract({ address: usdc, abi: ERC20_ABI, functionName: "allowance", args: [owner, escrow] });
-}
-
-/** Native balance (18 decimals) formatted as USDC — the canonical balance on Arc. */
+/** Native balance formatted as a USDC decimal string. */
 export async function nativeUsdcBalance(owner: Address): Promise<string> {
-  const wei = await publicClient().getBalance({ address: owner });
-  return formatUnits(wei, 18);
+  return formatUnits(await nativeUsdcWei(owner), 18);
 }
 
 export async function readEscrowItinerary(onchainId: Hex) {
@@ -128,8 +115,7 @@ async function feeOverrides() {
   }
 }
 
-/** Operator call (release/refund). Simulates first, then waits for the receipt. */
-export async function operatorCall(functionName: "release" | "refund", onchainId: Hex, stopIndex: number): Promise<Hex> {
+async function operatorWrite(functionName: "release" | "refund", args: readonly unknown[]): Promise<Hex> {
   const account = operatorAccount();
   const { escrow } = addresses();
   const pc = publicClient();
@@ -140,7 +126,8 @@ export async function operatorCall(functionName: "release" | "refund", onchainId
     address: escrow,
     abi: ESCROW_ABI,
     functionName,
-    args: [onchainId, BigInt(stopIndex)],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    args: args as any,
     ...(await feeOverrides()),
   });
   const hash = await wallet.writeContract(request);
@@ -149,12 +136,26 @@ export async function operatorCall(functionName: "release" | "refund", onchainId
   return hash;
 }
 
-/** Rough network-fee estimate (USDC) for approve + deposit, shown as "ước tính". */
+/**
+ * Submit a check-in: release(id, index, code). The operator key only relays and
+ * pays gas — the contract checks the traveller's code and can only pay the
+ * merchant fixed at deposit.
+ */
+export function relayRelease(onchainId: Hex, stopIndex: number, code: Hex): Promise<Hex> {
+  return operatorWrite("release", [onchainId, BigInt(stopIndex), code]);
+}
+
+/** Return a stop's money to the payer (traveller-requested cancel, or after the deadline). */
+export function operatorRefund(onchainId: Hex, stopIndex: number): Promise<Hex> {
+  return operatorWrite("refund", [onchainId, BigInt(stopIndex)]);
+}
+
+/** Rough network-fee estimate (USDC) for the single deposit transaction, shown as "ước tính". */
 export async function estimatePaymentFeeUsdc(paidStops: number): Promise<string | null> {
   try {
     const gasPrice = await publicClient().getGasPrice();
-    // approve ~60k + deposit ~110k + ~70k per stop; smart-account wallets add overhead (+~100k).
-    const gas = 60_000n + 110_000n + 70_000n * BigInt(paidStops) + 100_000n;
+    // deposit ~90k + ~95k per stop (merchant, amount, code hash); smart-account wallets add ~100k.
+    const gas = 90_000n + 95_000n * BigInt(paidStops) + 100_000n;
     const price = gasPrice > MIN_FEE_PER_GAS ? gasPrice : MIN_FEE_PER_GAS;
     return formatUnits(gas * price, 18);
   } catch {

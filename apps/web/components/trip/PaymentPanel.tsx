@@ -20,6 +20,7 @@ import type { ItineraryView } from "@/lib/types";
 import { useI18n } from "../I18nProvider";
 import { PriceLabel } from "../ItineraryCard";
 import { errorText } from "@/lib/error-text";
+import { codeHashes, ensureCodes } from "@/lib/checkin-codes";
 import { isExpiredDraft } from "@/lib/use-account";
 
 type Phase =
@@ -27,8 +28,6 @@ type Phase =
   | "login"
   | "creating"
   | "checking"
-  | "approve"
-  | "approveWait"
   | "deposit"
   | "confirming"
   | "done";
@@ -137,7 +136,7 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
           return;
         }
 
-        const status = await api<{ balanceOk: boolean; allowanceOk: boolean }>(
+        const status = await api<{ balanceOk: boolean }>(
           `/api/circle/payment-status?itineraryId=${itinerary.id}&address=${addr}`,
         );
         if (!status.balanceOk) {
@@ -148,26 +147,20 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
           return;
         }
 
-        if (!status.allowanceOk) {
-          setPhase("approve");
-          const { challengeId } = await api<{ challengeId: string }>("/api/circle/deposit-challenge", {
-            method: "POST",
-            body: JSON.stringify({ userToken: s.userToken, itineraryId: itinerary.id, step: "approve" }),
-          });
-          await executeChallenge(s, challengeId);
-          setPhase("approveWait");
-          let ok = false;
-          for (let i = 0; i < 45 && !ok; i++) {
-            await sleep(2000);
-            ok = (await api<{ allowanceOk: boolean }>(`/api/circle/payment-status?itineraryId=${itinerary.id}&address=${addr}`)).allowanceOk;
-          }
-          if (!ok) throw new FlowError("TIMEOUT_CHAIN");
+        // One code per paid stop, created and kept on this device; only hashes go out.
+        const paidIds = itinerary.stops.filter((x) => x.status === "PENDING" && Number(x.priceUsdc) > 0).map((x) => x.id);
+        let hashes: Record<string, string>;
+        try {
+          hashes = codeHashes(ensureCodes(itinerary.id, paidIds));
+        } catch {
+          throw new FlowError("STORAGE");
         }
 
+        // Single confirmation: deposit paid in native USDC (no separate approve).
         setPhase("deposit");
         const { challengeId } = await api<{ challengeId: string }>("/api/circle/deposit-challenge", {
           method: "POST",
-          body: JSON.stringify({ userToken: s.userToken, itineraryId: itinerary.id, step: "deposit" }),
+          body: JSON.stringify({ userToken: s.userToken, itineraryId: itinerary.id, codeHashes: hashes }),
         });
         await executeChallenge(s, challengeId);
 
@@ -251,8 +244,6 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
     login: t.loggingIn,
     creating: t.creatingWallet,
     checking: t.stepCheck,
-    approve: t.stepApprove,
-    approveWait: t.stepApproveWait,
     deposit: t.stepDeposit,
     confirming: t.stepConfirm,
     done: "",

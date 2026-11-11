@@ -5,7 +5,7 @@ import { ApiError, clientIp, handle, jsonError, parseJson } from "@/lib/api";
 import { findDepositTx, readEscrowItinerary } from "@/lib/chain";
 import { prisma } from "@/lib/db";
 import { getItineraryView, getItineraryWithStops } from "@/lib/itinerary";
-import { toBaseUnits } from "@/lib/pricing";
+import { toNativeUnits } from "@/lib/pricing";
 import { rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -37,7 +37,9 @@ export const POST = handle(async (req: Request) => {
       return (
         s.merchant !== null &&
         getAddress(o.merchant) === getAddress(s.merchant.walletAddress) &&
-        o.amount === toBaseUnits(s.priceUsdc.toString())
+        o.amount === toNativeUnits(s.priceUsdc.toString()) &&
+        !!s.codeHash &&
+        o.codeHash.toLowerCase() === s.codeHash.toLowerCase()
       );
     });
   if (!matches) {

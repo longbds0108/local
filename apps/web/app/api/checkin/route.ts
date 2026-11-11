@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import type { Hex } from "viem";
+import { keccak256, type Hex } from "viem";
 import { z } from "zod";
 import { ApiError, clientIp, handle, jsonError, parseJson } from "@/lib/api";
-import { operatorCall } from "@/lib/chain";
+import { relayRelease } from "@/lib/chain";
 import { prisma } from "@/lib/db";
 import { config } from "@/lib/env";
 import { recomputeItineraryStatus } from "@/lib/itinerary";
-import { verifyStopSig } from "@/lib/qr";
 import { rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -15,21 +14,27 @@ export const maxDuration = 90;
 
 const Body = z.object({
   stopId: z.string().min(1).max(64),
-  sig: z.string().regex(/^[0-9a-f]{64}$/i),
+  /** The stop's check-in code from the traveller's QR (32 bytes, hex). */
+  code: z.string().regex(/^(0x)?[0-9a-f]{64}$/i),
   merchantId: z.string().min(1).max(64),
 });
 
 /**
- * Merchant scanned a voucher QR. Verify it, then release that stop's USDC on-chain
- * to the merchant using the operator key.
+ * A venue scanned a traveller's QR. The QR carries the stop's check-in code; we
+ * check it against the stored hash (to fail fast), then relay release(id, index,
+ * code). The contract verifies the code itself and can only pay the merchant
+ * fixed at deposit — the operator key just pays gas.
  */
 export const POST = handle(async (req: Request) => {
   if (!rateLimit(`checkin:${clientIp(req)}`, 30, 60_000).ok) return jsonError(429, "RATE_LIMITED", "Too many requests");
-  const { stopId, sig, merchantId } = await parseJson(req, Body);
+  const { stopId, code: rawCode, merchantId } = await parseJson(req, Body);
+  const code = (rawCode.startsWith("0x") ? rawCode : `0x${rawCode}`).toLowerCase() as Hex;
 
   const stop = await prisma.stop.findUnique({ where: { id: stopId }, include: { itinerary: true, merchant: true } });
   // Same response for unknown stop and bad signature: don't leak which stop ids exist.
-  if (!stop || !verifyStopSig(stop.id, stop.qrSecret, sig)) throw new ApiError(400, "BAD_REQUEST", "Invalid voucher");
+  if (!stop || !stop.codeHash || keccak256(code).toLowerCase() !== stop.codeHash.toLowerCase()) {
+    throw new ApiError(400, "BAD_REQUEST", "Invalid voucher");
+  }
   if (stop.merchantId !== merchantId) {
     throw new ApiError(403, "FORBIDDEN", "This QR code belongs to another partner");
   }
@@ -48,7 +53,7 @@ export const POST = handle(async (req: Request) => {
 
   let txHash: Hex;
   try {
-    txHash = await operatorCall("release", stop.itinerary.onchainId as Hex, stop.onchainIndex);
+    txHash = await relayRelease(stop.itinerary.onchainId as Hex, stop.onchainIndex, code);
   } catch (err) {
     await prisma.stop.update({ where: { id: stop.id }, data: { status: "PENDING", checkedInAt: null } });
     console.error("[checkin] release failed", err);

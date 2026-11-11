@@ -19,14 +19,14 @@ type Result = { ok: true; name: string; amount: string; txHash: string; url: str
 
 const MERCHANT_KEY = "hedgora.merchant";
 
-/** hedgora://checkin?s={stopId}&sig={hex} → { stopId, sig } */
-function parsePayload(text: string): { stopId: string; sig: string } | null {
+/** hedgora://checkin?s={stopId}&c={code hex} → { stopId, code } (the code the escrow checks) */
+function parsePayload(text: string): { stopId: string; code: string } | null {
   const m = text.trim().match(/^hedgora:\/\/checkin\?(.+)$/);
   if (!m) return null;
   const q = new URLSearchParams(m[1]);
   const stopId = q.get("s");
-  const sig = q.get("sig");
-  return stopId && sig && /^[0-9a-f]{64}$/i.test(sig) ? { stopId, sig } : null;
+  const code = q.get("c");
+  return stopId && code && /^[0-9a-f]{64}$/i.test(code) ? { stopId, code } : null;
 }
 
 export default function MerchantClient() {

@@ -127,6 +127,8 @@ export async function createContractExecutionChallenge(args: {
   contractAddress: string;
   abiFunctionSignature: string;
   abiParameters: (string | string[])[];
+  /** Native token sent with the call, as a decimal string in whole USDC (payable functions only). */
+  amount?: string;
   refId?: string;
 }) {
   return circleFetch<{ challengeId: string }>("/v1/w3s/user/transactions/contractExecution", {
@@ -138,6 +140,7 @@ export async function createContractExecutionChallenge(args: {
       contractAddress: args.contractAddress,
       abiFunctionSignature: args.abiFunctionSignature,
       abiParameters: args.abiParameters,
+      ...(args.amount ? { amount: args.amount } : {}),
       feeLevel: "MEDIUM",
       refId: args.refId,
     },

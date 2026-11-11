@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { authMode, CircleClientError, connectWallet, ensureWallet, getOrRefreshSession, getSession, hasPinWallet, logout } from "@/lib/circle-client";
+import { checkinPayload, codesFor } from "@/lib/checkin-codes";
 import { errorText } from "@/lib/error-text";
 import { CATEGORY_EMOJI, hhmm, usdc } from "@/lib/format";
 import { merchantName } from "@/lib/i18n";
@@ -14,16 +15,21 @@ import QRVoucher from "../QRVoucher";
 type Props = {
   it: ItineraryView;
   onChange: (it: ItineraryView) => void;
-  vouchers: Record<string, string>;
   explorerUrl: string | null;
 };
 
 /** Paid trip: the next stop's QR first, every stop's state, then the blockchain record. */
-export default function VoucherPanel({ it, onChange, vouchers, explorerUrl }: Props) {
+export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
   const { t } = useI18n();
   const [busyStop, setBusyStop] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openQr, setOpenQr] = useState<string | null>(null);
+  // QR payloads come from codes kept on this device (read after mount: localStorage).
+  const [vouchers, setVouchers] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const codes = codesFor(it.id);
+    setVouchers(Object.fromEntries(Object.entries(codes).map(([stopId, code]) => [stopId, checkinPayload(stopId, code)])));
+  }, [it.id]);
   // Read after mount (localStorage) to avoid a hydration mismatch.
   const [hasSession, setHasSession] = useState(false);
   useEffect(() => setHasSession(!!getSession() || hasPinWallet()), []);
@@ -79,6 +85,8 @@ export default function VoucherPanel({ it, onChange, vouchers, explorerUrl }: Pr
 
   const canUse = (s: StopView) => it.status === "PAID" && s.status === "PENDING" && !!vouchers[s.id];
   const next = it.stops.find(canUse) ?? null;
+  // Paid stops whose code isn't on this device (paid in another browser, or data cleared).
+  const missing = it.status === "PAID" ? it.stops.filter((s) => s.status === "PENDING" && !vouchers[s.id]) : [];
   const paidStops = it.stops.filter((s) => s.status !== "FREE");
   const paidOut = paidStops.filter((s) => s.status === "RELEASED").reduce((n, s) => n + Number(s.priceUsdc), 0);
   const refunded = paidStops.filter((s) => s.status === "REFUNDED").reduce((n, s) => n + Number(s.priceUsdc), 0);
@@ -107,6 +115,10 @@ export default function VoucherPanel({ it, onChange, vouchers, explorerUrl }: Pr
         <p role="alert" className="rounded-xl bg-danger/10 px-3 py-2 text-sm text-danger">
           {error}
         </p>
+      )}
+
+      {missing.length > 0 && (
+        <p className="rounded-xl bg-warn-soft px-4 py-3 text-sm text-warn">{t.codesMissing}</p>
       )}
 
       {/* 1. What to do now */}
@@ -168,6 +180,7 @@ export default function VoucherPanel({ it, onChange, vouchers, explorerUrl }: Pr
                     <p className={`mt-1 text-xs font-semibold ${s.status === "PENDING" ? "text-accent" : "text-ink-2"}`}>
                       {isNext ? `${st.label} · ${t.nextStopShort}` : s.status === "FREE" ? t.noVoucherFree : st.label}
                     </p>
+                    {it.status === "PAID" && s.status === "PENDING" && !vouchers[s.id] && <div className="mt-2">{cancelButton(s)}</div>}
                     {canUse(s) && !isNext && (
                       <button
                         type="button"

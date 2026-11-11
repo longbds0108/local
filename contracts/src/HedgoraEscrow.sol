@@ -1,26 +1,30 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-/// @title HedgoraEscrow
-/// @notice Holds USDC (ERC-20 interface, 6 decimals) for a travel itinerary, split per stop.
-///         The operator (Hedgora backend) releases a stop to its merchant after a valid QR check-in.
-///         Unreleased stops can be refunded to the payer: by the payer after the deadline,
-///         or by the operator at any time (e.g. the user cancelled that stop).
+/// @title HedgoraEscrow (v2)
+/// @notice Per-stop escrow for a travel itinerary, paid in Arc's native USDC (msg.value, 18 decimals),
+///         so paying is a single transaction — no ERC-20 approve step.
+///
+///         Trust model — where money can go:
+///         - A stop's money can only ever go to the merchant fixed at deposit, or back to the payer.
+///         - Releasing to the merchant needs the stop's check-in code: a random secret created on the
+///           traveller's device; only its hash is stored here. The traveller hands it over by showing
+///           the QR code at the venue. Anyone may submit it (the venue, or a gas-paying relayer), but
+///           nobody — the Hedgora operator included — can release a stop without it.
+///         - Unreleased stops go back to the payer: by the payer after the deadline, or by the operator
+///           at any time (a traveller-requested cancellation). A refund can only pay the payer.
 contract HedgoraEscrow is ReentrancyGuard, Ownable {
-    using SafeERC20 for IERC20;
-
     uint8 public constant STATUS_LOCKED = 0;
     uint8 public constant STATUS_RELEASED = 1;
     uint8 public constant STATUS_REFUNDED = 2;
 
     struct StopInfo {
         address merchant;
-        uint256 amount;
+        uint256 amount; // native USDC, 18 decimals
+        bytes32 codeHash; // keccak256(abi.encodePacked(code))
         uint8 status; // 0=Locked 1=Released 2=Refunded
     }
 
@@ -30,7 +34,6 @@ contract HedgoraEscrow is ReentrancyGuard, Ownable {
         StopInfo[] stops;
     }
 
-    IERC20 public immutable usdc;
     address public operator;
 
     mapping(bytes32 => Itinerary) private _itineraries;
@@ -40,38 +43,37 @@ contract HedgoraEscrow is ReentrancyGuard, Ownable {
     event Refunded(bytes32 indexed itineraryId, uint256 stopIndex, address payer, uint256 amount);
     event OperatorChanged(address indexed previousOperator, address indexed newOperator);
 
-    error NotOperator();
     error NotAuthorized();
     error ItineraryExists();
     error ItineraryNotFound();
     error InvalidInput();
     error InvalidDeadline();
+    error WrongAmount();
     error StopIndexOutOfRange();
     error StopNotLocked();
+    error WrongCode();
+    error DeadlinePassed();
     error DeadlineNotReached();
+    error TransferFailed();
 
-    modifier onlyOperator() {
-        if (msg.sender != operator) revert NotOperator();
-        _;
-    }
-
-    constructor(IERC20 usdc_, address operator_, address owner_) Ownable(owner_) {
-        if (address(usdc_) == address(0) || operator_ == address(0)) revert InvalidInput();
-        usdc = usdc_;
+    constructor(address operator_, address owner_) Ownable(owner_) {
+        if (operator_ == address(0)) revert InvalidInput();
         operator = operator_;
         emit OperatorChanged(address(0), operator_);
     }
 
-    /// @notice Lock USDC for an itinerary. The payer must `approve` this contract for sum(amounts) first.
+    /// @notice Lock native USDC for an itinerary. msg.value must equal sum(amounts).
+    /// @param codeHashes keccak256 of each stop's check-in code (codes stay on the traveller's device).
     function deposit(
         bytes32 itineraryId,
         address[] calldata merchants,
         uint256[] calldata amounts,
+        bytes32[] calldata codeHashes,
         uint64 deadline
-    ) external nonReentrant {
+    ) external payable nonReentrant {
         if (_itineraries[itineraryId].payer != address(0)) revert ItineraryExists();
         uint256 n = merchants.length;
-        if (n == 0 || n != amounts.length) revert InvalidInput();
+        if (n == 0 || n != amounts.length || n != codeHashes.length) revert InvalidInput();
         if (deadline <= block.timestamp) revert InvalidDeadline();
 
         Itinerary storage it = _itineraries[itineraryId];
@@ -80,25 +82,30 @@ contract HedgoraEscrow is ReentrancyGuard, Ownable {
 
         uint256 total;
         for (uint256 i; i < n; ++i) {
-            if (merchants[i] == address(0) || amounts[i] == 0) revert InvalidInput();
-            it.stops.push(StopInfo({merchant: merchants[i], amount: amounts[i], status: STATUS_LOCKED}));
+            if (merchants[i] == address(0) || amounts[i] == 0 || codeHashes[i] == bytes32(0)) revert InvalidInput();
+            it.stops.push(StopInfo({merchant: merchants[i], amount: amounts[i], codeHash: codeHashes[i], status: STATUS_LOCKED}));
             total += amounts[i];
         }
+        if (msg.value != total) revert WrongAmount();
 
-        usdc.safeTransferFrom(msg.sender, address(this), total);
         emit Deposited(itineraryId, msg.sender, total);
     }
 
-    /// @notice Pay a stop's merchant after a verified check-in.
-    function release(bytes32 itineraryId, uint256 stopIndex) external onlyOperator nonReentrant {
+    /// @notice Pay a stop to its merchant. Needs the stop's check-in code from the traveller's QR.
+    ///         Callable by anyone; the money can only go to the merchant fixed at deposit.
+    function release(bytes32 itineraryId, uint256 stopIndex, bytes32 code) external nonReentrant {
+        Itinerary storage it = _itineraries[itineraryId];
         StopInfo storage s = _lockedStop(itineraryId, stopIndex);
+        if (block.timestamp > it.deadline) revert DeadlinePassed();
+        if (keccak256(abi.encodePacked(code)) != s.codeHash) revert WrongCode();
+
         s.status = STATUS_RELEASED;
-        usdc.safeTransfer(s.merchant, s.amount);
+        _send(s.merchant, s.amount);
         emit Released(itineraryId, stopIndex, s.merchant, s.amount);
     }
 
-    /// @notice Return a stop's funds to the payer.
-    ///         Payer: only after the deadline. Operator: any time (user-initiated cancellation).
+    /// @notice Return a stop's money to the payer.
+    ///         Payer: only after the deadline. Operator: any time (traveller-requested cancellation).
     function refund(bytes32 itineraryId, uint256 stopIndex) external nonReentrant {
         Itinerary storage it = _itineraries[itineraryId];
         if (it.payer == address(0)) revert ItineraryNotFound();
@@ -110,7 +117,7 @@ contract HedgoraEscrow is ReentrancyGuard, Ownable {
 
         StopInfo storage s = _lockedStop(itineraryId, stopIndex);
         s.status = STATUS_REFUNDED;
-        usdc.safeTransfer(it.payer, s.amount);
+        _send(it.payer, s.amount);
         emit Refunded(itineraryId, stopIndex, it.payer, s.amount);
     }
 
@@ -135,5 +142,10 @@ contract HedgoraEscrow is ReentrancyGuard, Ownable {
         if (stopIndex >= it.stops.length) revert StopIndexOutOfRange();
         s = it.stops[stopIndex];
         if (s.status != STATUS_LOCKED) revert StopNotLocked();
+    }
+
+    function _send(address to, uint256 amount) private {
+        (bool ok,) = to.call{value: amount}("");
+        if (!ok) revert TransferFailed();
     }
 }

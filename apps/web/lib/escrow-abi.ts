@@ -4,11 +4,6 @@ export const ESCROW_ABI = [
     "type": "constructor",
     "inputs": [
       {
-        "name": "usdc_",
-        "type": "address",
-        "internalType": "contract IERC20"
-      },
-      {
         "name": "operator_",
         "type": "address",
         "internalType": "address"
@@ -80,13 +75,18 @@ export const ESCROW_ABI = [
         "internalType": "uint256[]"
       },
       {
+        "name": "codeHashes",
+        "type": "bytes32[]",
+        "internalType": "bytes32[]"
+      },
+      {
         "name": "deadline",
         "type": "uint64",
         "internalType": "uint64"
       }
     ],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "payable"
   },
   {
     "type": "function",
@@ -123,6 +123,11 @@ export const ESCROW_ABI = [
             "name": "amount",
             "type": "uint256",
             "internalType": "uint256"
+          },
+          {
+            "name": "codeHash",
+            "type": "bytes32",
+            "internalType": "bytes32"
           },
           {
             "name": "status",
@@ -191,6 +196,11 @@ export const ESCROW_ABI = [
         "name": "stopIndex",
         "type": "uint256",
         "internalType": "uint256"
+      },
+      {
+        "name": "code",
+        "type": "bytes32",
+        "internalType": "bytes32"
       }
     ],
     "outputs": [],
@@ -228,19 +238,6 @@ export const ESCROW_ABI = [
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "usdc",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "contract IERC20"
-      }
-    ],
-    "stateMutability": "view"
   },
   {
     "type": "event",
@@ -374,6 +371,11 @@ export const ESCROW_ABI = [
   },
   {
     "type": "error",
+    "name": "DeadlinePassed",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "InvalidDeadline",
     "inputs": []
   },
@@ -395,11 +397,6 @@ export const ESCROW_ABI = [
   {
     "type": "error",
     "name": "NotAuthorized",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "NotOperator",
     "inputs": []
   },
   {
@@ -431,23 +428,27 @@ export const ESCROW_ABI = [
   },
   {
     "type": "error",
-    "name": "SafeERC20FailedOperation",
-    "inputs": [
-      {
-        "name": "token",
-        "type": "address",
-        "internalType": "address"
-      }
-    ]
-  },
-  {
-    "type": "error",
     "name": "StopIndexOutOfRange",
     "inputs": []
   },
   {
     "type": "error",
     "name": "StopNotLocked",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TransferFailed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "WrongAmount",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "WrongCode",
     "inputs": []
   }
 ] as const;

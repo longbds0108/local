@@ -12,7 +12,6 @@ import VoucherPanel from "./VoucherPanel";
 
 type Props = {
   initial: ItineraryView;
-  vouchers: Record<string, string>;
   explorerUrl: string | null;
   faucetUrl: string | null;
   feeEstimate: string | null;
@@ -55,7 +54,7 @@ function Stepper({ step }: { step: number }) {
 }
 
 /** /trips/[id] — one page per trip; what it shows follows the trip's state. */
-export default function TripDetail({ initial, vouchers, explorerUrl, faucetUrl, feeEstimate, paymentsConfigured }: Props) {
+export default function TripDetail({ initial, explorerUrl, faucetUrl, feeEstimate, paymentsConfigured }: Props) {
   const { t } = useI18n();
   const router = useRouter();
   const [it, setIt] = useState(initial);
@@ -94,7 +93,7 @@ export default function TripDetail({ initial, vouchers, explorerUrl, faucetUrl, 
       {it.status === "DRAFT" ? (
         <PaymentPanel initial={it} faucetUrl={faucetUrl} feeEstimate={feeEstimate} paymentsConfigured={paymentsConfigured} onPaid={onPaid} />
       ) : (
-        <VoucherPanel it={it} onChange={setIt} vouchers={vouchers} explorerUrl={explorerUrl} />
+        <VoucherPanel it={it} onChange={setIt} explorerUrl={explorerUrl} />
       )}
     </div>
   );

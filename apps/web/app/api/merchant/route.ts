@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { formatUnits, type Address } from "viem";
+import { type Address } from "viem";
 import { z } from "zod";
 import { ApiError, handle, parseQuery } from "@/lib/api";
-import { usdcBalance } from "@/lib/chain";
+import { nativeUsdcBalance } from "@/lib/chain";
 import { prisma } from "@/lib/db";
 import { config } from "@/lib/env";
 
@@ -29,7 +29,7 @@ export const GET = handle(async (req: Request) => {
   });
   let balance: string | null = null;
   try {
-    balance = formatUnits(await usdcBalance(merchant.walletAddress as Address), 6);
+    balance = await nativeUsdcBalance(merchant.walletAddress as Address);
   } catch {
     balance = null; // chain not configured / RPC down — page still works
   }

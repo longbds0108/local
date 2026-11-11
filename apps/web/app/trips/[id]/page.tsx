@@ -3,7 +3,6 @@ import TripDetail from "@/components/trip/TripDetail";
 import { estimatePaymentFeeUsdc } from "@/lib/chain";
 import { config } from "@/lib/env";
 import { getItineraryWithStops, toView } from "@/lib/itinerary";
-import { qrPayload } from "@/lib/qr";
 
 export const dynamic = "force-dynamic";
 
@@ -14,13 +13,8 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   if (!it) notFound();
   const view = toView(it);
 
-  // QR payloads are signed server-side; secrets never leave the server.
-  // MVP: anyone with this (unguessable) link can see the codes.
-  const vouchers: Record<string, string> = {};
-  if (it.status !== "DRAFT") {
-    for (const s of it.stops) if (s.status === "PENDING") vouchers[s.id] = qrPayload(s.id, s.qrSecret);
-  }
-
+  // Check-in QR codes are built in the traveller's browser from codes only it
+  // holds, so this link can be shared without exposing them.
   const paidStops = view.stops.filter((s) => Number(s.priceUsdc) > 0).length;
   const feeEstimate =
     it.status === "DRAFT" && config.paymentsConfigured && paidStops > 0 ? await estimatePaymentFeeUsdc(paidStops).catch(() => null) : null;
@@ -28,7 +22,6 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   return (
     <TripDetail
       initial={view}
-      vouchers={vouchers}
       explorerUrl={config.explorerUrl ?? null}
       faucetUrl={config.faucetUrl ?? null}
       feeEstimate={feeEstimate}

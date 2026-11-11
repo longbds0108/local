@@ -27,7 +27,14 @@ export function partyPrice(unit: number, partySize: number): number {
   return Math.round(unit * partySize * 100) / 100;
 }
 
-/** Decimal string (e.g. "12.5") → USDC base units (6 decimals). */
+/** Decimal string (e.g. "12.5") → native USDC on Arc (18 decimals) — what the escrow holds. */
+export function toNativeUnits(amount: string | number): bigint {
+  const s = typeof amount === "number" ? amount.toFixed(6) : amount;
+  const [whole, frac = ""] = s.split(".");
+  return BigInt(whole) * 10n ** 18n + BigInt((frac + "0".repeat(18)).slice(0, 18));
+}
+
+/** Decimal string (e.g. "12.5") → USDC base units (6 decimals, ERC-20 view). */
 export function toBaseUnits(amount: string | number): bigint {
   const s = typeof amount === "number" ? amount.toFixed(6) : amount;
   const [whole, frac = ""] = s.split(".");
