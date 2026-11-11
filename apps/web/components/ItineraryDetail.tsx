@@ -5,9 +5,11 @@ import { useCallback, useEffect, useState } from "react";
 import { authMode, CircleClientError, connectWallet, ensureWallet, getOrRefreshSession, getSession, hasPinWallet, logout } from "@/lib/circle-client";
 import { CATEGORY_EMOJI, hhmm, usdc } from "@/lib/format";
 import type { ItineraryView, StopView } from "@/lib/types";
+import { merchantName } from "@/lib/i18n";
 import { useI18n } from "./I18nProvider";
 import { PriceLabel } from "./ItineraryCard";
 import QRVoucher from "./QRVoucher";
+import { errorText } from "@/lib/error-text";
 
 type Props = { initial: ItineraryView; vouchers: Record<string, string>; explorerUrl: string | null };
 
@@ -62,7 +64,7 @@ export default function ItineraryDetail({ initial, vouchers, explorerUrl }: Prop
       try {
         session = await connectWallet(`/itinerary/${it.id}`);
       } catch (e) {
-        setError((e as Error).message);
+        setError(errorText(t, e instanceof CircleClientError ? e.code : null, (e as Error).message));
         return;
       }
       if (!session) return; // Google mode: redirected
@@ -86,7 +88,7 @@ export default function ItineraryDetail({ initial, vouchers, explorerUrl }: Prop
       await refresh();
     } catch (err) {
       const code = err instanceof CircleClientError ? err.code : "TX_FAILED";
-      setError(t.err[code] ?? (err as Error).message);
+      setError(errorText(t, code, (err as Error).message));
     } finally {
       setBusyStop(null);
     }
@@ -105,9 +107,9 @@ export default function ItineraryDetail({ initial, vouchers, explorerUrl }: Prop
           <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">{t.status[it.status]}</span>
         </div>
         <p className="text-sm text-ink-2">
-          {hhmm(it.startAt)}–{hhmm(it.endAt)} · {it.partySize} {t.people} · {t.total} {usdc(it.totalUsdc)}
+          {hhmm(it.startAt)}–{hhmm(it.endAt)} · {it.partySize} {it.partySize === 1 ? t.person : t.people} · {t.total} {usdc(it.totalUsdc)}
         </p>
-        {it.depositTxHash && <TxLink hash={it.depositTxHash} explorerUrl={explorerUrl} label="Deposit" />}
+        {it.depositTxHash && <TxLink hash={it.depositTxHash} explorerUrl={explorerUrl} label={t.txDeposit} />}
         <p className="text-xs text-warn">⚠️ {t.testnetBadge}</p>
       </header>
 
@@ -136,7 +138,7 @@ export default function ItineraryDetail({ initial, vouchers, explorerUrl }: Prop
                 </h2>
                 <p className="text-xs text-ink-2">
                   {hhmm(s.arriveAt)} · {s.durationMin} {t.minutes}
-                  {s.merchant && Number(s.priceUsdc) > 0 ? ` · ${s.merchant.name}` : ""}
+                  {s.merchant && Number(s.priceUsdc) > 0 ? ` · ${merchantName(t, s.merchant)}` : ""}
                 </p>
               </div>
               <PriceLabel price={s.priceUsdc} source={s.priceSource} />
@@ -162,8 +164,8 @@ export default function ItineraryDetail({ initial, vouchers, explorerUrl }: Prop
             )}
             {s.status === "FREE" && paid && <p className="mt-2 text-xs text-ink-2">{t.noVoucherFree}</p>}
             <div className="mt-2 flex flex-col gap-1">
-              {s.releaseTx && <TxLink hash={s.releaseTx} explorerUrl={explorerUrl} label="Release" />}
-              {s.refundTx && <TxLink hash={s.refundTx} explorerUrl={explorerUrl} label="Refund" />}
+              {s.releaseTx && <TxLink hash={s.releaseTx} explorerUrl={explorerUrl} label={t.txRelease} />}
+              {s.refundTx && <TxLink hash={s.refundTx} explorerUrl={explorerUrl} label={t.txRefund} />}
             </div>
           </li>
         ))}

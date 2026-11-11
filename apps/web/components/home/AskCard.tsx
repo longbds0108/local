@@ -12,6 +12,12 @@ type Props = {
   onReset: () => void;
 };
 
+/** Server sends the bare number ("14"); older saved chats may hold "14 places". */
+function toolSummary(template: string | undefined, raw: string | undefined): string {
+  const n = raw?.match(/^[\d.]+/)?.[0];
+  return n && template ? ` · ${template.replace("{n}", n)}` : "";
+}
+
 export default function AskCard({ messages, busy, hasItinerary, onSend, onReset }: Props) {
   const { t } = useI18n();
   const [input, setInput] = useState("");
@@ -69,7 +75,7 @@ export default function AskCard({ messages, busy, hasItinerary, onSend, onReset 
                         }`}
                       >
                         {tool.status === "start" ? "⏳" : tool.status === "done" ? "✓" : "↻"} {t.tool[tool.name] ?? tool.name}
-                        {tool.summary ? ` · ${tool.summary}` : ""}
+                        {toolSummary(t.toolSummary[tool.name], tool.summary)}
                       </span>
                     ))}
                   </div>

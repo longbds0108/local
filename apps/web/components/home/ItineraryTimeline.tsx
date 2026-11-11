@@ -20,7 +20,7 @@ export default function ItineraryTimeline({ itinerary }: { itinerary: ItineraryV
           </h2>
           {itinerary && (
             <p className="mt-1 text-xs text-ink-2">
-              {hhmm(itinerary.startAt)}–{hhmm(itinerary.endAt)} · {itinerary.partySize} {t.people} · {t.status[itinerary.status]}
+              {hhmm(itinerary.startAt)}–{hhmm(itinerary.endAt)} · {itinerary.partySize} {itinerary.partySize === 1 ? t.person : t.people} · {t.status[itinerary.status]}
             </p>
           )}
         </div>

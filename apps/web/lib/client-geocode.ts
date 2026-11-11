@@ -14,6 +14,24 @@ function clean(s: string | undefined | null): string | null {
   return v || null;
 }
 
+/** "Thành phố Hồ Chí Minh" / "Ho Chi Minh City" / "Ho Chi Minh" → "hochiminh". */
+function core(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/gi, "d")
+    .toLowerCase()
+    .replace(/^(thanh pho|tinh)\s+/, "")
+    .replace(/\s+(city|province)$/, "")
+    .replace(/[\s-]+/g, ""); // "Ha Noi" = "Hanoi"
+}
+
+function longer(a: string | null, b: string | null): string | null {
+  if (!a) return b;
+  if (!b) return a;
+  return b.length > a.length ? b : a;
+}
+
 export async function clientReverse(lat: number, lon: number, locale: "vi" | "en"): Promise<ClientPlace | null> {
   const url =
     `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}` +
@@ -25,10 +43,13 @@ export async function clientReverse(lat: number, lon: number, locale: "vi" | "en
     const locality = clean(d.locality);
     const city = clean(d.city);
     const region = clean(d.principalSubdivision);
-    // "Sài Gòn, Thành phố Hồ Chí Minh" / "Hội An, Đà Nẵng" / "Ba Đình, Hà Nội"
-    const first = city && region && city !== region ? city : (locality ?? city);
-    const second = region ?? city;
-    const parts = [first, second].filter((x, i, a): x is string => !!x && a.indexOf(x) === i);
+    // "Vũng Tàu, Thành phố Hồ Chí Minh" / "Hội An, Đà Nẵng" / "Vung Tau, Ho Chi Minh City".
+    // City and province are often the same place spelled differently
+    // ("Ho Chi Minh City" / "Ho Chi Minh"), so compare their core names.
+    const sameCityAsRegion = !!city && !!region && core(city) === core(region);
+    const first = city && region && !sameCityAsRegion ? city : (locality ?? city);
+    const second = sameCityAsRegion ? longer(city, region) : (region ?? city);
+    const parts = [first, second].filter((x, i, a): x is string => !!x && a.findIndex((y) => y && core(y) === core(x)) === i);
     if (!parts.length) return null;
     return {
       label: parts.join(", "),

@@ -14,7 +14,9 @@ import {
 } from "@/lib/circle-client";
 import { CATEGORY_EMOJI, hhmm, shortAddr, usdc } from "@/lib/format";
 import type { DashboardActivity, DashboardData, ItineraryView, StopView } from "@/lib/types";
+import { merchantName } from "@/lib/i18n";
 import { useI18n } from "./I18nProvider";
+import { errorText } from "@/lib/error-text";
 
 const DRAFT_KEY = "hedgora.chat.itinerary";
 const TZ = "Asia/Ho_Chi_Minh";
@@ -76,7 +78,7 @@ function TripCard({ it, kind }: { it: ItineraryView; kind: Kind }) {
             <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${pill.cls}`}>{pill.text}</span>
           </div>
           <p className="mt-0.5 text-xs text-ink-2">
-            {hhmm(it.startAt)}–{hhmm(it.endAt)} · {it.partySize} {t.people} · {it.stops.length} {t.dashStopsWord}
+            {hhmm(it.startAt)}–{hhmm(it.endAt)} · {it.partySize} {it.partySize === 1 ? t.person : t.people} · {it.stops.length} {t.dashStopsWord}
           </p>
         </div>
       </div>
@@ -142,17 +144,13 @@ function Group({ title, count, children }: { title: string; count: number; child
 
 function ActivityRow({ a, explorerUrl }: { a: DashboardActivity; explorerUrl: string | null }) {
   const { t, locale } = useI18n();
-  const when = new Intl.DateTimeFormat(locale === "vi" ? "vi-VN" : "en-GB", {
-    timeZone: TZ,
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(new Date(a.at));
+  const dm = new Intl.DateTimeFormat(locale === "vi" ? "vi-VN" : "en-GB", { timeZone: TZ, day: "2-digit", month: "2-digit" })
+    .format(new Date(a.at))
+    .replace(/[-.]/g, "/");
+  const when = `${dm} ${hhmm(a.at)}`;
   const meta = {
     deposit: { icon: "↑", title: fill(t.dashTxPay, { trip: a.title }), note: t.dashTxPayNote, amount: `−${usdc(a.amountUsdc)}`, amountCls: "text-white", iconCls: "bg-surface-2 text-ink" },
-    release: { icon: "✓", title: fill(t.dashTxRelease, { merchant: a.merchant ?? a.title }), note: t.dashTxReleaseNote, amount: usdc(a.amountUsdc), amountCls: "text-ink-2", iconCls: "bg-accent-soft text-accent" },
+    release: { icon: "✓", title: fill(t.dashTxRelease, { merchant: a.merchant ? merchantName(t, { id: a.merchantId, name: a.merchant }) : a.title }), note: t.dashTxReleaseNote, amount: usdc(a.amountUsdc), amountCls: "text-ink-2", iconCls: "bg-accent-soft text-accent" },
     refund: { icon: "↩", title: fill(t.dashTxRefund, { place: a.title }), note: t.dashTxRefundNote, amount: `+${usdc(a.amountUsdc)}`, amountCls: "text-accent", iconCls: "bg-accent-soft text-accent" },
   }[a.type];
   const inner = (
@@ -258,7 +256,7 @@ export default function DashboardClient() {
             logout();
             setSession(null);
           }
-          setError(t.err[code] ?? (j as { error?: { message?: string } }).error?.message ?? t.err.NETWORK);
+          setError(errorText(t, code, (j as { error?: { message?: string } }).error?.message));
           return;
         }
         setData(j as DashboardData);
@@ -303,7 +301,7 @@ export default function DashboardClient() {
       }
     } catch (err) {
       const code = err instanceof CircleClientError ? err.code : "";
-      setError(t.err[code] ?? (err as Error).message);
+      setError(errorText(t, code, (err as Error).message));
     } finally {
       setConnecting(false);
     }
@@ -448,7 +446,7 @@ export default function DashboardClient() {
               <div className="space-y-6">
                 {/* Balance */}
                 <section className="rounded-[20px] border border-line bg-surface p-5">
-                  <div className="text-xs text-ink-2">{t.usdcBalance} · Arc testnet</div>
+                  <div className="text-xs text-ink-2">{t.usdcBalance} · {t.arcTestnet}</div>
                   <div className="mt-1 font-display text-[36px] leading-none font-extrabold text-white">
                     {balance ?? (loading ? "…" : "—")}
                     <span className="ml-2 text-base font-bold text-ink-2">USDC</span>
@@ -457,7 +455,7 @@ export default function DashboardClient() {
                     <button
                       type="button"
                       onClick={copyAddr}
-                      className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg bg-white/[0.06] px-3 font-mono text-xs text-[#dffff4]"
+                      className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg bg-white/[0.06] px-3 tabular-nums text-xs text-[#dffff4]"
                       title={t.copy}
                     >
                       {shortAddr(address)} {copied ? "✓" : "⧉"}
@@ -479,7 +477,7 @@ export default function DashboardClient() {
                         rel="noreferrer"
                         className="flex min-h-11 items-center justify-center rounded-xl border border-line px-3 text-sm font-bold text-ink"
                       >
-                        Explorer ↗
+                        {t.explorerShort} ↗
                       </a>
                     ) : (
                       <span />

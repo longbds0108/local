@@ -25,7 +25,7 @@ export default function ItineraryCard({ itinerary, compact = false }: { itinerar
         <div className="min-w-0">
           <h3 className="truncate text-sm font-bold text-ink">{itinerary.title}</h3>
           <p className="text-xs text-ink-2">
-            {hhmm(itinerary.startAt)}–{hhmm(itinerary.endAt)} · {itinerary.partySize} {t.people} · {itinerary.stops.length} {t.stops}
+            {hhmm(itinerary.startAt)}–{hhmm(itinerary.endAt)} · {itinerary.partySize} {itinerary.partySize === 1 ? t.person : t.people} · {itinerary.stops.length} {t.stops}
           </p>
         </div>
         <span className="shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent">

@@ -41,7 +41,7 @@ export default function MobileNav() {
 
   return (
     <nav
-      aria-label="Main"
+      aria-label={t.mainNav}
       className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
     >
       <ul className="grid grid-cols-5">

@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { shortAddr, usdc } from "@/lib/format";
+import { merchantName } from "@/lib/i18n";
 import { useI18n } from "./I18nProvider";
 import Scanner from "./Scanner";
+import { errorText } from "@/lib/error-text";
 
 type Merchant = { id: string; name: string; walletAddress: string };
 type Detail = {
@@ -91,7 +93,8 @@ export default function MerchantClient() {
         });
         const j = await res.json().catch(() => ({}));
         if (!res.ok) {
-          setResult({ ok: false, message: (j as { error?: { message?: string } }).error?.message ?? t.err.TX_FAILED });
+          const e = (j as { error?: { code?: string; message?: string } }).error;
+          setResult({ ok: false, message: errorText(t, e?.code ?? "TX_FAILED", e?.message) });
           return;
         }
         const ok = j as { stop: { name: string; amountUsdc: string }; txHash: string; explorerTxUrl: string | null };
@@ -130,7 +133,7 @@ export default function MerchantClient() {
         >
           {merchants.map((m) => (
             <option key={m.id} value={m.id}>
-              {m.name}
+              {merchantName(t, m)}
             </option>
           ))}
         </select>
@@ -150,12 +153,12 @@ export default function MerchantClient() {
                 href={`${detail.explorerUrl}/address/${detail.merchant.walletAddress}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-block min-h-6 pt-1 font-mono text-[11px] text-accent underline"
+                className="inline-block min-h-6 pt-1 tabular-nums text-[11px] text-accent underline"
               >
                 {shortAddr(detail.merchant.walletAddress)} ↗
               </a>
             ) : (
-              <span className="font-mono text-[11px] text-ink-2">{shortAddr(detail.merchant.walletAddress)}</span>
+              <span className="tabular-nums text-[11px] text-ink-2">{shortAddr(detail.merchant.walletAddress)}</span>
             )}
           </div>
         </section>
@@ -172,8 +175,8 @@ export default function MerchantClient() {
               id="qr-paste"
               value={paste}
               onChange={(e) => setPaste(e.target.value)}
-              placeholder="hedgora://checkin?s=…&sig=…"
-              className="min-h-[44px] min-w-0 flex-1 rounded-xl border border-line bg-bg px-3 font-mono text-base text-ink"
+              placeholder={t.pastePlaceholder}
+              className="min-h-[44px] min-w-0 flex-1 rounded-xl border border-line bg-bg px-3 tabular-nums text-base text-ink"
             />
             <button
               type="submit"

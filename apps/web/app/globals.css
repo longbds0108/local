@@ -51,8 +51,10 @@
   --color-forest: var(--forest);
   --color-forest-soft: var(--forest-soft);
   --color-deep: var(--deep);
-  --font-sans: var(--font-dm-sans), var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-manrope), var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+  /* A single typeface everywhere (body, headings, numbers, addresses). */
+  --font-sans: var(--font-app), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-app), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-app), ui-sans-serif, system-ui, sans-serif;
 }
 
 html {
@@ -133,6 +135,13 @@ body {
 
 .maplibregl-ctrl-attrib {
   font-size: 10px;
+}
+/* MapLibre ships Helvetica for its controls and popups; use the app font instead. */
+body .maplibregl-map,
+body .maplibregl-popup-content,
+body .maplibregl-ctrl,
+body .maplibregl-cooperative-gesture-screen {
+  font-family: var(--font-sans);
 }
 
 @keyframes fadein {

@@ -17,6 +17,7 @@ import {
 } from "@/lib/circle-client";
 import { shortAddr } from "@/lib/format";
 import { useI18n } from "./I18nProvider";
+import { errorText } from "@/lib/error-text";
 
 /**
  * Header wallet button. PIN mode (no Google client id configured): connects a
@@ -79,7 +80,7 @@ export default function WalletButton() {
       if (s) setSession(s);
     } catch (err) {
       const code = err instanceof CircleClientError ? err.code : "";
-      flash(t.err[code] ?? (err as Error).message);
+      flash(errorText(t, code, (err as Error).message));
     } finally {
       setBusy(false);
     }
@@ -98,10 +99,10 @@ export default function WalletButton() {
       </button>
       {open && connected && (
         <div className="absolute right-0 mt-2 w-64 space-y-2 rounded-2xl border border-line bg-surface p-3 text-sm shadow-2xl">
-          <div className="text-[11px] font-bold tracking-widest text-ink-2">ARC TESTNET · CIRCLE</div>
+          <div className="text-[11px] font-bold tracking-widest text-ink-2">{t.networkLabel}</div>
           <button
             type="button"
-            className="min-h-10 w-full truncate text-left font-mono text-xs text-ink hover:text-accent"
+            className="min-h-10 w-full truncate text-left tabular-nums text-xs text-ink hover:text-accent"
             onClick={() => navigator.clipboard?.writeText(session!.walletAddress!)}
             title={t.copy}
           >

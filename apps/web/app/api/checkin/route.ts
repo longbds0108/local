@@ -31,7 +31,7 @@ export const POST = handle(async (req: Request) => {
   // Same response for unknown stop and bad signature: don't leak which stop ids exist.
   if (!stop || !verifyStopSig(stop.id, stop.qrSecret, sig)) throw new ApiError(400, "BAD_REQUEST", "Invalid voucher");
   if (stop.merchantId !== merchantId) {
-    throw new ApiError(403, "FORBIDDEN", `This voucher belongs to ${stop.merchant?.name ?? "another merchant"}`);
+    throw new ApiError(403, "FORBIDDEN", "This QR code belongs to another partner");
   }
   if (stop.itinerary.status !== "PAID") throw new ApiError(409, "CONFLICT", `Itinerary is not in PAID state (${stop.itinerary.status})`);
   if (stop.status !== "PENDING") throw new ApiError(409, "CONFLICT", `Voucher already used (${stop.status})`);

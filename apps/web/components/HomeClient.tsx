@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getSession, SESSION_EVENT } from "@/lib/circle-client";
 import { clientReverse } from "@/lib/client-geocode";
 import type { ItineraryView, MapPlace } from "@/lib/types";
@@ -11,6 +11,7 @@ import Hero, { type GpsState, type HereInfo, type LocationInfo } from "./home/He
 import ItineraryTimeline from "./home/ItineraryTimeline";
 import PlaceCards from "./home/PlaceCards";
 import { useI18n } from "./I18nProvider";
+import { dishLabel } from "@/lib/dish-names";
 
 const MapView = dynamic(() => import("./Map"), { ssr: false });
 
@@ -55,7 +56,7 @@ function MiniWallet() {
         <b className="text-[22px]">{addr ? (balance ?? "…") : "—"}</b>
       </div>
       <div className="mt-3 flex items-center gap-1.5 text-[11px] text-[#b9cbc5]">
-        <i className="inline-block h-[7px] w-[7px] rounded-full bg-accent" /> Arc Testnet
+        <i className="inline-block h-[7px] w-[7px] rounded-full bg-accent" /> {t.arcTestnet}
       </div>
       {!addr && <p className="mt-2 text-[11px] text-[#84a59b]">{t.walletHint}</p>}
     </div>
@@ -70,7 +71,9 @@ export default function HomeClient() {
   const [infoLoading, setInfoLoading] = useState(false);
 
   // Place name + current weather + landmark photo for a point.
+  const infoSeq = useRef(0);
   const loadInfo = useCallback(async (pt: { lat: number; lon: number }, isGps: boolean) => {
+    const seq = ++infoSeq.current;
     setInfoLoading(true);
     try {
       // Browser-side geocode first (BigDataCloud); the server falls back to Photon.
@@ -84,15 +87,23 @@ export default function HomeClient() {
       const res = await fetch(`/api/location?${qs}`, { cache: "no-store" });
       if (!res.ok) throw new Error(String(res.status));
       const j = (await res.json()) as LocationInfo;
+      if (seq !== infoSeq.current) return; // a newer request (other language/place) wins
       setInfo(j);
       if (isGps && j.label) setHere((h) => (h ? { ...h, label: j.label } : h));
     } catch {
-      setInfo((prev) => prev ?? { label: null, weather: null, landmark: null, dishes: [] });
+      if (seq === infoSeq.current) setInfo((prev) => prev ?? { label: null, weather: null, landmark: null, dishes: [] });
     } finally {
-      setInfoLoading(false);
+      if (seq === infoSeq.current) setInfoLoading(false);
     }
   }, [locale]);
   const [start, setStart] = useState<{ lat: number; lon: number; isGps: boolean } | null>(null);
+  // Switching language re-fetches the place name in that language.
+  const infoLocale = useRef(locale);
+  useEffect(() => {
+    if (infoLocale.current === locale) return;
+    infoLocale.current = locale;
+    if (start) void loadInfo(start, start.isGps);
+  }, [locale, start, loadInfo]);
   const [places, setPlaces] = useState<MapPlace[]>([]);
   const [placesState, setPlacesState] = useState<"loading" | "ok" | "error">("loading");
   const [degraded, setDegraded] = useState(false);
@@ -220,7 +231,7 @@ export default function HomeClient() {
   const visible =
     tab === "saved" ? sorted.filter((p) => saved.has(p.osmId)) : dish ? dishPlaces : sorted.slice(0, limit);
 
-  const area = info?.label?.split(",")[0]?.trim() || (start?.isGps ? null : "Vũng Tàu");
+  const area = info?.label?.split(",")[0]?.trim() || (start?.isGps ? null : locale === "vi" ? "Vũng Tàu" : "Vung Tau");
   const dishes = info?.dishes ?? [];
 
   const pickDish = async (d: string) => {
@@ -301,7 +312,7 @@ export default function HomeClient() {
                   : tab === "saved"
                     ? t.savedTitle
                     : dish
-                      ? t.dishNear.replace("{dish}", dish)
+                      ? t.dishNear.replace("{dish}", dishLabel(dish, locale))
                       : area
                         ? t.discoverNear.replace("{area}", area)
                         : t.discoverTitle}
@@ -349,7 +360,7 @@ export default function HomeClient() {
                     dish === d ? "border-forest bg-forest text-white" : "border-cream-line bg-white text-cream-ink hover:border-forest"
                   }`}
                 >
-                  {d}
+                  {dishLabel(d, locale)}
                   {dish === d ? " ✕" : ""}
                 </button>
               ))}
@@ -359,10 +370,10 @@ export default function HomeClient() {
 
           {dish && dishState === "ok" && dishPlaces.length === 0 && tab === "discover" && (
             <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[17px] border border-dashed border-cream-line bg-white p-4 text-sm text-cream-muted">
-              <span>{degraded ? t.mapDataBusy : t.dishEmpty.replace("{dish}", dish)}</span>
+              <span>{degraded ? t.mapDataBusy : t.dishEmpty.replace("{dish}", dishLabel(dish, locale))}</span>
               <button
                 type="button"
-                onClick={() => void chat.send(t.askDish.replace("{dish}", dish))}
+                onClick={() => void chat.send(t.askDish.replace("{dish}", dishLabel(dish, locale)))}
                 className="min-h-10 rounded-lg bg-forest-soft px-3 text-sm font-bold text-forest"
               >
                 {t.askButton} →

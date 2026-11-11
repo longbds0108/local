@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { dictionaries, type Dict, type Locale } from "@/lib/i18n";
 
@@ -21,9 +22,14 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const pathname = usePathname();
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
+  // Tab title in the UI language (React hoists <title> into <head>).
+  const section = "/" + (pathname?.split("/")[1] ?? "");
+  const pageName = dictionaries[locale].pageTitle[section];
+  const title = pageName ? `${pageName} · Hedgora Travel` : "Hedgora Travel";
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
@@ -34,7 +40,12 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  return <I18nContext.Provider value={{ locale, t: dictionaries[locale], setLocale }}>{children}</I18nContext.Provider>;
+  return (
+    <I18nContext.Provider value={{ locale, t: dictionaries[locale], setLocale }}>
+      <title>{title}</title>
+      {children}
+    </I18nContext.Provider>
+  );
 }
 
 export function useI18n() {
@@ -48,7 +59,7 @@ export function LangToggle() {
       type="button"
       onClick={() => setLocale(locale === "vi" ? "en" : "vi")}
       className="min-h-[40px] rounded-xl border border-line px-3 text-xs font-semibold text-ink-2 hover:text-white"
-      aria-label="Switch language"
+      aria-label={t.switchLang}
     >
       {t.langToggle}
     </button>

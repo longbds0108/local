@@ -58,7 +58,7 @@ export const POST = handle(async (req: Request) => {
       const amount = Number(s.priceUsdc);
       if (s.status === "RELEASED") {
         released += amount;
-        activity.push({ type: "release", itineraryId: it.id, title: s.name, merchant: s.merchant?.name ?? null, amountUsdc: amount.toFixed(2), txHash: s.releaseTx, at: (s.checkedInAt ?? it.updatedAt).toISOString() });
+        activity.push({ type: "release", itineraryId: it.id, title: s.name, merchant: s.merchant?.name ?? null, merchantId: s.merchant?.id ?? null, amountUsdc: amount.toFixed(2), txHash: s.releaseTx, at: (s.checkedInAt ?? it.updatedAt).toISOString() });
       } else if (s.status === "REFUNDED") {
         refunded += amount;
         activity.push({ type: "refund", itineraryId: it.id, title: s.name, amountUsdc: amount.toFixed(2), txHash: s.refundTx, at: (s.refundedAt ?? it.updatedAt).toISOString() });

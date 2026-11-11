@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/components/I18nProvider";
 import type { ChatEvent, ItineraryView, MapPlace } from "./types";
+import { errorText } from "@/lib/error-text";
 
 export type ToolState = { name: string; status: "start" | "done" | "error"; summary?: string };
 export type ChatMessage = { id: string; role: "user" | "assistant"; text: string; tools: ToolState[]; error?: string };
@@ -103,8 +104,8 @@ export function useChat(opts: {
         });
         if (!res.ok || !res.body) {
           const j = await res.json().catch(() => ({}));
-          const code = (j as { error?: { code?: string } }).error?.code ?? "AI_ERROR";
-          patchLast((m) => ({ ...m, error: t.err[code] ?? t.err.AI_ERROR }));
+          const e = (j as { error?: { code?: string; message?: string } }).error;
+          patchLast((m) => ({ ...m, error: errorText(t, e?.code ?? "AI_ERROR", e?.message) }));
           return;
         }
         const reader = res.body.getReader();
@@ -151,7 +152,7 @@ export function useChat(opts: {
                 writeJSON(ITINERARY_KEY, ev.itinerary.id);
                 break;
               case "error":
-                patchLast((m) => ({ ...m, error: t.err[ev.code] ?? ev.message }));
+                patchLast((m) => ({ ...m, error: errorText(t, ev.code, ev.message) }));
                 break;
             }
           }

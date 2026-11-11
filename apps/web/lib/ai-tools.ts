@@ -329,9 +329,9 @@ async function runBuild(raw: unknown, ctx: ToolContext) {
 }
 
 const SUMMARY: Record<string, (out: unknown) => string> = {
-  search_places: (o) => `${(o as { count: number }).count} places`,
-  get_route: (o) => `${(o as { totalMin: number }).totalMin} min`,
-  build_itinerary: (o) => `${(o as { totalUsdc: string }).totalUsdc} USDC`,
+  search_places: (o) => String((o as { count: number }).count),
+  get_route: (o) => String((o as { totalMin: number }).totalMin),
+  build_itinerary: (o) => String((o as { totalUsdc: string }).totalUsdc),
 };
 
 /** Executes one tool call. Returns the tool_result content and whether it is an error. */

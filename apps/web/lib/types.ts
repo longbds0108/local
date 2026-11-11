@@ -74,6 +74,7 @@ export type DashboardActivity = {
   itineraryId: string;
   title: string;
   merchant?: string | null;
+  merchantId?: string | null;
   amountUsdc: string;
   txHash: string | null;
   at: string;

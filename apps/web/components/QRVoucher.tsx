@@ -18,13 +18,13 @@ export default function QRVoucher({ payload, label }: { payload: string; label: 
     <div className="flex flex-col items-center gap-2 rounded-xl bg-white p-3">
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt={`QR voucher — ${label}`} width={200} height={200} className="h-[200px] w-[200px]" />
+        <img src={src} alt={t.qrAlt.replace("{name}", label)} width={200} height={200} className="h-[200px] w-[200px]" />
       ) : (
         <div className="h-[200px] w-[200px] animate-pulse rounded bg-neutral-200" />
       )}
       <p className="text-center text-xs text-neutral-600">{t.voucherHint}</p>
       <details className="w-full text-[11px] text-neutral-500">
-        <summary className="cursor-pointer">QR text</summary>
+        <summary className="cursor-pointer">{t.qrText}</summary>
         <code className="block break-all select-all">{payload}</code>
       </details>
     </div>

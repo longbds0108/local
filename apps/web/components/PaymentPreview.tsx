@@ -20,6 +20,7 @@ import { CATEGORY_EMOJI, hhmm, shortAddr, usdc } from "@/lib/format";
 import type { ItineraryView } from "@/lib/types";
 import { useI18n } from "./I18nProvider";
 import { PriceLabel } from "./ItineraryCard";
+import { errorText } from "@/lib/error-text";
 
 type Phase =
   | "idle"
@@ -86,7 +87,7 @@ export default function PaymentPreview({ initial, explorerUrl, faucetUrl, feeEst
         logout();
         setSession(null);
       }
-      setError(t.err[code] ?? (err as Error).message ?? t.err.TX_FAILED);
+      setError(errorText(t, code, (err as Error).message));
       setPhase("idle");
     },
     [t],
@@ -243,7 +244,7 @@ export default function PaymentPreview({ initial, explorerUrl, faucetUrl, feeEst
       <section className="rounded-2xl border border-line bg-surface p-4">
         <h2 className="font-semibold text-ink">{itinerary.title}</h2>
         <p className="text-xs text-ink-2">
-          {hhmm(itinerary.startAt)}–{hhmm(itinerary.endAt)} · {itinerary.partySize} {t.people}
+          {hhmm(itinerary.startAt)}–{hhmm(itinerary.endAt)} · {itinerary.partySize} {itinerary.partySize === 1 ? t.person : t.people}
         </p>
         <ul className="mt-3 divide-y divide-line">
           {itinerary.stops.map((s, i) => (
@@ -307,7 +308,7 @@ export default function PaymentPreview({ initial, explorerUrl, faucetUrl, feeEst
                 <div className="text-xs text-ink-2">{t.wallet}</div>
                 <button
                   type="button"
-                  className="font-mono text-ink hover:text-accent"
+                  className="tabular-nums text-ink hover:text-accent"
                   title={t.copy}
                   onClick={() => navigator.clipboard?.writeText(session.walletAddress!)}
                 >

@@ -18,7 +18,27 @@ import type { ItineraryView, MapPlace } from "@/lib/types";
 // (tile.openstreetmap.org is unreachable from some networks, CARTO now needs a key.)
 const DEFAULT_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 const CUSTOM_TILES = process.env.NEXT_PUBLIC_MAP_TILE_URL;
-const ATTRIBUTION = '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors';
+
+/**
+ * Map data credit in the UI language. MapLibre's own attribution control would
+ * show the style's English credit line, so this replaces it (same CSS classes).
+ * The HTML comes from our dictionary only, never from map data.
+ */
+class CreditControl implements maplibregl.IControl {
+  private el: HTMLElement | null = null;
+  constructor(private html: string) {}
+  onAdd() {
+    const el = document.createElement("div");
+    el.className = "maplibregl-ctrl maplibregl-ctrl-attrib";
+    el.innerHTML = `<div class="maplibregl-ctrl-attrib-inner">${this.html}</div>`;
+    this.el = el;
+    return el;
+  }
+  onRemove() {
+    this.el?.remove();
+    this.el = null;
+  }
+}
 
 function mapStyle(): string | StyleSpecification {
   if (process.env.NEXT_PUBLIC_MAP_STYLE_URL) return process.env.NEXT_PUBLIC_MAP_STYLE_URL;
@@ -79,7 +99,12 @@ function popupNode(p: MapPlace, t: Dict): HTMLElement {
   return root;
 }
 
-export default function MapView({ center, user, places, itinerary, t }: Props) {
+/** Remount on language change so MapLibre's built-in control labels follow the UI language. */
+export default function MapView(props: Props) {
+  return <MapCanvas key={props.t.langToggle} {...props} />;
+}
+
+function MapCanvas({ center, user, places, itinerary, t }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
@@ -99,12 +124,21 @@ export default function MapView({ center, user, places, itinerary, t }: Props) {
       style: mapStyle(),
       center: [center.lon, center.lat],
       zoom: 13.2,
-      attributionControl: { compact: false, customAttribution: ATTRIBUTION },
+      attributionControl: false,
       // On phones, one finger scrolls the page; two fingers move the map.
       cooperativeGestures: window.matchMedia("(pointer: coarse)").matches,
-      locale: { "CooperativeGesturesHandler.MobileHelpText": tRef.current.mapTwoFingers },
+      locale: {
+        "CooperativeGesturesHandler.MobileHelpText": tRef.current.mapTwoFingers,
+        "CooperativeGesturesHandler.WindowsHelpText": tRef.current.mapCtrlScroll,
+        "CooperativeGesturesHandler.MacHelpText": tRef.current.mapCmdScroll,
+        "NavigationControl.ZoomIn": tRef.current.mapZoomIn,
+        "NavigationControl.ZoomOut": tRef.current.mapZoomOut,
+        "NavigationControl.ResetBearing": tRef.current.mapResetBearing,
+        "Map.Title": tRef.current.mapLabel,
+      },
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+    map.addControl(new CreditControl(tRef.current.mapCredit), "bottom-right");
     mapRef.current = map;
 
     map.on("load", () => {
@@ -227,7 +261,7 @@ export default function MapView({ center, user, places, itinerary, t }: Props) {
   // Tailwind's layered utilities), so size the map via a positioned wrapper.
   return (
     <div className="absolute inset-0">
-      <div ref={containerRef} className="h-full w-full" aria-label="Map" />
+      <div ref={containerRef} className="h-full w-full" aria-label={t.mapLabel} />
     </div>
   );
 }
