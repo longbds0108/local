@@ -51,6 +51,7 @@ export const POST = handle(async (req: Request) => {
     where: { id: itineraryId },
     data: {
       status: "PAID",
+      paidAt: new Date(),
       depositTxHash: txHash,
       payerAddress: payer,
       deadline: Number(onchain.deadline),

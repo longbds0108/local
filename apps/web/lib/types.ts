@@ -68,3 +68,25 @@ export type ChatEvent =
   | { type: "itinerary"; itinerary: ItineraryView }
   | { type: "error"; code: string; message: string }
   | { type: "done" };
+
+export type DashboardActivity = {
+  type: "deposit" | "release" | "refund";
+  itineraryId: string;
+  title: string;
+  merchant?: string | null;
+  amountUsdc: string;
+  txHash: string | null;
+  at: string;
+};
+
+export type DashboardData = {
+  wallet: { id: string; address: string } | null;
+  balanceUsdc: string | null;
+  explorerUrl: string | null;
+  faucetUrl: string | null;
+  stats: { escrowedUsdc: string; releasedUsdc: string; refundedUsdc: string; trips: number; activeVouchers: number };
+  drafts: ItineraryView[];
+  active: ItineraryView[];
+  history: ItineraryView[];
+  activity: DashboardActivity[];
+};

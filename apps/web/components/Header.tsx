@@ -11,6 +11,7 @@ export default function Header() {
   const nav = [
     { href: "/#explore", label: t.navExplore },
     { href: "/#itinerary", label: t.navTrips },
+    { href: "/dashboard", label: t.navDashboard },
     { href: "/merchant", label: t.navMerchant },
   ];
   return (

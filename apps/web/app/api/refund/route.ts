@@ -30,7 +30,7 @@ async function refundStop(stop: { id: string; itineraryId: string; onchainIndex:
   if (locked.count !== 1) throw new ApiError(409, "CONFLICT", "Stop is not refundable (already used, refunded or in progress)");
   try {
     const txHash = await operatorCall("refund", onchainId as Hex, stop.onchainIndex);
-    await prisma.stop.update({ where: { id: stop.id }, data: { status: "REFUNDED", refundTx: txHash } });
+    await prisma.stop.update({ where: { id: stop.id }, data: { status: "REFUNDED", refundTx: txHash, refundedAt: new Date() } });
     await recomputeItineraryStatus(stop.itineraryId);
     return txHash;
   } catch (err) {

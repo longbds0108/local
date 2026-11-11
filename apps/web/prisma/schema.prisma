@@ -36,6 +36,7 @@ model Itinerary {
   totalUsdc      Decimal // 6 decimals
   status         String // DRAFT | PAID | COMPLETED | REFUNDED | PARTIAL
   depositTxHash  String?
+  paidAt         DateTime?
   onchainId      String? // bytes32 used in the contract
   deadline       Int? // unix seconds, passed to deposit()
   payerAddress   String?
@@ -70,6 +71,7 @@ model Stop {
   onchainIndex  Int? // index in the escrow's stops[] (only paid stops are escrowed)
   releaseTx     String?
   refundTx      String?
+  refundedAt    DateTime?
   checkedInAt   DateTime?
 }
 

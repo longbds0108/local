@@ -70,16 +70,16 @@ export default function MobileNav() {
         ))}
         <li>
           <Link
-            href="/merchant"
-            aria-current={path === "/merchant" ? "page" : undefined}
+            href="/dashboard"
+            aria-current={path === "/dashboard" ? "page" : undefined}
             className={`flex min-h-16 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold ${
-              path === "/merchant" ? "text-accent" : "text-ink-2"
+              path === "/dashboard" ? "text-accent" : "text-ink-2"
             }`}
           >
             <span className="text-xl leading-none" aria-hidden>
-              ▣
+              ◉
             </span>
-            {t.navMerchant}
+            {t.navDashboard}
           </Link>
         </li>
       </ul>

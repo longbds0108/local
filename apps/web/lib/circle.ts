@@ -25,6 +25,7 @@ export const CIRCLE_CODES = {
   userAlreadyExists: 155101,
   userAlreadyInitialized: 155106,
   userTokenExpired: 155104,
+  userTokenInvalid: 155105,
   userTokenNotFound: 155103,
 } as const;
 

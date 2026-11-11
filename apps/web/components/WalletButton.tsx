@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -111,6 +112,13 @@ export default function WalletButton() {
             <b>{balance !== null ? `${balance} USDC` : "…"}</b>
           </div>
           {session?.email && <div className="truncate text-xs text-ink-2">{session.email}</div>}
+          <Link
+            href="/dashboard"
+            onClick={() => setOpen(false)}
+            className="flex min-h-10 items-center justify-center rounded-lg bg-accent text-xs font-bold text-accent-ink"
+          >
+            ◉ {t.navDashboard} →
+          </Link>
           {authMode() === "pin" && <p className="text-[11px] leading-snug text-ink-2">{t.walletBrowserNote}</p>}
           <a
             href={process.env.NEXT_PUBLIC_FAUCET_URL || "https://faucet.circle.com"}

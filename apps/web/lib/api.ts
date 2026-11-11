@@ -62,8 +62,11 @@ export function handle<A extends unknown[]>(fn: (...args: A) => Promise<Response
       if (err instanceof ConfigError) return jsonError(503, "NOT_CONFIGURED", err.message);
       if (err instanceof CircleError) {
         const expired =
-          err.code === CIRCLE_CODES.userTokenExpired || err.code === CIRCLE_CODES.userTokenNotFound || err.status === 401;
-        if (expired) return jsonError(401, "UNAUTHORIZED", "Circle session expired — please sign in with Google again");
+          err.code === CIRCLE_CODES.userTokenExpired ||
+          err.code === CIRCLE_CODES.userTokenInvalid ||
+          err.code === CIRCLE_CODES.userTokenNotFound ||
+          err.status === 401;
+        if (expired) return jsonError(401, "UNAUTHORIZED", "Circle session expired — please reconnect your wallet");
         console.error("[circle]", err.status, err.code, err.message);
         return jsonError(502, "CIRCLE_ERROR", `Circle: ${err.message}`, { circleCode: err.code });
       }
