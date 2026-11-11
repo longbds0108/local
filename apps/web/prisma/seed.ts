@@ -1,6 +1,6 @@
-// Seeds merchants (demo testnet wallets) from data/merchants.json.
+// Seeds merchants (demo testnet wallets) from apps/web/data/merchants.json.
 import { PrismaClient } from "@prisma/client";
-import merchantsData from "../../../data/merchants.json";
+import merchantsData from "../data/merchants.json";
 
 const prisma = new PrismaClient();
 

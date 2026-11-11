@@ -5,8 +5,8 @@ out/
 .env.local
 *.db
 *.db-journal
-data/*.local.json
-data/cache/
+apps/web/data/*.local.json
+apps/web/data/cache/
 contracts/out/
 contracts/cache/
 contracts/broadcast/

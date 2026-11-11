@@ -16,7 +16,7 @@ PAY AGENT sits in the middle, and each stop is paid the way that venue works:
 | **Pay at venue** — a partner venue you just walk into (cafe, street food) | When you arrive | Scan the venue's QR, enter the bill, confirm with your PIN — USDC goes straight to the venue |
 | **Pay yourself** — not a PAY AGENT partner | When you arrive | Shown as an estimate; you pay there directly (no fake "partner pool") |
 
-The venue decides: `prepay: true` in [`data/merchants.json`](data/merchants.json) means it takes bookings. A trip with
+The venue decides: `prepay: true` in [`apps/web/data/merchants.json`](apps/web/data/merchants.json) means it takes bookings. A trip with
 nothing to prepay is simply **started** (no transaction) and paid stop by stop.
 
 ## How it works

@@ -24,7 +24,7 @@ export function required(...names: string[]): string[] {
 
 export const config = {
   get dataDir() {
-    return read("DATA_DIR") ?? path.resolve(process.cwd(), "../../data");
+    return read("DATA_DIR") ?? path.resolve(process.cwd(), "data");
   },
   /**
    * Best-effort disk cache for public map services. Serverless platforms (Vercel)
