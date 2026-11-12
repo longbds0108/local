@@ -96,6 +96,10 @@ model ChatSession {
   itinerary   Itinerary? @relation(fields: [itineraryId], references: [id])
   startLat    Float?
   startLon    Float?
+  // The wallet that started the chat (the AI needs a signed-in wallet). Null on older chats.
+  walletAddress String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+
+  @@index([walletAddress])
 }

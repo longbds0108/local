@@ -125,6 +125,7 @@ Stack: Next.js 15, React 19, Tailwind 4, Prisma (SQLite locally, Postgres on Ver
 - Check-in codes live in the browser that paid (like the PIN wallet). Losing browser data means that stop can't be checked in — its money is still refundable.
 - Pay-at-venue: the traveller types the bill; nothing stops them paying less than the venue asks (as with any QR transfer — the venue sees the amount arrive). Only three demo venues are partners; every other place is "pay yourself".
 - The partner portal has no login. Funds are safe (the contract only pays the right venue), but anyone can view a venue's revenue.
+- The AI chat needs a signed-in wallet (Circle user token, verified server-side); limits: 20 messages/min per IP, 10/min and 200/day per wallet.
 - In-memory rate limits (per instance). Public OSM services are for demo use.
 
 Map data © OpenStreetMap contributors (ODbL).

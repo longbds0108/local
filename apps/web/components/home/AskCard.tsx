@@ -8,7 +8,12 @@ type Props = {
   messages: ChatMessage[];
   busy: boolean;
   hasItinerary: boolean;
+  /** False when no wallet is signed in: the AI needs one (anti-spam). */
+  signedIn: boolean | null;
+  connecting: boolean;
+  gateError: string | null;
   onSend: (text: string) => void;
+  onSignIn: () => void;
   onReset: () => void;
 };
 
@@ -18,7 +23,7 @@ function toolSummary(template: string | undefined, raw: string | undefined): str
   return n && template ? ` · ${template.replace("{n}", n)}` : "";
 }
 
-export default function AskCard({ messages, busy, hasItinerary, onSend, onReset }: Props) {
+export default function AskCard({ messages, busy, hasItinerary, signedIn, connecting, gateError, onSend, onSignIn, onReset }: Props) {
   const { t } = useI18n();
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -27,12 +32,19 @@ export default function AskCard({ messages, busy, hasItinerary, onSend, onReset 
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
+  const signedOut = signedIn === false;
   const submit = (e?: FormEvent) => {
     e?.preventDefault();
-    if (!input.trim() || busy) return;
+    if (busy || connecting) return;
+    if (!input.trim()) {
+      if (signedOut) onSignIn();
+      return;
+    }
+    // Signed out: onSend opens the wallet sign-in first, then sends this question.
     onSend(input);
     setInput("");
   };
+  const buttonLabel = busy ? t.chatThinkingShort : connecting ? t.connecting : signedOut ? `${t.askSignIn} →` : `${t.askButton} →`;
 
   return (
     <div id="ask" className="fx-rise grid scroll-mt-24 grid-cols-[auto_1fr] gap-x-3.5 gap-y-2.5 rounded-[22px] bg-deep p-[18px] text-white md:p-6">
@@ -129,19 +141,31 @@ export default function AskCard({ messages, busy, hasItinerary, onSend, onReset 
         />
         <button
           type="submit"
-          disabled={busy || !input.trim()}
-          className="min-h-12 w-full rounded-[9px] bg-accent px-[18px] text-base font-bold sm:min-h-[44px] sm:text-sm text-[#08231c] disabled:opacity-60 sm:w-auto"
+          disabled={busy || connecting || (!signedOut && !input.trim())}
+          className="min-h-12 w-full rounded-[9px] bg-accent px-[18px] text-base font-bold whitespace-nowrap sm:min-h-[44px] sm:text-sm text-[#08231c] disabled:opacity-60 sm:w-auto"
         >
-          {busy ? t.chatThinkingShort : `${t.askButton} →`}
+          {buttonLabel}
         </button>
       </form>
+
+      {signedOut && (
+        <p className="col-span-full flex items-start gap-2 text-xs leading-relaxed text-[#9bb0aa]">
+          <span aria-hidden>🔒</span>
+          {t.askWalletNote}
+        </p>
+      )}
+      {gateError && (
+        <p role="alert" className="col-span-full rounded-lg bg-[#ff8a7f]/15 px-3 py-2 text-sm text-[#ffb3ab]">
+          {gateError}
+        </p>
+      )}
 
       <div className="col-span-full -mx-[18px] flex gap-2 overflow-x-auto px-[18px] pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
         {t.quickPrompts.map((p) => (
           <button
             key={p.label}
             type="button"
-            disabled={busy}
+            disabled={busy || connecting}
             onClick={() => onSend(p.prompt)}
             className="min-h-10 shrink-0 rounded-[20px] border border-white/10 bg-white/[0.04] px-3.5 text-sm whitespace-nowrap text-[#c5d8d1] hover:border-accent/50 disabled:opacity-50 sm:text-xs"
           >

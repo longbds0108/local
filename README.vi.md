@@ -116,7 +116,7 @@ Ví merchant demo (chỉ địa chỉ) ở `apps/web/data/merchants.json`; priva
 | Giờ mở cửa (`opening_hours`, theo giờ Asia/Ho_Chi_Minh) | `lib/hours.ts` |
 | Circle REST (server) / Web SDK (client) | `lib/circle.ts`, `lib/circle-client.ts` |
 | Chain (viem): đọc escrow, release/refund bằng operator | `lib/chain.ts` |
-| Rate limit chat 20 req/phút/IP (in-memory) | `lib/rate-limit.ts` |
+| Chat AI chỉ cho ví đã đăng nhập (Circle user token → địa chỉ ví, cache 5 phút; mỗi cuộc chat gắn với ví đã mở nó). Giới hạn: 20 tin/phút/IP, 10 tin/phút và 200 tin/ngày mỗi ví (in-memory) | `lib/wallet-auth.ts`, `app/api/chat/route.ts`, `lib/rate-limit.ts` |
 
 Trạng thái itinerary: `DRAFT → PAID → COMPLETED | REFUNDED | PARTIAL`. Stop: `FREE | PENDING → (CHECKED_IN) → RELEASED` hoặc `PENDING → (REFUNDING) → REFUNDED`.
 

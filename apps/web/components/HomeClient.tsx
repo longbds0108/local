@@ -303,7 +303,17 @@ export default function HomeClient() {
         </aside>
 
         <div className="min-w-0 p-[18px] md:p-10">
-          <AskCard messages={chat.messages} busy={chat.busy} hasItinerary={!!itinerary} onSend={(s) => void chat.send(s)} onReset={chat.reset} />
+          <AskCard
+            messages={chat.messages}
+            busy={chat.busy}
+            hasItinerary={!!itinerary}
+            signedIn={chat.signedIn}
+            connecting={chat.connecting}
+            gateError={chat.gateError}
+            onSend={(s) => void chat.send(s)}
+            onSignIn={chat.signIn}
+            onReset={chat.reset}
+          />
 
           <div className="mt-8 mb-4 flex flex-wrap items-end justify-between gap-3 md:mt-10 md:mb-5">
             <div>

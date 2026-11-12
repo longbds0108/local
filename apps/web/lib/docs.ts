@@ -34,8 +34,8 @@ const vi: Docs = {
       id: "bat-dau",
       title: "Bắt đầu",
       steps: [
-        "Hỏi AI về chuyến đi bạn muốn, ví dụ “chiều nay 4 tiếng, 2 người, thích biển”. Chưa cần ví để xem lịch trình.",
-        "Bấm “Bắt đầu” để tạo ví du lịch. Bạn chỉ cần đặt mã PIN trong cửa sổ của Circle, không phải cài thêm gì.",
+        "Bấm “Bắt đầu” để tạo ví du lịch. Bạn chỉ cần đặt mã PIN trong cửa sổ của Circle, không phải cài thêm gì. Cần có ví mới trò chuyện được với AI.",
+        "Hỏi AI về chuyến đi bạn muốn, ví dụ “chiều nay 4 tiếng, 2 người, thích biển”.",
         "Nạp USDC thử nghiệm vào ví (xem mục bên dưới), rồi thanh toán hoặc bắt đầu chuyến đi.",
       ],
       links: [{ label: "Hỏi AI", href: "/#ask" }],
@@ -148,8 +148,8 @@ const en: Docs = {
       id: "get-started",
       title: "Get started",
       steps: [
-        "Ask the AI for the trip you want, e.g. “4 hours this afternoon, 2 people, love the beach”. You don't need a wallet to see a plan.",
-        "Tap “Get started” to create a travel wallet. You only set a PIN in Circle's window; nothing to install.",
+        "Tap “Get started” to create a travel wallet. You only set a PIN in Circle's window; nothing to install. You need a wallet to chat with the AI.",
+        "Ask the AI for the trip you want, e.g. “4 hours this afternoon, 2 people, love the beach”.",
         "Add test USDC to the wallet (see below), then pay for or start your trip.",
       ],
       links: [{ label: "Ask AI", href: "/#ask" }],

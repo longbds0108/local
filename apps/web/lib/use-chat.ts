@@ -1,11 +1,23 @@
 "use client";
 // Streaming chat with /api/chat (SSE). Keeps the visible transcript + session id
-// in localStorage; the server keeps the full conversation.
+// in localStorage; the server keeps the full conversation. The AI needs a
+// signed-in wallet: sending while signed out opens the wallet sign-in first.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/components/I18nProvider";
 import type { ChatEvent, ItineraryView, MapPlace } from "./types";
 import { errorText } from "@/lib/error-text";
 import { rememberDraft } from "./drafts";
+import {
+  CircleClientError,
+  circleConfigured,
+  connectWallet,
+  getOrRefreshSession,
+  getSession,
+  hasPinWallet,
+  logout,
+  SESSION_EVENT,
+  type CircleSession,
+} from "./circle-client";
 
 export type ToolState = { name: string; status: "start" | "done" | "error"; summary?: string };
 export type ChatMessage = { id: string; role: "user" | "assistant"; text: string; tools: ToolState[]; error?: string };
@@ -45,6 +57,10 @@ export function useChat(opts: {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [busy, setBusy] = useState(false);
+  // null until checked in the browser; false shows the sign-in prompt.
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [connecting, setConnecting] = useState(false);
+  const [gateError, setGateError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const optsRef = useRef(opts);
   optsRef.current = opts;
@@ -63,6 +79,35 @@ export function useChat(opts: {
   }, []);
 
   useEffect(() => {
+    const check = () => setSignedIn(!!getSession()?.walletAddress || hasPinWallet());
+    check();
+    window.addEventListener(SESSION_EVENT, check);
+    return () => window.removeEventListener(SESSION_EVENT, check);
+  }, []);
+
+  /** A session with a wallet, opening the wallet sign-in if needed. Null if the user didn't finish it. */
+  const ensureSignedIn = useCallback(async (): Promise<CircleSession | null> => {
+    setGateError(null);
+    const s = await getOrRefreshSession().catch(() => null);
+    if (s?.walletAddress) return s;
+    if (!circleConfigured()) {
+      setGateError(t.walletNotConfigured);
+      return null;
+    }
+    setConnecting(true);
+    try {
+      // Google sign-in leaves the page (resolves null) and comes back to the chat.
+      const fresh = await connectWallet(`${window.location.pathname}#ask`);
+      return fresh?.walletAddress ? fresh : null;
+    } catch (err) {
+      setGateError(errorText(t, err instanceof CircleClientError ? err.code : null, (err as Error).message));
+      return null;
+    } finally {
+      setConnecting(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
     if (!busy) writeJSON(TRANSCRIPT_KEY, messages.slice(-40));
   }, [messages, busy]);
 
@@ -77,7 +122,9 @@ export function useChat(opts: {
   const send = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
-      if (!trimmed || busy) return;
+      if (busy || connecting) return;
+      let session = await ensureSignedIn();
+      if (!session || !trimmed) return;
       setBusy(true);
       setMessages((prev) => [
         ...prev,
@@ -89,8 +136,8 @@ export function useChat(opts: {
       abortRef.current = ctrl;
       const timeout = setTimeout(() => ctrl.abort(), 270_000);
       const start = optsRef.current.start;
-      try {
-        const res = await fetch("/api/chat", {
+      const post = (userToken: string) =>
+        fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -100,12 +147,29 @@ export function useChat(opts: {
             lon: start?.isGps ? start.lon : undefined,
             area: start?.isGps ? (optsRef.current.area ?? undefined) : undefined,
             locale,
+            userToken,
           }),
           signal: ctrl.signal,
         });
+      const readError = async (res: Response) => {
+        const j = await res.json().catch(() => ({}));
+        return (j as { error?: { code?: string; message?: string } }).error;
+      };
+      try {
+        let res = await post(session.userToken);
+        let e = !res.ok ? await readError(res) : undefined;
+        if (e?.code === "UNAUTHORIZED") {
+          // Token expired early: get a fresh one (silent for PIN wallets) and try once more.
+          logout();
+          const fresh = await getOrRefreshSession().catch(() => null);
+          if (fresh?.walletAddress) {
+            session = fresh;
+            res = await post(fresh.userToken);
+            e = !res.ok ? await readError(res) : undefined;
+          }
+        }
         if (!res.ok || !res.body) {
-          const j = await res.json().catch(() => ({}));
-          const e = (j as { error?: { code?: string; message?: string } }).error;
+          if (e?.code === "UNAUTHORIZED" || e?.code === "WALLET_REQUIRED") setSignedIn(false);
           patchLast((m) => ({ ...m, error: errorText(t, e?.code ?? "AI_ERROR", e?.message) }));
           return;
         }
@@ -167,7 +231,7 @@ export function useChat(opts: {
         setBusy(false);
       }
     },
-    [busy, sessionId, locale, t, patchLast],
+    [busy, connecting, ensureSignedIn, sessionId, locale, t, patchLast],
   );
 
   const reset = useCallback(() => {
@@ -180,5 +244,7 @@ export function useChat(opts: {
     writeJSON(ITINERARY_KEY, null);
   }, []);
 
-  return { messages, busy, send, reset };
+  const signIn = useCallback(() => void ensureSignedIn(), [ensureSignedIn]);
+
+  return { messages, busy, send, reset, signedIn, connecting, gateError, signIn };
 }

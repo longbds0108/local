@@ -6,6 +6,7 @@ import { ConfigError } from "./env";
 export type ApiErrorCode =
   | "BAD_REQUEST"
   | "UNAUTHORIZED"
+  | "WALLET_REQUIRED"
   | "NOT_FOUND"
   | "RATE_LIMITED"
   | "NOT_CONFIGURED"
