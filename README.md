@@ -73,7 +73,7 @@ Contract: [`contracts/src/TouraEscrow.sol`](contracts/src/TouraEscrow.sol) (escr
 
 ```bash
 git clone --recursive https://github.com/longbds0108/local.git toura && cd toura
-cp .env.example apps/web/.env          # fill ANTHROPIC_API_KEY, CIRCLE_API_KEY, NEXT_PUBLIC_CIRCLE_APP_ID
+cp .env.example apps/web/.env          # fill DEEPSEEK_API_KEY, CIRCLE_API_KEY, NEXT_PUBLIC_CIRCLE_APP_ID
 cd apps/web && npm install && npm run setup && npm run dev     # http://localhost:3000
 ```
 
@@ -111,7 +111,7 @@ Step by step (Vietnamese): [README.vi.md → Triển khai lên Vercel](README.vi
 
 | Part | Where |
 |---|---|
-| Claude agent (streaming tool loop, append-only per session, weather-aware) | `apps/web/lib/agent.ts`, `app/api/chat` |
+| AI agent on DeepSeek (Anthropic-compatible API; streaming tool loop, append-only per session, weather-aware) | `apps/web/lib/agent.ts`, `app/api/chat` |
 | Tools: `search_places` / `get_route` / `build_itinerary` (server recomputes times, hours, prices) | `apps/web/lib/ai-tools.ts` |
 | Places from OpenStreetMap (OpenFreeMap vector tiles + Overpass for opening hours), OSRM routes | `lib/places.ts`, `lib/ofm-pois.ts`, `lib/overpass.ts`, `lib/osrm.ts` |
 | Check-in codes (created on device; hashes only) | `lib/checkin-codes.ts`, `components/trip/PayByScan.tsx` |

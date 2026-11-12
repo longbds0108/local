@@ -87,11 +87,11 @@ model Stop {
   checkedInAt   DateTime?
 }
 
-// Full Claude conversation for a chat (append-only, incl. tool calls), so edits
+// Full AI conversation for a chat (append-only, incl. tool calls), so edits
 // like "bỏ hải đăng" can modify the existing DRAFT itinerary.
 model ChatSession {
   id          String     @id @default(cuid())
-  messages    String     @default("[]") // JSON array of Anthropic message params
+  messages    String     @default("[]") // JSON array of Messages API params (DeepSeek's Anthropic-compatible format)
   itineraryId String?
   itinerary   Itinerary? @relation(fields: [itineraryId], references: [id])
   startLat    Float?

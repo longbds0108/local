@@ -1,5 +1,5 @@
 // Tools the Toura agent can call. Every input is validated with zod here
-// (eager input streaming means the API no longer validates tool input for us),
+// (never trust the model's tool input as-is),
 // and build_itinerary re-derives times and prices on the server rather than
 // trusting numbers from the model.
 import type Anthropic from "@anthropic-ai/sdk";
@@ -27,12 +27,11 @@ export type ToolContext = {
 
 const CATEGORY_ENUM = ["beach", "viewpoint", "attraction", "museum", "restaurant", "cafe"];
 
-export const TOOLS: Anthropic.Beta.BetaTool[] = [
+export const TOOLS: Anthropic.Tool[] = [
   {
     name: "search_places",
     description:
       "Search real places near a point (OpenStreetMap via Overpass/Photon, plus curated Vung Tau seed data with merchants). Returns osmId, name, coordinates, category, tags/cuisine, opening hours, per-person priceUsdc (priceSource 'estimate' means a category estimate) and whether the place is open during the given time window. Places closed during the window are excluded. Only places returned here may be used in an itinerary.",
-    eager_input_streaming: true,
     input_schema: {
       type: "object",
       properties: {
@@ -55,7 +54,6 @@ export const TOOLS: Anthropic.Beta.BetaTool[] = [
     name: "get_route",
     description:
       "Travel time and distance between consecutive points (OSRM). Pass the starting location first, then stops in visiting order. Returns one leg per consecutive pair.",
-    eager_input_streaming: true,
     input_schema: {
       type: "object",
       properties: {
@@ -78,7 +76,6 @@ export const TOOLS: Anthropic.Beta.BetaTool[] = [
     name: "build_itinerary",
     description:
       "Save the itinerary (creates the draft, or replaces the stops of the current DRAFT itinerary when the user is editing). The server recomputes arrival times from real travel times, checks opening hours and computes prices = per-person price x partySize. Returns itineraryId, totalUsdc and the authoritative schedule; returns an error to fix if the plan does not fit.",
-    eager_input_streaming: true,
     input_schema: {
       type: "object",
       properties: {

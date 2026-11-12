@@ -19,23 +19,23 @@ apps/web/data/ vungtau_pois.json (18 POI, toạ độ/osmId lấy từ OSM), mer
 
 - Node 20+ (đã test trên Node 24), npm 10+
 - [Foundry](https://book.getfoundry.sh/getting-started/installation) (`forge`, `cast`)
-- Tài khoản: [Anthropic API key](https://console.anthropic.com), [Circle Developer Console](https://console.circle.com), Google Cloud (OAuth client)
+- Tài khoản: [DeepSeek API key](https://platform.deepseek.com), [Circle Developer Console](https://console.circle.com), Google Cloud (OAuth client)
 
-## 2. Chạy local (M1–M3 chỉ cần Anthropic key)
+## 2. Chạy local (M1–M3 chỉ cần DeepSeek key)
 
 ```bash
 git clone --recursive https://github.com/longbds0108/local.git toura && cd toura
 # (đã clone không có --recursive? chạy: git submodule update --init --recursive)
-cp .env.example apps/web/.env       # rồi điền ANTHROPIC_API_KEY
+cp .env.example apps/web/.env       # rồi điền DEEPSEEK_API_KEY
 cd apps/web
 npm install
 npm run setup                        # prisma db push + seed merchants
 npm run dev                          # http://localhost:3000
 ```
 
-Không có `ANTHROPIC_API_KEY`: bản đồ + POI vẫn chạy, chat báo lỗi rõ ràng. Không có cấu hình Circle/Arc: màn thanh toán báo "chưa cấu hình".
+Không có `DEEPSEEK_API_KEY`: bản đồ + POI vẫn chạy, chat báo lỗi rõ ràng. Không có cấu hình Circle/Arc: màn thanh toán báo "chưa cấu hình".
 
-Model mặc định `claude-opus-5-5` (đổi bằng `ANTHROPIC_MODEL`, `ANTHROPIC_EFFORT`). Request bật **server-side refusal fallback** (`fallbacks: "default"`) — muốn tắt thì xoá 2 dòng `betas`/`fallbacks` trong `apps/web/lib/agent.ts`.
+AI dùng **DeepSeek** qua cổng tương thích Anthropic (`https://api.deepseek.com/anthropic`, [tài liệu](https://api-docs.deepseek.com/guides/anthropic_api)). Model mặc định `deepseek-flash` (nhanh, rẻ); đổi sang `deepseek-v4-pro` bằng `DEEPSEEK_MODEL`. Chế độ suy nghĩ bật mặc định; `DEEPSEEK_THINKING=off` để trả lời nhanh hơn.
 
 ## 3. Arc testnet
 
@@ -131,7 +131,7 @@ Trạng thái itinerary: `DRAFT → PAID → COMPLETED | REFUNDED | PARTIAL`. St
 - Chuyến **kết hợp** trên Anvil (27 kiểm tra), dùng hợp đồng giả cho giao diện ERC-20 USDC của Arc (`contracts/test/mocks/MockArcUsdc.sol`): chỉ trả trước 24/35 USDC → quét nhầm quán, ví khác trả thay, số tiền sai, trả thẳng cho điểm đã trả trước đều bị chặn → quán cà phê nhận đúng 6,5 USDC (số trên hoá đơn) thẳng từ ví khách, xác nhận bằng sự kiện `Transfer` → trả lần hai bị chặn → điểm trả trước giải ngân bằng mã → chuyến "Hoàn tất", điểm tự trả không đụng tới chuỗi. Chuyến không có khoản trả trước bắt đầu mà không cần giao dịch; điểm trả tại quán chưa trả được ghi "Không ghé" khi quá hạn; một giao dịch không bao giờ tính cho hai điểm.
 - Trên trình duyệt (camera giả lập): bắt đầu chuyến → quét mã quán cà phê → nhập 7,5 → tải lại trang, trang tự tìm thấy giao dịch trên chuỗi.
 
-**Chưa chạy được ở đây** (cần key/tài khoản của bạn): chat với Claude thật, hoàn tất bước đặt PIN Circle thật, deploy + giao dịch trên Arc testnet thật (ví operator cần USDC testnet; định dạng trường `amount` của Circle — số USDC dạng thập phân — cần xác nhận bằng một giao dịch thật), và một lần trả tại quán thật qua Circle trên Arc (`contractExecution` gọi `transfer(address,uint256)` trên `0x3600…0000`; sự kiện `Transfer` của USDC trên Arc testnet đã được kiểm tra là có thật).
+**Chưa chạy được ở đây** (cần key/tài khoản của bạn): chat với DeepSeek thật, hoàn tất bước đặt PIN Circle thật, deploy + giao dịch trên Arc testnet thật (ví operator cần USDC testnet; định dạng trường `amount` của Circle — số USDC dạng thập phân — cần xác nhận bằng một giao dịch thật), và một lần trả tại quán thật qua Circle trên Arc (`contractExecution` gọi `transfer(address,uint256)` trên `0x3600…0000`; sự kiện `Transfer` của USDC trên Arc testnet đã được kiểm tra là có thật).
 
 ## 8. Giới hạn của MVP
 
@@ -163,7 +163,7 @@ Code đã sẵn cho Vercel: trên Vercel dùng **Postgres** (máy local vẫn d�
 
    | Biến | Ghi chú |
    |---|---|
-   | `ANTHROPIC_API_KEY` | chat AI |
+   | `DEEPSEEK_API_KEY` | chat AI |
    | `CIRCLE_API_KEY`, `NEXT_PUBLIC_CIRCLE_APP_ID` | ví Circle (biến `NEXT_PUBLIC_*` được nhúng lúc build — đổi thì phải deploy lại) |
    | `ARC_RPC_URL`, `ARC_CHAIN_ID`, `ARC_EXPLORER_URL`, `NEXT_PUBLIC_FAUCET_URL` | như `.env.example` |
    | `ESCROW_ADDRESS`, `OPERATOR_PRIVATE_KEY` | `OPERATOR_PRIVATE_KEY` là khoá bí mật — chỉ dán vào Vercel, không commit |

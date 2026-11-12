@@ -33,12 +33,19 @@ export const config = {
   get cacheDir() {
     return read("CACHE_DIR") ?? (process.env.VERCEL ? path.join(os.tmpdir(), "toura-cache") : path.join(this.dataDir, "cache"));
   },
-  get anthropicModel() {
-    return read("ANTHROPIC_MODEL") ?? "claude-opus-5-5";
+  /** DeepSeek, through its Anthropic-compatible Messages endpoint. */
+  get aiBaseUrl() {
+    return (read("DEEPSEEK_BASE_URL") ?? "https://api.deepseek.com/anthropic").replace(/\/$/, "");
   },
-  get anthropicEffort(): "low" | "medium" | "high" | "xhigh" | "max" {
-    const v = read("ANTHROPIC_EFFORT");
-    return v === "low" || v === "high" || v === "xhigh" || v === "max" ? v : "medium";
+  get aiApiKey() {
+    return read("DEEPSEEK_API_KEY");
+  },
+  get aiModel() {
+    return read("DEEPSEEK_MODEL") ?? "deepseek-flash";
+  },
+  /** Thinking mode: on unless DEEPSEEK_THINKING=off (faster replies, shallower plans). */
+  get aiThinking() {
+    return read("DEEPSEEK_THINKING") !== "off";
   },
   get osrmUrl() {
     return (read("OSRM_URL") ?? "https://router.project-osrm.org").replace(/\/$/, "");
