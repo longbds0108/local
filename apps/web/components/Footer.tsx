@@ -5,8 +5,6 @@ import { usePathname } from "next/navigation";
 import { useI18n } from "./I18nProvider";
 import Logo from "./Logo";
 
-const FAUCET_URL = process.env.NEXT_PUBLIC_FAUCET_URL || "https://faucet.circle.com";
-
 export default function Footer() {
   const { t } = useI18n();
   const path = usePathname();
@@ -17,6 +15,7 @@ export default function Footer() {
     { href: "/#ask", label: t.navAsk },
     { href: "/trips", label: t.navTripsPage },
     { href: "/wallet", label: t.navWallet },
+    { href: "/docs", label: t.footerDocs },
   ];
 
   return (
@@ -46,16 +45,6 @@ export default function Footer() {
                 </Link>
               </li>
             ))}
-            <li className="col-span-2 md:col-span-1">
-              <a
-                href={FAUCET_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex min-h-11 items-center gap-1 text-sm text-[#cfe0da] hover:text-white"
-              >
-                {t.faucet} <span aria-hidden>↗</span>
-              </a>
-            </li>
           </ul>
         </nav>
 
