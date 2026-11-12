@@ -121,7 +121,6 @@ export default function MerchantClient() {
   return (
     <div className="mx-auto w-full max-w-xl space-y-4 px-4 py-5">
       <h1 className="text-xl font-bold text-ink">🏪 {t.merchantTitle}</h1>
-      <p className="text-xs text-warn">⚠️ {t.testnetBadge}</p>
 
       <label className="block space-y-1">
         <span className="text-sm font-medium text-ink">{t.merchantSelect}</span>

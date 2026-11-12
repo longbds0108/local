@@ -67,7 +67,6 @@ const vi = {
   viewPayment: "Xem thanh toán",
   viewVouchers: "Xem mã QR",
   // Payment
-  testnetBadge: "Mạng thử nghiệm — USDC không có giá trị thật",
   networkFee: "Phí mạng ước tính",
   feeNote: "trả bằng USDC trên Arc",
   loginAndPay: "Đăng nhập Google & thanh toán",
@@ -468,7 +467,6 @@ const en: Dict = {
   minutes: "min",
   viewPayment: "Review payment",
   viewVouchers: "View QR codes",
-  testnetBadge: "Testnet — USDC has no real value",
   networkFee: "Estimated network fee",
   feeNote: "paid in USDC on Arc",
   loginAndPay: "Sign in with Google & pay",

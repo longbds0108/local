@@ -43,7 +43,7 @@ const vi: Docs = {
     {
       id: "usdc-thu-nghiem",
       title: "Nhận USDC thử nghiệm",
-      intro: "Toura đang chạy trên mạng thử nghiệm Arc. USDC ở đây miễn phí và không có giá trị thật.",
+      intro: "Toura đang chạy trên mạng thử nghiệm Arc. USDC để dùng ở đây được phát miễn phí.",
       steps: [
         "Mở trang Ví và sao chép địa chỉ ví của bạn.",
         "Mở trang nhận USDC thử nghiệm của Circle, chọn mạng “Arc Testnet” và dán địa chỉ vào.",
@@ -130,7 +130,7 @@ const vi: Docs = {
       id: "luu-y",
       title: "Lưu ý",
       bullets: [
-        "Đây là bản thử nghiệm: USDC không có giá trị thật và giá các điểm chỉ là giá mẫu.",
+        "Giá các điểm hiện là giá mẫu.",
         "Dữ liệu địa điểm và bản đồ lấy từ OpenStreetMap, có thể thiếu hoặc chưa cập nhật giờ mở cửa.",
       ],
     },
@@ -157,7 +157,7 @@ const en: Docs = {
     {
       id: "test-usdc",
       title: "Get test USDC",
-      intro: "Toura runs on the Arc testnet. USDC here is free and has no real value.",
+      intro: "Toura runs on the Arc testnet. The USDC used here is handed out for free.",
       steps: [
         "Open the Wallet page and copy your wallet address.",
         "Open Circle's test USDC page, choose the “Arc Testnet” network and paste the address.",
@@ -244,7 +244,7 @@ const en: Docs = {
       id: "notes",
       title: "Good to know",
       bullets: [
-        "This is a test version: USDC has no real value and venue prices are sample prices.",
+        "Venue prices are sample prices for now.",
         "Places and maps come from OpenStreetMap and may be missing or have outdated opening hours.",
       ],
     },

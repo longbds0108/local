@@ -29,10 +29,6 @@ export default function Footer() {
             <Logo />
           </Link>
           <p className="mt-4 text-sm leading-relaxed text-[#a7bbb5]">{t.footerAbout}</p>
-          <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#25423d] bg-[#0b211e] px-3 py-1.5 text-[11px] font-semibold text-ink-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#F28C38]" aria-hidden />
-            {t.testnetBadge}
-          </p>
         </div>
 
         <nav aria-label={t.footerTravel}>
