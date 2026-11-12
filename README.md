@@ -1,3 +1,5 @@
+<p align="center"><img src="apps/web/public/brand/toura-logo.png" alt="Toura" width="200"></p>
+
 # Toura
 
 **An AI local guide that plans your next few hours — and pays each place only when you actually show up.**

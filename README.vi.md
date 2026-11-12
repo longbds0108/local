@@ -1,3 +1,5 @@
+<p align="center"><img src="apps/web/public/brand/toura-logo.png" alt="Toura" width="200"></p>
+
 # Toura — MVP (tiếng Việt)
 
 > English: [README.md](README.md)
