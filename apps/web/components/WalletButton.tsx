@@ -17,6 +17,7 @@ import {
 } from "@/lib/circle-client";
 import { shortAddr } from "@/lib/format";
 import { useI18n } from "./I18nProvider";
+import Icon from "./Icon";
 import { errorText } from "@/lib/error-text";
 
 /**
@@ -117,16 +118,16 @@ export default function WalletButton() {
             <Link
               href="/trips"
               onClick={() => setOpen(false)}
-              className="flex min-h-10 items-center justify-center rounded-lg bg-accent text-xs font-bold text-accent-ink"
+              className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-accent text-xs font-bold text-accent-ink"
             >
-              ◇ {t.navTripsPage}
+              <Icon name="luggage" size={16} /> {t.navTripsPage}
             </Link>
             <Link
               href="/wallet"
               onClick={() => setOpen(false)}
-              className="flex min-h-10 items-center justify-center rounded-lg bg-surface-2 text-xs font-bold text-ink"
+              className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-surface-2 text-xs font-bold text-ink"
             >
-              ◉ {t.navWallet}
+              <Icon name="wallet" size={16} /> {t.navWallet}
             </Link>
           </div>
           {authMode() === "pin" && <p className="text-[11px] leading-snug text-ink-2">{t.walletBrowserNote}</p>}

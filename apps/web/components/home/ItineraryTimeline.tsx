@@ -5,6 +5,7 @@ import { Fragment } from "react";
 import { hhmm, usdc } from "@/lib/format";
 import type { ItineraryView } from "@/lib/types";
 import { useI18n } from "../I18nProvider";
+import Icon from "../Icon";
 
 export default function ItineraryTimeline({ itinerary }: { itinerary: ItineraryView | null }) {
   const { t } = useI18n();
@@ -86,7 +87,9 @@ export default function ItineraryTimeline({ itinerary }: { itinerary: ItineraryV
             >
               {paid ? t.viewVouchers : t.viewPayment} →
             </Link>
-            <span className="text-xs text-ink-2">◇ {t.approveNote}</span>
+            <span className="flex items-center gap-1.5 text-xs text-ink-2">
+              <Icon name="shield" size={15} className="shrink-0" /> {t.approveNote}
+            </span>
           </div>
         </>
       )}

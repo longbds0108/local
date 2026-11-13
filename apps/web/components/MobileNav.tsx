@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type MouseEvent } from "react";
+import Icon, { type IconName } from "./Icon";
 import { useI18n } from "./I18nProvider";
 
 /**
@@ -22,14 +23,14 @@ export default function MobileNav() {
     return () => window.removeEventListener("hashchange", read);
   }, [path]);
 
-  const items = [
-    { href: "/#explore", hash: "#explore", icon: "⌂", label: t.tabDiscover },
-    { href: "/#map", hash: "#map", icon: "⌖", label: t.tabMap },
-    { href: "/#ask", hash: "#ask", icon: "✦", label: t.navAsk, primary: true },
+  const items: { href: string; hash: string; icon: IconName; label: string; primary?: boolean }[] = [
+    { href: "/#explore", hash: "#explore", icon: "compass", label: t.tabDiscover },
+    { href: "/#map", hash: "#map", icon: "map", label: t.tabMap },
+    { href: "/#ask", hash: "#ask", icon: "sparkles", label: t.navAsk, primary: true },
   ];
-  const pages = [
-    { href: "/trips", icon: "◇", label: t.navTripsPage, active: !!path?.startsWith("/trips") },
-    { href: "/wallet", icon: "◉", label: t.navWallet, active: path === "/wallet" },
+  const pages: { href: string; icon: IconName; label: string; active: boolean }[] = [
+    { href: "/trips", icon: "luggage", label: t.navTripsPage, active: !!path?.startsWith("/trips") },
+    { href: "/wallet", icon: "wallet", label: t.navWallet, active: path === "/wallet" },
   ];
 
   const onHashClick = (e: MouseEvent<HTMLAnchorElement>, h: string) => {
@@ -59,13 +60,11 @@ export default function MobileNav() {
               }`}
             >
               {it.primary ? (
-                <span className="-mt-5 grid h-12 w-12 place-items-center rounded-2xl bg-accent text-xl text-accent-ink shadow-[0_8px_24px_#70efc044]">
-                  {it.icon}
+                <span className="-mt-5 grid h-12 w-12 place-items-center rounded-2xl bg-accent text-accent-ink shadow-[0_8px_24px_#70efc044]">
+                  <Icon name={it.icon} size={24} strokeWidth={2} />
                 </span>
               ) : (
-                <span className="text-xl leading-none" aria-hidden>
-                  {it.icon}
-                </span>
+                <Icon name={it.icon} size={22} />
               )}
               {it.label}
             </a>
@@ -78,9 +77,7 @@ export default function MobileNav() {
               aria-current={p.active ? "page" : undefined}
               className={`flex min-h-16 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold ${p.active ? "text-accent" : "text-ink-2"}`}
             >
-              <span className="text-xl leading-none" aria-hidden>
-                {p.icon}
-              </span>
+              <Icon name={p.icon} size={22} />
               {p.label}
             </Link>
           </li>

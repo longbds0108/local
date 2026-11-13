@@ -11,6 +11,7 @@ import Hero, { type GpsState, type HereInfo, type LocationInfo } from "./home/He
 import ItineraryTimeline from "./home/ItineraryTimeline";
 import PlaceCards from "./home/PlaceCards";
 import { useI18n } from "./I18nProvider";
+import Icon, { type IconName } from "./Icon";
 import { dishLabel } from "@/lib/dish-names";
 import { fxDelay } from "@/lib/fx";
 
@@ -265,11 +266,11 @@ export default function HomeClient() {
     setDishPlaces([]);
   }, [start]);
 
-  const tabs: { id: Tab | "itinerary"; icon: string; label: string }[] = [
-    { id: "discover", icon: "⌂", label: t.tabDiscover },
-    { id: "map", icon: "⌖", label: t.tabMap },
-    { id: "itinerary", icon: "◇", label: t.tabItinerary },
-    { id: "saved", icon: "▣", label: `${t.tabSaved}${saved.size ? ` (${saved.size})` : ""}` },
+  const tabs: { id: Tab | "itinerary"; icon: IconName; label: string; count?: number }[] = [
+    { id: "discover", icon: "compass", label: t.tabDiscover },
+    { id: "map", icon: "map", label: t.tabMap },
+    { id: "itinerary", icon: "route", label: t.tabItinerary },
+    { id: "saved", icon: "heart", label: t.tabSaved, count: saved.size },
   ];
   const pick = (id: Tab | "itinerary") => {
     if (id === "itinerary") document.getElementById("itinerary")?.scrollIntoView({ behavior: "smooth" });
@@ -288,17 +289,35 @@ export default function HomeClient() {
         style={fxDelay(4)}
         className="fx-rise mx-auto grid min-h-[700px] max-w-[1440px] scroll-mt-20 rounded-t-[24px] bg-cream text-cream-ink md:grid-cols-[210px_1fr] md:rounded-t-[34px]"
       >
-        <aside className="hidden flex-col gap-2 border-r border-cream-line px-5 py-10 md:flex">
-          {tabs.map((x) => (
-            <button
-              key={x.id}
-              type="button"
-              onClick={() => pick(x.id)}
-              className={`rounded-[10px] p-3 text-left text-sm ${tab === x.id ? "bg-forest-soft font-bold text-forest" : "text-cream-muted hover:bg-black/[0.03]"}`}
-            >
-              {x.icon} <span>{x.label}</span>
-            </button>
-          ))}
+        <aside className="hidden flex-col gap-1 border-r border-cream-line px-4 py-10 md:flex">
+          {tabs.map((x) => {
+            const on = tab === x.id;
+            return (
+              <button
+                key={x.id}
+                type="button"
+                onClick={() => pick(x.id)}
+                aria-current={on ? "true" : undefined}
+                className={`group flex min-h-12 items-center gap-3 rounded-xl px-2.5 text-left text-sm transition-colors ${
+                  on ? "bg-forest-soft font-bold text-forest" : "font-medium text-cream-muted hover:bg-black/[0.04] hover:text-cream-ink"
+                }`}
+              >
+                <span
+                  className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg transition-colors ${
+                    on ? "bg-forest text-white" : "bg-white text-cream-muted ring-1 ring-cream-line group-hover:text-cream-ink"
+                  }`}
+                >
+                  <Icon name={x.icon} size={17} />
+                </span>
+                <span className="flex-1">{x.label}</span>
+                {!!x.count && (
+                  <span className={`min-w-6 rounded-full px-1.5 py-0.5 text-center text-[11px] font-bold tabular-nums ${on ? "bg-forest text-white" : "bg-cream-line text-cream-ink"}`}>
+                    {x.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
           <MiniWallet />
         </aside>
 
