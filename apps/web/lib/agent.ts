@@ -8,6 +8,7 @@ import { CITY, config } from "./env";
 import { placeLabel, reverseGeocode } from "./geocode";
 import type { LatLon } from "./geo";
 import { executeTool, TOOLS } from "./ai-tools";
+import { repairHistory } from "./chat-history";
 import { hhmm, localNowString } from "./time";
 import { currentWeather } from "./weather";
 import type { ChatEvent } from "./types";
@@ -51,12 +52,6 @@ function client() {
 
 type Msg = Anthropic.MessageParam;
 
-// Conversations saved by older builds may hold redacted_thinking blocks, which DeepSeek rejects.
-function replayable(messages: Msg[]): Msg[] {
-  return messages.map((m) =>
-    Array.isArray(m.content) ? ({ ...m, content: m.content.filter((b) => b.type !== "redacted_thinking") } as Msg) : m,
-  );
-}
 
 async function contextBlock(sessionId: string, start: LatLon, startIsGps: boolean, locale: string, areaHint?: string): Promise<string> {
   // Area name: from the browser geocode if given, else server-side (Photon).
@@ -119,10 +114,9 @@ export async function runChatTurn(args: {
 }): Promise<void> {
   const { sessionId, send } = args;
   const session = await prisma.chatSession.findUniqueOrThrow({ where: { id: sessionId } });
-  const messages: Msg[] = replayable(JSON.parse(session.messages));
-
   const ctxText = await contextBlock(sessionId, args.start, args.startIsGps, args.locale, args.area);
-  messages.push({ role: "user", content: `${ctxText}\n\n${args.userText}` });
+  // Repair what an interrupted earlier turn may have left, so one broken reply can't break the whole chat.
+  const messages: Msg[] = repairHistory([...(JSON.parse(session.messages) as Msg[]), { role: "user", content: `${ctxText}\n\n${args.userText}` }]);
   await save(sessionId, messages);
 
   const toolCtx = { sessionId, start: args.start, send };
