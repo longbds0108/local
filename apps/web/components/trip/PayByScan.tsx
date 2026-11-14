@@ -10,6 +10,7 @@ import { parseVenue, venuePayload } from "@/lib/venue-qr";
 import type { Hex } from "viem";
 import { useI18n } from "../I18nProvider";
 import Scanner from "../Scanner";
+import BillPanel from "./BillPanel";
 
 type State =
   | { kind: "idle" }
@@ -21,7 +22,9 @@ type State =
   | { kind: "paying"; stop: StopView; text?: string }
   | { kind: "pending"; stop: StopView }
   | { kind: "done"; stop: StopView; amount: string; url: string | null }
-  | { kind: "error"; message: string };
+  | { kind: "error"; message: string }
+  // Group trip, pay-at-venue stop: split the bill, each member pays their own part.
+  | { kind: "bill"; stop: StopView };
 
 class PayError extends Error {
   constructor(public code: string, message?: string) {
@@ -80,6 +83,7 @@ export default function PayByScan({
       .filter((s) => s.status === "PENDING" && s.merchant?.id === merchantId && (s.payMode === "VENUE" || codes[s.id]))
       .sort((a, b) => (a.arriveAt < b.arriveAt ? -1 : 1))[0];
     if (!stop) return setState({ kind: "error", message: t.venueNotInTrip });
+    if (stop.payMode === "VENUE" && it.group) return setState({ kind: "bill", stop });
     if (stop.payMode === "VENUE") return setState({ kind: "amount", stop, merchantId, amount: Number(stop.priceUsdc).toString() });
     setState({ kind: "confirm", stop, merchantId });
   };
@@ -171,6 +175,17 @@ export default function PayByScan({
   };
 
   const venue = (s: StopView) => merchantName(t, s.merchant) || s.name;
+
+  if (state.kind === "bill") {
+    return (
+      <div className="space-y-2">
+        <BillPanel it={it} stop={state.stop} onChanged={() => onPaid()} />
+        <button type="button" onClick={() => setState({ kind: "idle" })} className="min-h-10 w-full text-sm text-ink-2 hover:text-white">
+          {t.cancelAction}
+        </button>
+      </div>
+    );
+  }
 
   if (state.kind === "scanning") {
     return (

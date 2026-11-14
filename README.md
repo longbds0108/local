@@ -22,8 +22,11 @@ Toura sits in the middle, and each stop is paid the way that venue works:
 person; each member pays their own share (for themselves, or covering someone else) as a separate escrow deposit with
 their own check-in codes. At the venue each member's code releases their part to the venue; whoever doesn't come, or
 cancels, gets their own part back. The escrow contract is unchanged — a share is just one more `deposit()`
-(`apps/web/lib/group.ts`, `app/api/group/*`). Tested end to end on Anvil: 31 checks (seats, double-pay, check-in per
-member, cancel, sweep, per-member wallet history).
+(`apps/web/lib/group.ts`, `app/api/group/*`). Bills at pay-at-venue stops are split too: one member scans the venue's
+QR and enters the total, the app splits it (evenly by seats, editable), and every member pays their own part straight to
+the venue; the stop is paid when every part is (or, once the trip is over, with what was paid). Tested end to end on
+Anvil: 31 checks for prepaid shares and 27 for bill splitting (exact on-chain amounts, seats, wrong venue, parts that
+don't add up, redo before payment, double pay, closing a partly paid bill, per-member wallet history).
 
 The venue decides: `prepay: true` in [`apps/web/data/merchants.json`](apps/web/data/merchants.json) means it takes bookings. A trip with
 nothing to prepay is simply **started** (no transaction) and paid stop by stop.

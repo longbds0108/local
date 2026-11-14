@@ -35,6 +35,9 @@ export const POST = handle(async (req: Request) => {
   const wallet = await getArcWallet(userToken);
   if (!wallet) throw new ApiError(400, "BAD_REQUEST", "No Arc wallet for this user yet");
   const payer = getAddress(wallet.address);
+  if (it.groupMode && it.organizerAddress && getAddress(it.organizerAddress) !== payer) {
+    throw new ApiError(403, "FORBIDDEN", "Only the organizer can change this");
+  }
   const user = await prisma.user.findFirst({ where: { walletAddress: { in: [payer, payer.toLowerCase()] } } });
 
   await prisma.itinerary.updateMany({

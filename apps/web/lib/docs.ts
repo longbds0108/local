@@ -91,10 +91,10 @@ const vi: Docs = {
       id: "di-nhom",
       title: "Đi nhóm và chia tiền",
       steps: [
-        "Trên lịch trình nháp có điểm trả trước, bấm “Đi nhóm: mỗi người tự trả phần mình”. Phần trả trước được chia đều theo số người.",
-        "Gửi link chuyến đi (hoặc cho bạn bè quét mã QR mời) cho cả nhóm.",
-        "Mỗi người mở link, đăng nhập ví và trả phần của mình, có thể trả thay cho người đi cùng. Hạn góp là giờ bắt đầu chuyến.",
-        "Tới quán, mỗi người tự quét mã của quán: phần của ai thì chuyển cho quán khi người đó tới. Ai không đi hoặc huỷ thì phần của người đó tự hoàn về đúng ví đã trả.",
+        "Trên lịch trình nháp từ 2 người trở lên, bấm “Đi nhóm: mỗi người tự trả phần mình”, rồi gửi link chuyến đi (hoặc mã QR mời) cho cả nhóm.",
+        "Mỗi người mở link, đăng nhập ví và tham gia, có thể tham gia thay cho người đi cùng. Chuyến có quán cần đặt chỗ thì tham gia bằng cách trả trước phần của mình (hạn là giờ bắt đầu chuyến).",
+        "Quán trả tại chỗ: một người quét mã QR của quán và nhập tổng hoá đơn. App chia đều (bỏ chọn người vắng mặt hoặc sửa số tiền nếu cần), mỗi người tự xác nhận phần của mình bằng mã PIN và tiền đi thẳng vào ví của quán.",
+        "Quán đã trả trước: mỗi người tự quét mã của quán khi tới, phần của ai thì chuyển cho quán khi người đó tới. Ai không đi hoặc huỷ thì phần của người đó tự hoàn về đúng ví đã trả.",
       ],
     },
     {
@@ -225,10 +225,10 @@ const en: Docs = {
       id: "group",
       title: "Group trips and splitting the bill",
       steps: [
-        "On a draft with prepaid stops, tap “Go as a group: everyone pays their own share”. The prepaid part is split evenly per person.",
-        "Send the trip link (or let friends scan the invite QR code) to the group.",
-        "Each person opens the link, signs in with their wallet and pays their share, and can cover someone travelling with them. Shares close when the trip starts.",
-        "At each venue everyone scans its QR code: your part goes to the venue when you arrive. If you don't go or cancel, your part goes back to the wallet that paid it.",
+        "On a draft for 2 or more people, tap “Go as a group: everyone pays their own share”, then send the trip link (or the invite QR code) to the group.",
+        "Each person opens the link, signs in with their wallet and joins, and can cover someone travelling with them. On a trip with a venue that takes bookings, you join by prepaying your share (before the trip starts).",
+        "Venues paid on the spot: one person scans the venue's QR code and enters the bill total. The app splits it evenly (untick anyone absent or change an amount if needed), everyone confirms their own part with their PIN, and the money goes straight to the venue.",
+        "Prepaid venues: everyone scans the venue's QR code on arrival and their part goes to the venue. If you don't go or cancel, your part goes back to the wallet that paid it.",
       ],
     },
     {

@@ -13,7 +13,7 @@ import {
 } from "@/lib/circle-client";
 import { errorText } from "@/lib/error-text";
 import { CATEGORY_EMOJI, hhmm, tripDay, usdc } from "@/lib/format";
-import { forViewer, myShare } from "@/lib/group-view";
+import { forViewer, isOrganizer, myShare } from "@/lib/group-view";
 import { payModeLabel } from "@/lib/stop-info";
 import { paySplit } from "@/lib/pay-modes";
 import { isExpiredDraft } from "@/lib/use-account";
@@ -172,6 +172,7 @@ export default function TripDetail({ initial, explorerUrl, faucetUrl, feeEstimat
     [router],
   );
 
+  const hasPrepay = paySplit(it.stops).prepay > 0;
   const step = currentStep(it);
   const expired = it.status === "DRAFT" && isExpiredDraft(it);
   const pill = expired
@@ -210,7 +211,9 @@ export default function TripDetail({ initial, explorerUrl, faucetUrl, feeEstimat
 
       {!expired && <Stepper step={step} prepay={paySplit(it.stops).prepay > 0} />}
 
-      {it.group && !expired && <GroupPanel it={it} viewer={viewer} onChange={onGroupChange} paymentsConfigured={paymentsConfigured} />}
+      {it.group && !expired && (
+        <GroupPanel it={it} viewer={viewer} onChange={onGroupChange} paymentsConfigured={hasPrepay ? paymentsConfigured : walletPaymentsConfigured} />
+      )}
       {groupError && (
         <p role="alert" className="rounded-xl bg-danger/10 px-3 py-2 text-sm text-danger">
           {groupError}
@@ -226,8 +229,9 @@ export default function TripDetail({ initial, explorerUrl, faucetUrl, feeEstimat
           paymentsConfigured={paymentsConfigured}
           walletPaymentsConfigured={walletPaymentsConfigured}
           onPaid={onPaid}
-          hidePay={!!it.group}
-          onEnableGroup={it.group || !paymentsConfigured ? undefined : () => void enableGroup()}
+          // Group trip: prepaid shares are paid in the group panel; a trip paid only at venues is started by its organizer.
+          hidePay={!!it.group && (hasPrepay || !isOrganizer(it, viewer))}
+          onEnableGroup={it.group || !(hasPrepay ? paymentsConfigured : walletPaymentsConfigured) ? undefined : () => void enableGroup()}
           groupBusy={groupBusy}
         />
       ) : it.group && !(myShare(it, viewer) && myShare(it, viewer)!.status !== "PENDING") ? (

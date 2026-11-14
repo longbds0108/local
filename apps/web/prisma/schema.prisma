@@ -90,18 +90,21 @@ model Stop {
   refundedAt   DateTime?
   checkedInAt  DateTime?
   shareStops   ShareStop[]
+  bill         VenueBill?
 }
 
-// One member's prepaid part of a group trip: its own escrow deposit (own on-chain id,
-// own check-in codes), covering `people` seats. Unconfirmed shares hold a seat for a while.
+// One member of a group trip, covering `people` seats. On a trip with prepaid stops the
+// member joins by paying their part as their own escrow deposit (own on-chain id, own
+// check-in codes); unconfirmed deposits hold their seats for a while. On a trip paid only
+// at venues the member simply joins (JOINED, no deposit) and splits the bills there.
 model GroupShare {
   id           String      @id @default(cuid())
   itineraryId  String
   itinerary    Itinerary   @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
   payerAddress String
   people       Int
-  onchainId    String      @unique
-  status       String // PENDING (challenge created) | PAID | DONE | REFUNDED | PARTIAL
+  onchainId    String?     @unique
+  status       String // JOINED (no deposit) | PENDING (challenge created) | PAID | DONE | REFUNDED | PARTIAL
   depositTx    String?
   paidAt       DateTime?
   createdAt    DateTime    @default(now())
@@ -146,4 +149,30 @@ model ChatSession {
   updatedAt     DateTime   @updatedAt
 
   @@index([walletAddress])
+}
+
+// A bill split at the venue on a group trip: one member enters the total, each member
+// pays their own part straight to the venue's wallet. The stop is paid once every part is.
+model VenueBill {
+  id        String          @id @default(cuid())
+  stopId    String          @unique
+  stop      Stop            @relation(fields: [stopId], references: [id], onDelete: Cascade)
+  totalUsdc String // decimal string, 2 decimals
+  createdBy String
+  createdAt DateTime        @default(now())
+  parts     VenueBillPart[]
+}
+
+model VenueBillPart {
+  id           String    @id @default(cuid())
+  billId       String
+  bill         VenueBill @relation(fields: [billId], references: [id], onDelete: Cascade)
+  payerAddress String
+  amountUsdc   String // decimal string, 2 decimals
+  status       String // PENDING | PAID
+  fromBlock    Int? // chain block when this member started paying (where to look for the transfer)
+  txHash       String?
+  paidAt       DateTime?
+
+  @@unique([billId, payerAddress])
 }

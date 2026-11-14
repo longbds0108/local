@@ -5,7 +5,7 @@ import { ApiError } from "./api";
 import { operatorRefund } from "./chain";
 import { prisma } from "./db";
 import { config } from "./env";
-import { sweepGroup } from "./group";
+import { closeBills, sweepGroup } from "./group";
 import { recomputeItineraryStatus } from "./itinerary";
 
 export async function refundStop(stop: { id: string; itineraryId: string; onchainIndex: number | null }, onchainId: string) {
@@ -36,6 +36,8 @@ export async function sweepItinerary(itineraryId: string): Promise<void> {
   try {
     const it = await prisma.itinerary.findUnique({ where: { id: itineraryId }, include: { stops: true } });
     if (!it || it.status !== "PAID" || !it.deadline || it.deadline > Date.now() / 1000) return;
+    // Group trip: a bill split at the venue counts with what its members paid.
+    if (it.groupMode) await closeBills(itineraryId);
     // Pay-at-venue stops that were never paid: no money was held, so nothing to refund.
     await prisma.stop.updateMany({ where: { itineraryId, payMode: "VENUE", status: "PENDING" }, data: { status: "SKIPPED" } });
     // Group trip: refund each member's unused part to that member.

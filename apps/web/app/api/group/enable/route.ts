@@ -26,6 +26,8 @@ export const POST = handle(async (req: Request) => {
   const it = await getItineraryWithStops(itineraryId);
   if (!it) throw new ApiError(404, "NOT_FOUND", "Itinerary not found");
   if (it.status !== "DRAFT") throw new ApiError(409, "CONFLICT", "Itinerary is already paid");
+  const hasPrepay = it.stops.some((s) => s.payMode === "ESCROW" && s.status === "PENDING");
+  const hasVenue = it.stops.some((s) => s.payMode === "VENUE" && s.status === "PENDING");
   if (it.endAt.getTime() <= Date.now()) throw new ApiError(410, "EXPIRED", "This itinerary's time window has passed — ask Toura for a new plan");
 
   const wallet = await getArcWallet(userToken);
@@ -34,16 +36,23 @@ export const POST = handle(async (req: Request) => {
 
   if (enabled) {
     if (it.partySize < 2) throw new ApiError(400, "BAD_REQUEST", "A group trip needs at least 2 people");
-    if (!it.stops.some((s) => s.payMode === "ESCROW" && s.status === "PENDING")) {
-      throw new ApiError(400, "BAD_REQUEST", "Nothing to prepay on this trip");
-    }
+    if (!hasPrepay && !hasVenue) throw new ApiError(400, "BAD_REQUEST", "Nothing to split on this trip");
     if (it.groupMode && it.organizerAddress && getAddress(it.organizerAddress) !== me) {
       throw new ApiError(403, "FORBIDDEN", "Only the organizer can change this");
     }
     await prisma.itinerary.update({ where: { id: it.id }, data: { groupMode: true, organizerAddress: me } });
+    // Paid only at venues: the organizer is a member right away (prepaid trips: by paying their share).
+    if (!hasPrepay) {
+      await prisma.groupShare.upsert({
+        where: { itineraryId_payerAddress: { itineraryId: it.id, payerAddress: me } },
+        create: { itineraryId: it.id, payerAddress: me, people: 1, status: "JOINED" },
+        update: {},
+      });
+    }
   } else {
     if (it.organizerAddress && getAddress(it.organizerAddress) !== me) throw new ApiError(403, "FORBIDDEN", "Only the organizer can change this");
-    if (it.shares.some((s) => s.status !== "PENDING")) throw new ApiError(409, "CONFLICT", "Someone has already paid their share");
+    if (it.shares.some((s) => s.status !== "PENDING" && s.status !== "JOINED")) throw new ApiError(409, "CONFLICT", "Someone has already paid their share");
+    if (it.stops.some((s) => s.bill)) throw new ApiError(409, "CONFLICT", "Someone has already paid their share");
     await prisma.$transaction([
       prisma.groupShare.deleteMany({ where: { itineraryId: it.id } }),
       prisma.itinerary.update({ where: { id: it.id }, data: { groupMode: false, organizerAddress: null } }),

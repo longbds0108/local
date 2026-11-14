@@ -67,14 +67,16 @@ export async function currentBlock(): Promise<bigint> {
  * The first USDC transfer from → to since fromBlock that isn't already accounted for.
  * Used to confirm a pay-at-venue payment from the chain, not from the client.
  */
-export async function findUsdcTransfer(from: Address, to: Address, fromBlock: bigint, exclude: Set<string>) {
+export async function findUsdcTransfer(from: Address, to: Address, fromBlock: bigint, exclude: Set<string>, value?: bigint) {
   const pc = publicClient();
   const latest = await pc.getBlockNumber({ cacheTime: 0 });
   const window = 9_000n;
   for (let start = fromBlock; start <= latest; start += window) {
     const end = start + window - 1n < latest ? start + window - 1n : latest;
     const logs = await pc.getLogs({ address: usdcErc20(), event: TRANSFER, args: { from: getAddress(from), to: getAddress(to) }, fromBlock: start, toBlock: end });
-    const hit = logs.find((l) => !exclude.has(l.transactionHash.toLowerCase()) && (l.args.value ?? 0n) > 0n);
+    const hit = logs.find(
+      (l) => !exclude.has(l.transactionHash.toLowerCase()) && (l.args.value ?? 0n) > 0n && (value === undefined || l.args.value === value),
+    );
     if (hit) return { txHash: hit.transactionHash, value: hit.args.value!, decimals: 6 };
   }
   return null;

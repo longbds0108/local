@@ -16,6 +16,7 @@ import { isOrganizer, myShare } from "@/lib/group-view";
 import type { ItineraryView } from "@/lib/types";
 import { useI18n } from "../I18nProvider";
 import QRVoucher from "../QRVoucher";
+import BillPanel from "./BillPanel";
 
 class Fail extends Error {
   constructor(
@@ -56,7 +57,12 @@ export default function GroupPanel({
   const paidMine = !!mine && mine.status !== "PENDING";
   const organizer = isOrganizer(it, viewer);
   const left = Math.max(0, it.partySize - g.paidPeople);
-  const open = (it.status === "DRAFT" || it.status === "PAID") && new Date(it.startAt).getTime() > Date.now() && left > 0;
+  // Prepaid trips: members join by paying their share before the trip starts.
+  // Trips paid only at venues: members just join (until the trip ends) and split each bill.
+  const hasPrepay = Number(g.perPersonUsdc) > 0;
+  const hasVenue = it.stops.some((s) => s.payMode === "VENUE");
+  const closesAt = new Date(hasPrepay ? it.startAt : it.endAt).getTime();
+  const open = (it.status === "DRAFT" || it.status === "PAID") && closesAt > Date.now() && left > 0;
   const [people, setPeople] = useState(1);
   useEffect(() => setPeople((p) => Math.min(Math.max(1, p), Math.max(1, left))), [left]);
   const [busy, setBusy] = useState<string | null>(null);
@@ -122,6 +128,20 @@ export default function GroupPanel({
     }
   };
 
+  const join = async () => {
+    setError(null);
+    setBusy(t.groupWorking);
+    try {
+      const s = await session();
+      if (!s) return setBusy(null);
+      const r = await api<{ itinerary: ItineraryView }>("/api/group/join", { userToken: s.userToken, itineraryId: it.id, people });
+      onChange(r.itinerary);
+      setBusy(null);
+    } catch (err) {
+      fail(err);
+    }
+  };
+
   const disable = async () => {
     setError(null);
     setBusy(t.groupEnabling);
@@ -162,11 +182,17 @@ export default function GroupPanel({
         <div>
           <h2 className="font-display text-lg font-extrabold text-white">👥 {t.groupTitle}</h2>
           <p className="mt-0.5 text-xs text-ink-2">
-            {t.groupPerPerson}: <b className="text-white">{usdc(per.toFixed(2))}</b>
+            {hasPrepay ? (
+              <>
+                {t.groupPerPerson}: <b className="text-white">{usdc(per.toFixed(2))}</b>
+              </>
+            ) : (
+              t.groupVenueOnly
+            )}
           </p>
         </div>
         <span className="shrink-0 rounded-full bg-accent-soft px-2.5 py-1 text-xs font-bold text-accent tabular-nums">
-          {t.groupProgress.replace("{paid}", String(g.paidPeople)).replace("{total}", String(it.partySize))}
+          {(hasPrepay ? t.groupProgress : t.groupJoinProgress).replace("{paid}", String(g.paidPeople)).replace("{total}", String(it.partySize))}
         </span>
       </div>
 
@@ -175,7 +201,7 @@ export default function GroupPanel({
       </div>
 
       <div>
-        <h3 className="text-xs font-semibold text-ink-2">{t.groupMembers}</h3>
+        <h3 className="text-xs font-semibold text-ink-2">{hasPrepay ? t.groupMembers : t.groupMembersJoined}</h3>
         {shares.length ? (
           <ul className="mt-1.5 divide-y divide-line rounded-xl bg-surface-2">
             {shares.map((s) => (
@@ -190,7 +216,7 @@ export default function GroupPanel({
             ))}
           </ul>
         ) : (
-          <p className="mt-1.5 text-sm text-ink-2">{t.groupNobody}</p>
+          <p className="mt-1.5 text-sm text-ink-2">{hasPrepay ? t.groupNobody : t.groupNobodyJoined}</p>
         )}
       </div>
 
@@ -207,12 +233,14 @@ export default function GroupPanel({
       )}
 
       {paidMine ? (
-        <p className="rounded-xl bg-ok-soft px-3 py-2 text-sm text-ok">✓ {t.groupPaidMine.replace("{n}", String(mine!.people))}</p>
+        <p className="rounded-xl bg-ok-soft px-3 py-2 text-sm text-ok">
+          ✓ {(mine!.status === "JOINED" ? t.groupJoined : t.groupPaidMine).replace("{n}", String(mine!.people))}
+        </p>
       ) : open && paymentsConfigured ? (
         <div className="space-y-3">
           {left > 1 && (
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm text-ink-2">{t.groupPayFor}</span>
+              <span className="text-sm text-ink-2">{hasPrepay ? t.groupPayFor : t.groupJoinFor}</span>
               <div className="flex items-center gap-1 rounded-xl bg-surface-2 p-1">
                 <button
                   type="button"
@@ -240,13 +268,13 @@ export default function GroupPanel({
           )}
           <button
             type="button"
-            onClick={() => void pay()}
+            onClick={() => void (hasPrepay ? pay() : join())}
             disabled={!!busy}
             className="min-h-[48px] w-full rounded-xl bg-accent px-4 text-base font-semibold text-accent-ink disabled:opacity-50"
           >
-            {t.groupPayMine.replace("{amount}", usdc((per * people).toFixed(2)))}
+            {hasPrepay ? t.groupPayMine.replace("{amount}", usdc((per * people).toFixed(2))) : t.groupJoin}
           </button>
-          <p className="text-center text-xs text-ink-2">{t.groupDeadline.replace("{time}", deadline)}</p>
+          {hasPrepay && <p className="text-center text-xs text-ink-2">{t.groupDeadline.replace("{time}", deadline)}</p>}
         </div>
       ) : (
         <p className="rounded-xl bg-surface-2 px-3 py-2 text-sm text-ink-2">{left === 0 ? t.groupFull : t.groupClosed}</p>
@@ -260,7 +288,7 @@ export default function GroupPanel({
               ⌄
             </span>
           </summary>
-          <p className="text-xs leading-relaxed text-[#c5d8d1]">{t.groupInviteBody}</p>
+          <p className="text-xs leading-relaxed text-[#c5d8d1]">{hasPrepay ? t.groupInviteBody : t.groupInviteBodyVenue}</p>
           <div className="mt-3 flex justify-center">{link && <QRVoucher payload={link} label={it.title} hint={t.groupInviteQr} showText={false} />}</div>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <button
@@ -282,8 +310,18 @@ export default function GroupPanel({
         </details>
       )}
 
-      <p className="text-xs leading-relaxed text-ink-2">🔒 {t.groupHow}</p>
-      <p className="text-xs leading-relaxed text-ink-2">📷 {t.groupVenueNote}</p>
+      {g.bills.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold text-ink-2">{t.billsTitle}</h3>
+          {g.bills.map((b) => {
+            const stop = it.stops.find((s) => s.id === b.stopId);
+            return stop ? <BillPanel key={b.stopId} it={it} stop={stop} onChanged={(next) => next && onChange(next)} /> : null;
+          })}
+        </div>
+      )}
+
+      {hasPrepay && <p className="text-xs leading-relaxed text-ink-2">🔒 {t.groupHow}</p>}
+      {hasVenue && <p className="text-xs leading-relaxed text-ink-2">📷 {t.groupHowVenue}</p>}
 
       {organizer && it.status === "DRAFT" && g.paidPeople === 0 && !busy && (
         <button type="button" onClick={() => void disable()} className="min-h-10 text-xs font-semibold text-ink-2 underline hover:text-white">

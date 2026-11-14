@@ -57,7 +57,7 @@ export type ItineraryView = {
   group: GroupView | null;
 };
 
-export type GroupShareStatus = "PENDING" | "PAID" | "DONE" | "REFUNDED" | "PARTIAL";
+export type GroupShareStatus = "JOINED" | "PENDING" | "PAID" | "DONE" | "REFUNDED" | "PARTIAL";
 export type GroupShareView = {
   id: string;
   payerAddress: string;
@@ -67,11 +67,20 @@ export type GroupShareView = {
   depositTx: string | null;
   stops: { stopId: string; amountUsdc: string; status: string; releaseTx: string | null; refundTx: string | null }[];
 };
+/** A bill split at a venue: each member pays their part straight to the venue. */
+export type VenueBillView = {
+  stopId: string;
+  totalUsdc: string;
+  createdBy: string;
+  parts: { payerAddress: string; amountUsdc: string; status: "PENDING" | "PAID"; txHash: string | null; started: boolean }[];
+};
 export type GroupView = {
   organizerAddress: string | null;
+  /** Bills split at venues, one per pay-at-venue stop. */
+  bills: VenueBillView[];
   /** One person's part of the prepaid stops, in USDC. */
   perPersonUsdc: string;
-  /** Seats covered by confirmed shares. */
+  /** Seats covered by members (paid shares, or joined on a trip paid only at venues). */
   paidPeople: number;
   shares: GroupShareView[];
 };

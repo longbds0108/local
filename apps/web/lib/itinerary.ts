@@ -5,7 +5,7 @@ import { toNativeUnits } from "./pricing";
 import type { GroupShareStatus, GroupView, ItineraryStatus, ItineraryView, PayMode, StopStatus, StopView } from "./types";
 
 export const itineraryInclude = {
-  stops: { include: { merchant: true }, orderBy: { order: "asc" } },
+  stops: { include: { merchant: true, bill: { include: { parts: true } } }, orderBy: { order: "asc" } },
   shares: { include: { stops: true }, orderBy: { createdAt: "asc" } },
 } as const;
 const include = itineraryInclude;
@@ -19,6 +19,24 @@ function groupView(it: ItineraryWithStops): GroupView | null {
     .reduce((sum, s) => sum + toNativeUnits(s.priceUsdc.toString()) / n, 0n);
   return {
     organizerAddress: it.organizerAddress,
+    bills: it.stops.flatMap((s) =>
+      s.bill
+        ? [
+            {
+              stopId: s.id,
+              totalUsdc: s.bill.totalUsdc,
+              createdBy: s.bill.createdBy,
+              parts: s.bill.parts.map((p) => ({
+                payerAddress: p.payerAddress,
+                amountUsdc: p.amountUsdc,
+                status: p.status as "PENDING" | "PAID",
+                txHash: p.txHash,
+                started: p.fromBlock !== null,
+              })),
+            },
+          ]
+        : [],
+    ),
     perPersonUsdc: formatUnits(perPerson, 18),
     paidPeople: it.shares.filter((s) => s.status !== "PENDING").reduce((sum, s) => sum + s.people, 0),
     shares: it.shares.map((s) => ({

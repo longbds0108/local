@@ -34,6 +34,7 @@ export const POST = handle(async (req: Request) => {
   if (!stop || stop.payMode !== "VENUE" || !stop.merchant) throw new ApiError(404, "NOT_FOUND", "Stop not found");
   if (stop.merchantId !== merchantId) throw new ApiError(403, "FORBIDDEN", "This QR code belongs to another partner");
   if (stop.itinerary.status !== "PAID" || !stop.itinerary.payerAddress) throw new ApiError(409, "CONFLICT", "Start the trip first");
+  if (stop.itinerary.groupMode) throw new ApiError(409, "CONFLICT", "Group trip: split the bill with your group");
   if (stop.status !== "PENDING") throw new ApiError(409, "CONFLICT", `Already paid (${stop.status})`);
 
   const wallet = await getArcWallet(userToken);

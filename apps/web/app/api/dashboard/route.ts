@@ -60,7 +60,7 @@ export const POST = handle(async (req: Request) => {
     if (it.groupMode) {
       // Group trip: this wallet's own share of the prepaid stops…
       const mine = it.shares.find((s) => getAddress(s.payerAddress) === address && s.status !== "PENDING");
-      if (mine) {
+      if (mine?.onchainId && mine.stops.length) {
         const usdcOf = (wei: string) => Number(formatUnits(BigInt(wei), 18));
         const total = mine.stops.reduce((sum, p) => sum + usdcOf(p.amountWei), 0);
         activity.push({ type: "deposit", itineraryId: it.id, title: it.title, amountUsdc: total.toFixed(2), txHash: mine.depositTx, at: (mine.paidAt ?? it.updatedAt).toISOString() });
@@ -79,15 +79,14 @@ export const POST = handle(async (req: Request) => {
           }
         }
       }
-      // …and, for the organizer, the bills paid at the venue.
-      if (it.payerAddress && getAddress(it.payerAddress) === address) {
-        for (const s of it.stops.filter((x) => x.payMode === "VENUE")) {
-          if (s.status === "RELEASED") {
-            const amount = Number((s.paidUsdc ?? s.priceUsdc).toString());
-            released += amount;
-            activity.push({ type: "venue", itineraryId: it.id, title: s.name, merchant: s.merchant?.name ?? null, merchantId: s.merchant?.id ?? null, amountUsdc: amount.toFixed(2), txHash: s.releaseTx, at: (s.checkedInAt ?? it.updatedAt).toISOString() });
-          } else if (s.status === "PENDING" && it.status === "PAID" && (it.deadline ?? 0) > now) activeVouchers += 1;
-        }
+      // …and this wallet's parts of the bills split at venues.
+      for (const s of it.stops.filter((x) => x.payMode === "VENUE")) {
+        const part = s.bill?.parts.find((p) => getAddress(p.payerAddress) === address);
+        if (part?.status === "PAID") {
+          const amount = Number(part.amountUsdc);
+          released += amount;
+          activity.push({ type: "venue", itineraryId: it.id, title: s.name, merchant: s.merchant?.name ?? null, merchantId: s.merchant?.id ?? null, amountUsdc: amount.toFixed(2), txHash: part.txHash, at: (part.paidAt ?? it.updatedAt).toISOString() });
+        } else if (s.status === "PENDING" && it.status === "PAID" && (it.deadline ?? 0) > now) activeVouchers += 1;
       }
       continue;
     }
@@ -139,9 +138,10 @@ export const POST = handle(async (req: Request) => {
       trips: paid.length,
       activeVouchers,
     },
-    drafts: drafts.map(toView),
+    // Drafts from this browser, plus group trips this wallet joined that haven't started yet.
+    drafts: [...drafts.map(toView), ...views.filter((v) => v.status === "DRAFT" && !drafts.some((d) => d.id === v.id))],
     active: views.filter((v) => v.status === "PAID"),
-    history: views.filter((v) => v.status !== "PAID"),
+    history: views.filter((v) => v.status !== "PAID" && v.status !== "DRAFT"),
     activity: activity.slice(0, 30),
   };
   return NextResponse.json(data);
