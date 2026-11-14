@@ -14,7 +14,7 @@ import {
 } from "./circle-client";
 import { DRAFTS_EVENT, draftIds, forgetDrafts } from "./drafts";
 import { errorText } from "./error-text";
-import type { DashboardData, ItineraryView } from "./types";
+import { normalizeDashboard, type DashboardData, type ItineraryView } from "./types";
 
 /** Unpaid plans from this browser — readable with or without a wallet. */
 export function useDrafts() {
@@ -80,7 +80,7 @@ export function useAccount(returnTo: string) {
           setError(errorText(t, e?.code, e?.message));
           return;
         }
-        setData(j as DashboardData);
+        setData(normalizeDashboard(j as Partial<DashboardData>));
       } catch {
         setError(t.err.NETWORK);
       } finally {
@@ -131,5 +131,9 @@ export function useAccount(returnTo: string) {
     data?.balanceUsdc !== undefined && data?.balanceUsdc !== null ? Number(data.balanceUsdc).toFixed(2) : null;
   const address = data?.wallet?.address ?? session?.walletAddress ?? null;
 
-  return { session, checked, data, loading, error, connecting, connect, balance, address };
+  const reload = useCallback(() => {
+    if (session) void load(session);
+  }, [session, load]);
+
+  return { session, checked, data, loading, error, connecting, connect, balance, address, reload };
 }

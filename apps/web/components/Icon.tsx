@@ -1,7 +1,7 @@
 // One line-icon set for navigation: 24px grid, 1.8 stroke, round joins, currentColor.
 import type { ReactNode, SVGProps } from "react";
 
-export type IconName = "compass" | "map" | "route" | "heart" | "sparkles" | "luggage" | "wallet" | "shield";
+export type IconName = "compass" | "map" | "route" | "heart" | "sparkles" | "luggage" | "wallet" | "shield" | "send" | "receive" | "scan" | "plus";
 
 const PATHS: Record<IconName, ReactNode> = {
   compass: (
@@ -42,6 +42,26 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M20.5 10.8h-3.7a1.95 1.95 0 0 0 0 3.9h3.7M6 6.5l8.8-2.4a1.5 1.5 0 0 1 1.9 1.1l.3 1.3" />
     </>
   ),
+  send: (
+    <>
+      <path d="M20.5 3.5 10.2 13.8" />
+      <path d="m20.5 3.5-6.4 17-3.9-6.7-6.7-3.9z" />
+    </>
+  ),
+  receive: (
+    <>
+      <path d="M12 4v11" />
+      <path d="m7.5 10.5 4.5 4.5 4.5-4.5" />
+      <path d="M5 19.5h14" />
+    </>
+  ),
+  scan: (
+    <>
+      <path d="M4 8.5V6.5A2.5 2.5 0 0 1 6.5 4h2M15.5 4h2A2.5 2.5 0 0 1 20 6.5v2M20 15.5v2a2.5 2.5 0 0 1-2.5 2.5h-2M8.5 20h-2A2.5 2.5 0 0 1 4 17.5v-2" />
+      <path d="M7.5 12h9" />
+    </>
+  ),
+  plus: <path d="M12 5.5v13M5.5 12h13" />,
   shield: (
     <>
       <path d="M12 3.5 5.5 6v5.3c0 4 2.8 7.3 6.5 8.7 3.7-1.4 6.5-4.7 6.5-8.7V6z" />

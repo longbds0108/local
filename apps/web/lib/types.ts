@@ -104,3 +104,24 @@ export type DashboardData = {
   history: ItineraryView[];
   activity: DashboardActivity[];
 };
+
+/** A dashboard with no wallet yet: every list empty, every total zero. */
+export function emptyDashboard(explorerUrl: string | null = null, faucetUrl: string | null = null): DashboardData {
+  return {
+    wallet: null,
+    balanceUsdc: null,
+    explorerUrl,
+    faucetUrl,
+    stats: { escrowedUsdc: "0", releasedUsdc: "0", refundedUsdc: "0", trips: 0, activeVouchers: 0 },
+    drafts: [],
+    active: [],
+    history: [],
+    activity: [],
+  };
+}
+
+/** Fill anything a response left out, so pages never read a field of undefined. */
+export function normalizeDashboard(raw: Partial<DashboardData>): DashboardData {
+  const base = emptyDashboard(raw.explorerUrl ?? null, raw.faucetUrl ?? null);
+  return { ...base, ...raw, stats: { ...base.stats, ...(raw.stats ?? {}) } } as DashboardData;
+}

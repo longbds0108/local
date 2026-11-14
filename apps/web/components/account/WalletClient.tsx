@@ -9,6 +9,7 @@ import { useAccount } from "@/lib/use-account";
 import { useI18n } from "../I18nProvider";
 import { tripHref } from "./TripsClient";
 import { AccountPage, ConnectCard, dayMonth, ErrorNote, fill } from "./shared";
+import WalletActions from "./WalletActions";
 
 function ActivityRow({ a }: { a: DashboardActivity }) {
   const { t, locale } = useI18n();
@@ -53,7 +54,7 @@ function ActivityRow({ a }: { a: DashboardActivity }) {
 /** /wallet — balance, where the trip money is, and payment history. */
 export default function WalletClient() {
   const { t } = useI18n();
-  const { session, checked, data, loading, error, connecting, connect, balance, address } = useAccount("/wallet");
+  const { session, checked, data, loading, error, connecting, connect, balance, address, reload } = useAccount("/wallet");
   const [copied, setCopied] = useState(false);
 
   const held = Number(data?.stats.escrowedUsdc ?? 0);
@@ -89,37 +90,34 @@ export default function WalletClient() {
               <span className="ml-2 text-base font-bold text-ink-2">USDC</span>
             </div>
             {address && (
-              <button
-                type="button"
-                onClick={copyAddr}
-                className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg bg-white/[0.06] px-3 text-xs text-[#dffff4] tabular-nums"
-                title={t.copy}
-              >
-                {shortAddr(address)} {copied ? "✓" : "⧉"}
-              </button>
-            )}
-            <div className="mt-4 grid grid-cols-1 gap-2 min-[400px]:grid-cols-2">
-              <a
-                href={data?.faucetUrl ?? "https://faucet.circle.com"}
-                target="_blank"
-                rel="noreferrer"
-                className="fx-shine flex min-h-11 items-center justify-center rounded-xl bg-accent px-3 text-sm font-bold text-accent-ink"
-              >
-                {t.dashTopUp} ↗
-              </a>
-              {address && data?.explorerUrl ? (
-                <a
-                  href={`${data.explorerUrl}/address/${address}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex min-h-11 items-center justify-center rounded-xl border border-white/15 px-3 text-sm font-bold text-white"
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={copyAddr}
+                  className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-white/[0.06] px-3 text-xs text-[#dffff4] tabular-nums"
+                  title={t.copy}
                 >
-                  {t.explorerShort} ↗
-                </a>
-              ) : (
-                <span />
-              )}
-            </div>
+                  {shortAddr(address)} {copied ? "✓" : "⧉"}
+                </button>
+                {data?.explorerUrl && (
+                  <a
+                    href={`${data.explorerUrl}/address/${address}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-10 items-center px-1 text-xs font-semibold text-accent hover:underline"
+                  >
+                    {t.explorerShort} ↗
+                  </a>
+                )}
+              </div>
+            )}
+            <WalletActions
+              address={address}
+              balanceRaw={data?.balanceUsdc ?? null}
+              faucetUrl={data?.faucetUrl ?? "https://faucet.circle.com"}
+              active={data?.active ?? []}
+              onChanged={reload}
+            />
             <p className="mt-3 text-[11px] leading-snug text-ink-2">{t.walletBrowserNote}</p>
           </section>
 

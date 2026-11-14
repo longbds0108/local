@@ -98,6 +98,16 @@ const vi: Docs = {
       ],
     },
     {
+      id: "vi",
+      title: "Gửi, nhận và quét mã trong Ví",
+      bullets: [
+        "Gửi: nhập địa chỉ ví và số tiền, kiểm tra lại rồi xác nhận bằng mã PIN. Giao dịch trên chuỗi khối không thể hoàn tác.",
+        "Nhận: cho người gửi quét mã QR địa chỉ ví của bạn, hoặc sao chép địa chỉ gửi cho họ.",
+        "Quét QR: mã của quán có trong chuyến đi sẽ mở thẳng chuyến đi để trả đúng điểm đó; mã của quán khác hoặc mã địa chỉ ví sẽ mở sẵn phần Gửi.",
+      ],
+      links: [{ label: "Mở trang Ví", href: "/wallet" }],
+    },
+    {
       id: "huy-va-hoan-tien",
       title: "Huỷ và hoàn tiền",
       bullets: [
@@ -210,6 +220,16 @@ const en: Docs = {
         "Pay-at-venue stop: enter the bill and confirm with your PIN.",
         "Or show your own QR code for the venue to scan, if they use the partner portal.",
       ],
+    },
+    {
+      id: "wallet",
+      title: "Send, receive and scan in Wallet",
+      bullets: [
+        "Send: enter a wallet address and an amount, check it, then confirm with your PIN. Blockchain transfers can't be undone.",
+        "Receive: let the sender scan your wallet address QR code, or copy the address for them.",
+        "Scan QR: a venue on your trip opens that trip to pay the right stop; any other venue or a wallet address opens Send, filled in.",
+      ],
+      links: [{ label: "Open Wallet", href: "/wallet" }],
     },
     {
       id: "refunds",

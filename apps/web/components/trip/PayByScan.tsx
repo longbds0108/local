@@ -1,12 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CircleClientError, connectWallet, ensureWallet, executeChallenge, getOrRefreshSession, logout } from "@/lib/circle-client";
 import { errorText } from "@/lib/error-text";
 import { usdc } from "@/lib/format";
 import { merchantName } from "@/lib/i18n";
 import type { ItineraryView, StopView } from "@/lib/types";
-import { parseVenue } from "@/lib/venue-qr";
+import { parseVenue, venuePayload } from "@/lib/venue-qr";
 import type { Hex } from "viem";
 import { useI18n } from "../I18nProvider";
 import Scanner from "../Scanner";
@@ -83,6 +83,34 @@ export default function PayByScan({
     if (stop.payMode === "VENUE") return setState({ kind: "amount", stop, merchantId, amount: Number(stop.priceUsdc).toString() });
     setState({ kind: "confirm", stop, merchantId });
   };
+
+  // Opened from the wallet's scanner (/trips/<id>?venue=<merchantId>): handle that venue as if
+  // it had just been scanned here, once this device's check-in codes have loaded.
+  const pendingVenue = useRef<string | null>(null);
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const v = url.searchParams.get("venue");
+    if (!v) return;
+    pendingVenue.current = v;
+    url.searchParams.delete("venue");
+    window.history.replaceState(window.history.state, "", url);
+  }, []);
+  useEffect(() => {
+    const v = pendingVenue.current;
+    if (!v) return;
+    const run = () => {
+      if (pendingVenue.current !== v) return;
+      pendingVenue.current = null;
+      accepting.current = true;
+      onScan(venuePayload(v));
+      document.getElementById("pay-by-scan")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    };
+    const ready = it.stops.some((s) => s.status === "PENDING" && s.merchant?.id === v && (s.payMode === "VENUE" || codes[s.id]));
+    if (ready) return run();
+    const timer = setTimeout(run, 1500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [codes, it]);
 
   const fail = (err: unknown) => {
     const code = err instanceof PayError || err instanceof CircleClientError ? err.code : "NETWORK";

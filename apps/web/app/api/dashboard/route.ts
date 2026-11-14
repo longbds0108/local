@@ -9,7 +9,7 @@ import { config } from "@/lib/env";
 import { toView } from "@/lib/itinerary";
 import { rateLimit } from "@/lib/rate-limit";
 import { isOverdue, sweepItinerary } from "@/lib/refunds";
-import type { DashboardActivity, DashboardData } from "@/lib/types";
+import { emptyDashboard, type DashboardActivity, type DashboardData } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,7 +31,8 @@ export const POST = handle(async (req: Request) => {
   const { userToken, draftIds } = await parseJson(req, Body);
 
   const wallet = await getArcWallet(userToken);
-  if (!wallet) return NextResponse.json({ wallet: null } satisfies Partial<DashboardData>);
+  // Signed in but the wallet isn't created yet (e.g. the PIN window was closed): same shape, empty.
+  if (!wallet) return NextResponse.json(emptyDashboard(config.explorerUrl ?? null, config.faucetUrl ?? null));
   const address = getAddress(wallet.address);
 
   const [paid, drafts, balance] = await Promise.all([

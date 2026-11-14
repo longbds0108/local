@@ -167,7 +167,7 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
           {stopOffer(t, next) && <p className="mt-1 text-xs text-[#9bb0aa]">{stopOffer(t, next)}</p>}
 
           {/* Two ways to pay at the venue: scan theirs (primary), or let them scan yours. */}
-          <div className="mt-4">
+          <div id="pay-by-scan" className="mt-4 scroll-mt-24">
             <PayByScan it={it} codes={codes} onPaid={() => void refresh()} returnTo={`/trips/${it.id}`} />
           </div>
           <a
