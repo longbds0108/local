@@ -177,7 +177,7 @@ export default function TripDetail({ initial, explorerUrl, faucetUrl, feeEstimat
   const pill = expired
     ? { text: t.dashExpired, cls: "bg-surface-2 text-ink-2" }
     : it.status === "DRAFT"
-      ? { text: t.dashUnpaid, cls: "bg-warn-soft text-warn" }
+      ? null
       : { text: t.status[it.status] ?? it.status, cls: it.status === "PAID" ? "bg-accent-soft text-accent" : "bg-surface-2 text-ink-2" };
 
   return (
@@ -200,10 +200,11 @@ export default function TripDetail({ initial, explorerUrl, faucetUrl, feeEstimat
           <p className="mt-0.5 text-sm text-ink-2">
             {tripDay(it.startAt, t.dayTomorrow) && `${tripDay(it.startAt, t.dayTomorrow)} · `}{hhmm(it.startAt)}–{hhmm(it.endAt)} · {it.partySize} {it.partySize === 1 ? t.person : t.people} · {usdc(it.totalUsdc)}
           </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${pill.cls}`}>{pill.text}</span>
-            <span className="rounded-full bg-warn-soft px-2.5 py-1 text-[11px] font-semibold text-warn">{t.testnetShort}</span>
-          </div>
+          {pill && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${pill.cls}`}>{pill.text}</span>
+            </div>
+          )}
         </div>
       </header>
 

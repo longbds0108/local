@@ -47,7 +47,7 @@ function TripCard({ it, kind }: { it: ItineraryView; kind: Kind }) {
   const done = paidStops.filter((s) => s.status === "RELEASED" || s.status === "REFUNDED" || s.status === "SKIPPED").length;
   const pill =
     kind === "draft"
-      ? { text: t.dashUnpaid, cls: "bg-warn-soft text-warn" }
+      ? null
       : kind === "expired"
         ? { text: t.dashExpired, cls: "bg-surface-2 text-ink-2" }
         : { text: t.status[it.status] ?? it.status, cls: kind === "active" ? "bg-accent-soft text-accent" : "bg-surface-2 text-ink-2" };
@@ -64,7 +64,7 @@ function TripCard({ it, kind }: { it: ItineraryView; kind: Kind }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <h3 className="min-w-0 font-display text-base leading-snug font-bold text-white">{it.title}</h3>
-            <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${pill.cls}`}>{pill.text}</span>
+            {pill && <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${pill.cls}`}>{pill.text}</span>}
           </div>
           <p className="mt-0.5 text-xs text-ink-2">
             {hhmm(it.startAt)}–{hhmm(it.endAt)} · {it.partySize} {it.partySize === 1 ? t.person : t.people} · {it.stops.length} {t.dashStopsWord}
