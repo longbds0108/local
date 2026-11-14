@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { shortAddr, usdc } from "@/lib/format";
 import { merchantName } from "@/lib/i18n";
+import Icon from "./Icon";
 import { useI18n } from "./I18nProvider";
 import Scanner from "./Scanner";
 import { errorText } from "@/lib/error-text";
 import QRVoucher from "./QRVoucher";
 import { venuePayload } from "@/lib/venue-qr";
 
-type Merchant = { id: string; name: string; walletAddress: string };
+type Merchant = { id: string; name: string; walletAddress: string; prepay?: boolean };
 type Detail = {
   merchant: Merchant;
   balance: string | null;
@@ -120,25 +121,60 @@ export default function MerchantClient() {
 
   return (
     <div className="mx-auto w-full max-w-xl space-y-4 px-4 py-5">
-      <h1 className="text-xl font-bold text-ink">🏪 {t.merchantTitle}</h1>
+      <h1 className="flex items-center gap-2.5 font-display text-xl font-extrabold text-white">
+        <span className="grid h-9 w-9 place-items-center rounded-xl bg-accent-soft text-accent" aria-hidden>
+          <Icon name="store" size={19} />
+        </span>
+        {t.merchantTitle}
+      </h1>
 
-      <label className="block space-y-1">
-        <span className="text-sm font-medium text-ink">{t.merchantSelect}</span>
-        <select
-          value={merchantId}
-          onChange={(e) => {
-            setMerchantId(e.target.value);
-            setResult(null);
-          }}
-          className="min-h-11 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink"
-        >
-          {merchants.map((m) => (
-            <option key={m.id} value={m.id}>
-              {merchantName(t, m)}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="space-y-2">
+        <h2 id="merchant-pick" className="text-sm font-medium text-ink-2">
+          {t.merchantSelect}
+        </h2>
+        <div role="radiogroup" aria-labelledby="merchant-pick" className="grid gap-2">
+          {merchants.map((m) => {
+            const on = m.id === merchantId;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onClick={() => {
+                  setMerchantId(m.id);
+                  setResult(null);
+                }}
+                className={`flex min-h-[64px] w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition-colors ${
+                  on ? "border-accent bg-accent-soft" : "border-line bg-surface hover:border-accent/40"
+                }`}
+              >
+                <span
+                  className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${on ? "bg-accent text-accent-ink" : "bg-surface-2 text-ink-2"}`}
+                  aria-hidden
+                >
+                  <Icon name="store" size={20} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[15px] font-semibold text-white">{merchantName(t, m)}</span>
+                  <span className="mt-0.5 flex items-center gap-2 text-xs text-ink-2">
+                    <span className={`rounded-full px-2 py-0.5 font-semibold ${m.prepay ? "bg-warn-soft text-warn" : "bg-surface-2 text-[#c5d8d1]"}`}>
+                      {m.prepay ? t.payModeEscrow : t.payModeVenue}
+                    </span>
+                    <span className="truncate tabular-nums">{shortAddr(m.walletAddress)}</span>
+                  </span>
+                </span>
+                <span
+                  className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border ${on ? "border-accent bg-accent text-accent-ink" : "border-[#2c4b45]"}`}
+                  aria-hidden
+                >
+                  {on && <Icon name="check" size={14} strokeWidth={2.6} />}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {detail && (
         <section className="grid grid-cols-2 gap-3">

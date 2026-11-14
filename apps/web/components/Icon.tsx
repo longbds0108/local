@@ -1,7 +1,7 @@
 // One line-icon set for navigation: 24px grid, 1.8 stroke, round joins, currentColor.
 import type { ReactNode, SVGProps } from "react";
 
-export type IconName = "compass" | "map" | "route" | "heart" | "sparkles" | "luggage" | "wallet" | "shield" | "send" | "receive" | "scan" | "plus";
+export type IconName = "compass" | "map" | "route" | "heart" | "sparkles" | "luggage" | "wallet" | "shield" | "send" | "receive" | "scan" | "plus" | "store" | "check";
 
 const PATHS: Record<IconName, ReactNode> = {
   compass: (
@@ -62,6 +62,14 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   plus: <path d="M12 5.5v13M5.5 12h13" />,
+  store: (
+    <>
+      <path d="M4 9.5 5.6 4.5h12.8L20 9.5" />
+      <path d="M4 9.5a2.67 2.67 0 0 0 5.33 0 2.67 2.67 0 0 0 5.34 0 2.67 2.67 0 0 0 5.33 0" />
+      <path d="M5.5 12v7.5h13V12M10 19.5v-4.5h4v4.5" />
+    </>
+  ),
+  check: <path d="m5.5 12.5 4.2 4.2 8.8-9.2" />,
   shield: (
     <>
       <path d="M12 3.5 5.5 6v5.3c0 4 2.8 7.3 6.5 8.7 3.7-1.4 6.5-4.7 6.5-8.7V6z" />
