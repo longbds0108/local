@@ -61,6 +61,8 @@ export function toView(it: ItineraryWithStops): ItineraryView {
   return {
     id: it.id,
     title: it.title,
+    titleVi: it.titleVi,
+    titleEn: it.titleEn,
     startAt: it.startAt.toISOString(),
     endAt: it.endAt.toISOString(),
     partySize: it.partySize,
@@ -87,6 +89,8 @@ export function toView(it: ItineraryWithStops): ItineraryView {
         priceUsdc: s.priceUsdc.toString(),
         priceSource: s.priceSource as "seed" | "estimate",
         note: s.note,
+        noteVi: s.noteVi,
+        noteEn: s.noteEn,
         status: s.status as StopStatus,
         payMode: s.payMode as PayMode,
         paidUsdc: s.paidUsdc?.toString() ?? null,

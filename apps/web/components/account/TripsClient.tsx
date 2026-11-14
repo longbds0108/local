@@ -8,6 +8,7 @@ import { paySplit } from "@/lib/pay-modes";
 import { isExpiredDraft, useAccount, useDrafts } from "@/lib/use-account";
 import { useI18n } from "../I18nProvider";
 import { AccountPage, ConnectCard, DateBlock, ErrorNote, fill } from "./shared";
+import { stopNote, tripTitle } from "@/lib/trip-i18n";
 
 type Kind = "draft" | "active" | "past" | "expired";
 type T = ReturnType<typeof useI18n>["t"];
@@ -42,7 +43,7 @@ function ctaLabel(it: ItineraryView, kind: Kind, t: T): string {
 }
 
 function TripCard({ it, kind }: { it: ItineraryView; kind: Kind }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const paidStops = it.stops.filter((s) => s.status !== "FREE");
   const done = paidStops.filter((s) => s.status === "RELEASED" || s.status === "REFUNDED" || s.status === "SKIPPED").length;
   const pill =
@@ -63,7 +64,7 @@ function TripCard({ it, kind }: { it: ItineraryView; kind: Kind }) {
         <DateBlock iso={it.startAt} />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="min-w-0 font-display text-base leading-snug font-bold text-white">{it.title}</h3>
+            <h3 className="min-w-0 font-display text-base leading-snug font-bold text-white">{tripTitle(it, locale)}</h3>
             {pill && <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${pill.cls}`}>{pill.text}</span>}
           </div>
           <p className="mt-0.5 text-xs text-ink-2">
@@ -135,7 +136,7 @@ function Group({ title, count, note, children }: { title: string; count: number;
 
 type NextAction = { title: string; body: string; cta: string; href: string; external?: boolean };
 
-function nextAction(data: DashboardData | null, drafts: ItineraryView[], t: T): NextAction {
+function nextAction(data: DashboardData | null, drafts: ItineraryView[], t: T, locale: "vi" | "en"): NextAction {
   const now = Date.now() / 1000;
   let best: { it: ItineraryView; s: StopView } | null = null;
   for (const it of data?.active ?? []) {
@@ -148,7 +149,7 @@ function nextAction(data: DashboardData | null, drafts: ItineraryView[], t: T): 
   if (best) {
     return {
       title: fill(t.dashNextCheckin, { place: best.s.name, time: hhmm(best.s.arriveAt) }),
-      body: fill(t.dashNextCheckinBody, { trip: best.it.title }),
+      body: fill(t.dashNextCheckinBody, { trip: tripTitle(best.it, locale) }),
       cta: best.s.payMode === "VENUE" ? t.dashOpenTrip : t.dashOpenQr,
       href: tripHref(best.it.id),
     };
@@ -157,8 +158,8 @@ function nextAction(data: DashboardData | null, drafts: ItineraryView[], t: T): 
   if (draft) {
     const prepay = paySplit(draft.stops).prepay;
     return prepay > 0
-      ? { title: fill(t.dashNextPay, { trip: draft.title }), body: fill(t.dashNextPayBody, { total: usdc(prepay) }), cta: t.dashPay, href: tripHref(draft.id) }
-      : { title: fill(t.dashNextStart, { trip: draft.title }), body: t.startNote, cta: t.startTrip, href: tripHref(draft.id) };
+      ? { title: fill(t.dashNextPay, { trip: tripTitle(draft, locale) }), body: fill(t.dashNextPayBody, { total: usdc(prepay) }), cta: t.dashPay, href: tripHref(draft.id) }
+      : { title: fill(t.dashNextStart, { trip: tripTitle(draft, locale) }), body: t.startNote, cta: t.startTrip, href: tripHref(draft.id) };
   }
   if (data && data.balanceUsdc !== null && Number(data.balanceUsdc) < 1) {
     return { title: t.dashNextTopUp, body: t.dashNextTopUpBody, cta: t.dashTopUp, href: data.faucetUrl ?? "https://faucet.circle.com", external: true };
@@ -168,7 +169,7 @@ function nextAction(data: DashboardData | null, drafts: ItineraryView[], t: T): 
 
 /** /trips — every trip in one list, plus the one thing to do next. */
 export default function TripsClient() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { session, checked, data, loading, error, connecting, connect, balance } = useAccount("/trips");
   const drafts = useDrafts();
   const liveDrafts = useMemo(() => (drafts ?? []).filter((d) => !isExpiredDraft(d)), [drafts]);
@@ -178,7 +179,7 @@ export default function TripsClient() {
   const tripCount = liveDrafts.length + upcoming.length + pastCount;
   // With a wallet: wait for its data. Without: drafts alone decide.
   const ready = drafts !== null && checked && (!session || !!data);
-  const next = ready && (!session || data?.wallet) ? nextAction(session ? data : null, liveDrafts, t) : null;
+  const next = ready && (!session || data?.wallet) ? nextAction(session ? data : null, liveDrafts, t, locale) : null;
 
   return (
     <AccountPage

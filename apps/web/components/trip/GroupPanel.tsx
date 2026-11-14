@@ -17,6 +17,7 @@ import type { ItineraryView } from "@/lib/types";
 import { useI18n } from "../I18nProvider";
 import QRVoucher from "../QRVoucher";
 import BillPanel from "./BillPanel";
+import { stopNote, tripTitle } from "@/lib/trip-i18n";
 
 class Fail extends Error {
   constructor(
@@ -51,7 +52,7 @@ export default function GroupPanel({
   onChange: (it: ItineraryView) => void;
   paymentsConfigured: boolean;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const g = it.group!;
   const mine = myShare(it, viewer);
   const paidMine = !!mine && mine.status !== "PENDING";
@@ -158,7 +159,7 @@ export default function GroupPanel({
 
   const shareLink = async () => {
     try {
-      if (navigator.share) return await navigator.share({ title: it.title, url: link });
+      if (navigator.share) return await navigator.share({ title: tripTitle(it, locale), url: link });
       await navigator.clipboard.writeText(link);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
@@ -289,7 +290,7 @@ export default function GroupPanel({
             </span>
           </summary>
           <p className="text-xs leading-relaxed text-[#c5d8d1]">{hasPrepay ? t.groupInviteBody : t.groupInviteBodyVenue}</p>
-          <div className="mt-3 flex justify-center">{link && <QRVoucher payload={link} label={it.title} hint={t.groupInviteQr} showText={false} />}</div>
+          <div className="mt-3 flex justify-center">{link && <QRVoucher payload={link} label={tripTitle(it, locale)} hint={t.groupInviteQr} showText={false} />}</div>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <button
               type="button"

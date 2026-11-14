@@ -63,7 +63,7 @@ export const POST = handle(async (req: Request) => {
       if (mine?.onchainId && mine.stops.length) {
         const usdcOf = (wei: string) => Number(formatUnits(BigInt(wei), 18));
         const total = mine.stops.reduce((sum, p) => sum + usdcOf(p.amountWei), 0);
-        activity.push({ type: "deposit", itineraryId: it.id, title: it.title, amountUsdc: total.toFixed(2), txHash: mine.depositTx, at: (mine.paidAt ?? it.updatedAt).toISOString() });
+        activity.push({ type: "deposit", itineraryId: it.id, title: it.title, titleVi: it.titleVi, titleEn: it.titleEn, amountUsdc: total.toFixed(2), txHash: mine.depositTx, at: (mine.paidAt ?? it.updatedAt).toISOString() });
         for (const p of mine.stops) {
           const s = it.stops.find((x) => x.id === p.stopId);
           const amount = usdcOf(p.amountWei);
@@ -93,7 +93,7 @@ export const POST = handle(async (req: Request) => {
     const escrowStops = it.stops.filter((s) => s.status !== "FREE" && s.payMode === "ESCROW");
     const deposit = escrowStops.reduce((sum, s) => sum + Number(s.priceUsdc), 0);
     if (it.depositTxHash || (it.paidAt && deposit > 0)) {
-      activity.push({ type: "deposit", itineraryId: it.id, title: it.title, amountUsdc: deposit.toFixed(2), txHash: it.depositTxHash, at: (it.paidAt ?? it.updatedAt).toISOString() });
+      activity.push({ type: "deposit", itineraryId: it.id, title: it.title, titleVi: it.titleVi, titleEn: it.titleEn, amountUsdc: deposit.toFixed(2), txHash: it.depositTxHash, at: (it.paidAt ?? it.updatedAt).toISOString() });
     }
     for (const s of it.stops) {
       if (s.payMode === "VENUE") {

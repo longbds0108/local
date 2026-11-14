@@ -24,6 +24,7 @@ import GroupPanel from "./GroupPanel";
 import { PriceLabel } from "../ItineraryCard";
 import PaymentPanel from "./PaymentPanel";
 import VoucherPanel from "./VoucherPanel";
+import { stopNote, tripTitle } from "@/lib/trip-i18n";
 
 type Props = {
   initial: ItineraryView;
@@ -42,7 +43,7 @@ function currentStep(it: ItineraryView): number {
 }
 
 function Stepper({ step, prepay }: { step: number; prepay: boolean }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   // Trips with nothing to prepay are started, not paid.
   const labels = [t.stepPlan, prepay ? t.stepPay : t.stepStart, t.stepGo, t.stepDone];
   return (
@@ -72,7 +73,7 @@ function Stepper({ step, prepay }: { step: number; prepay: boolean }) {
 
 /** A group trip seen by someone who hasn't paid a share: the plan, with each person's part. */
 function GroupStops({ it }: { it: ItineraryView }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   return (
     <section className="rounded-[20px] border border-line bg-surface p-4">
       <h2 className="text-sm font-bold text-ink-2">{t.tripStops}</h2>
@@ -105,7 +106,7 @@ function GroupStops({ it }: { it: ItineraryView }) {
 
 /** /trips/[id] — one page per trip; what it shows follows the trip's state. */
 export default function TripDetail({ initial, explorerUrl, faucetUrl, feeEstimate, paymentsConfigured, walletPaymentsConfigured }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
   const [it, setIt] = useState(initial);
   // A server refresh (after paying or starting) brings the trip's new state.
@@ -115,7 +116,7 @@ export default function TripDetail({ initial, explorerUrl, faucetUrl, feeEstimat
   const share = async () => {
     const url = window.location.href.split("?")[0];
     try {
-      if (navigator.share) return await navigator.share({ title: it.title, url });
+      if (navigator.share) return await navigator.share({ title: tripTitle(it, locale), url });
       await navigator.clipboard.writeText(url);
       setShared(true);
       setTimeout(() => setShared(false), 1500);
@@ -197,7 +198,7 @@ export default function TripDetail({ initial, explorerUrl, faucetUrl, feeEstimat
       <header className="flex items-start gap-3">
         <DateBlock iso={it.startAt} size="lg" />
         <div className="min-w-0 flex-1">
-          <h1 className="font-display text-[22px] leading-snug font-extrabold text-white">{it.title}</h1>
+          <h1 className="font-display text-[22px] leading-snug font-extrabold text-white">{tripTitle(it, locale)}</h1>
           <p className="mt-0.5 text-sm text-ink-2">
             {tripDay(it.startAt, t.dayTomorrow) && `${tripDay(it.startAt, t.dayTomorrow)} · `}{hhmm(it.startAt)}–{hhmm(it.endAt)} · {it.partySize} {it.partySize === 1 ? t.person : t.people} · {usdc(it.totalUsdc)}
           </p>

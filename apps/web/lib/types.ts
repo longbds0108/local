@@ -26,6 +26,9 @@ export type StopView = {
   priceUsdc: string;
   priceSource: "seed" | "estimate";
   note: string | null;
+  /** The same note in each UI language (AI-written; null on older trips). */
+  noteVi: string | null;
+  noteEn: string | null;
   status: StopStatus;
   payMode: PayMode;
   /** VENUE stops: the amount actually paid at the venue. */
@@ -41,6 +44,9 @@ export type StopView = {
 export type ItineraryView = {
   id: string;
   title: string;
+  /** The same title in each UI language (AI-written; null on older trips). */
+  titleVi: string | null;
+  titleEn: string | null;
   startAt: string;
   endAt: string;
   partySize: number;
@@ -116,6 +122,9 @@ export type DashboardActivity = {
   type: "deposit" | "release" | "venue" | "refund";
   itineraryId: string;
   title: string;
+  /** Deposit rows: the trip title in each UI language. */
+  titleVi?: string | null;
+  titleEn?: string | null;
   merchant?: string | null;
   merchantId?: string | null;
   amountUsdc: string;

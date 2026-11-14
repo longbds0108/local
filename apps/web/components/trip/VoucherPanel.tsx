@@ -14,6 +14,7 @@ import { PriceLabel } from "../ItineraryCard";
 import QRVoucher from "../QRVoucher";
 import PayByScan from "./PayByScan";
 import type { Hex } from "viem";
+import { stopNote, tripTitle } from "@/lib/trip-i18n";
 
 type Props = {
   it: ItineraryView;
@@ -229,10 +230,10 @@ export default function VoucherPanel({ it, onChange, explorerUrl }: Props) {
                       {hhmm(s.arriveAt)} · {s.durationMin} {t.minutes}
                       {payModeLabel(t, s) ? ` · ${payModeLabel(t, s)}` : ""}
                     </p>
-                    {s.note && (
+                    {stopNote(s, locale) && (
                       <p className="mt-1 text-xs text-[#c5d8d1]">
                         <span className="text-ink-2">{t.whyThis}: </span>
-                        {s.note}
+                        {stopNote(s, locale)}
                       </p>
                     )}
                     {stopOffer(t, s) && <p className="mt-0.5 text-xs text-ink-2">{stopOffer(t, s)}</p>}

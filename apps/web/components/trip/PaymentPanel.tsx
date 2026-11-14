@@ -24,6 +24,7 @@ import { codeHashes, ensureCodes } from "@/lib/checkin-codes";
 import { payModeLabel, stopOffer } from "@/lib/stop-info";
 import { paySplit } from "@/lib/pay-modes";
 import { isExpiredDraft } from "@/lib/use-account";
+import { stopNote, tripTitle } from "@/lib/trip-i18n";
 
 type Phase =
   | "idle"
@@ -72,7 +73,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 
 /** Unpaid trip: the plan with prices, then the one payment action. */
 export default function PaymentPanel({ initial, faucetUrl, feeEstimate, paymentsConfigured, walletPaymentsConfigured, onPaid, hidePay, onEnableGroup, groupBusy }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [itinerary, setItinerary] = useState(initial);
   const [session, setSession] = useState<CircleSession | null>(null);
   const [balance, setBalance] = useState<string | null>(null);
@@ -310,7 +311,7 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
                     </>
                   )}
                 </div>
-                {s.note && <div className="mt-0.5 text-xs text-[#c5d8d1]">{s.note}</div>}
+                {stopNote(s, locale) && <div className="mt-0.5 text-xs text-[#c5d8d1]">{stopNote(s, locale)}</div>}
                 {stopOffer(t, s) && <div className="mt-0.5 text-xs text-ink-2">{stopOffer(t, s)}</div>}
               </div>
               <PriceLabel stop={s} />

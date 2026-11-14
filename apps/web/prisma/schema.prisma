@@ -33,6 +33,9 @@ model Itinerary {
   userId           String?
   user             User?         @relation(fields: [userId], references: [id])
   title            String
+  // The AI writes the title and stop notes in both UI languages; `title`/`note` are the fallback.
+  titleVi          String?
+  titleEn          String?
   startAt          DateTime
   endAt            DateTime
   partySize        Int
@@ -71,6 +74,8 @@ model Stop {
   priceUsdc    Decimal
   priceSource  String      @default("seed") // seed | estimate
   note         String?
+  noteVi       String?
+  noteEn       String?
   merchantId   String?
   merchant     Merchant?   @relation(fields: [merchantId], references: [id])
   qrSecret     String // legacy (v1 HMAC vouchers); unused since escrow v2

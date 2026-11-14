@@ -79,7 +79,8 @@ export const TOOLS: Anthropic.Tool[] = [
     input_schema: {
       type: "object",
       properties: {
-        title: { type: "string", description: "Short title in the user's language" },
+        title_vi: { type: "string", description: "Short title in Vietnamese (no English words)" },
+        title_en: { type: "string", description: "The same title in English (place names stay as they are)" },
         startAt: { type: "string", description: "ISO 8601 with offset, e.g. 2026-11-10T14:00:00+07:00" },
         endAt: { type: "string", description: "ISO 8601 with offset" },
         partySize: { type: "integer", minimum: 1, maximum: 20 },
@@ -95,13 +96,14 @@ export const TOOLS: Anthropic.Tool[] = [
               arriveAt: { type: "string", description: "Planned arrival, ISO 8601 with offset" },
               durationMin: { type: "integer", minimum: 10, maximum: 300 },
               priceUsdc: { type: "number", description: "Your expected price for the party (informational; server recomputes)" },
-              note: { type: "string", description: "Why this stop fits the request, one short sentence (max ~90 chars) in the UI language, e.g. 'Ven biển, hợp ngắm hoàng hôn, rẻ hơn ngân sách'" },
+              note_vi: { type: "string", description: "Why this stop fits the request, one short sentence (max ~90 chars) in Vietnamese, e.g. 'Ven biển, hợp ngắm hoàng hôn, rẻ hơn ngân sách'" },
+              note_en: { type: "string", description: "The same reason in English, e.g. 'By the sea, great for sunset, under budget'" },
             },
             required: ["osmId", "arriveAt", "durationMin"],
           },
         },
       },
-      required: ["title", "startAt", "endAt", "partySize", "stops"],
+      required: ["title_vi", "title_en", "startAt", "endAt", "partySize", "stops"],
     },
   },
 ];
@@ -124,7 +126,10 @@ const RouteInput = z.object({
 });
 
 const BuildInput = z.object({
-  title: z.string().min(1).max(120),
+  title_vi: z.string().min(1).max(120).optional(),
+  title_en: z.string().min(1).max(120).optional(),
+  /** Older calls (one language only). */
+  title: z.string().min(1).max(120).optional(),
   startAt: isoDate,
   endAt: isoDate,
   partySize: z.number().int().min(1).max(20),
@@ -136,12 +141,14 @@ const BuildInput = z.object({
         arriveAt: isoDate,
         durationMin: z.number().int().min(10).max(300),
         priceUsdc: z.number().optional(),
+        note_vi: z.string().max(300).optional(),
+        note_en: z.string().max(300).optional(),
         note: z.string().max(300).optional(),
       }),
     )
     .min(1)
     .max(8),
-});
+}).refine((i) => !!(i.title_vi || i.title_en || i.title), { message: "title_vi and title_en are required", path: ["title_vi"] });
 
 function toMapPlace(p: Place & { distanceM: number }): MapPlace {
   return {
@@ -276,7 +283,9 @@ async function runBuild(raw: unknown, ctx: ToolContext) {
       travelMin: schedule[i].travelMin,
       priceUsdc: price.toFixed(2),
       priceSource: p.priceSource,
-      note: s.note ?? null,
+      note: s.note_vi ?? s.note ?? s.note_en ?? null,
+      noteVi: s.note_vi ?? null,
+      noteEn: s.note_en ?? null,
       merchantId: partner?.id ?? null,
       qrSecret: newQrSecret(),
       payMode,
@@ -289,7 +298,9 @@ async function runBuild(raw: unknown, ctx: ToolContext) {
   const session = await prisma.chatSession.findUniqueOrThrow({ where: { id: ctx.sessionId }, include: { itinerary: true } });
   const editable = session.itinerary && session.itinerary.status === "DRAFT" ? session.itinerary : null;
   const base = {
-    title: input.title,
+    title: input.title_vi ?? input.title ?? input.title_en ?? "",
+    titleVi: input.title_vi ?? null,
+    titleEn: input.title_en ?? null,
     startAt,
     endAt,
     partySize: input.partySize,

@@ -6,9 +6,10 @@ import { hhmm, tripDay, usdc } from "@/lib/format";
 import type { ItineraryView } from "@/lib/types";
 import { useI18n } from "../I18nProvider";
 import Icon from "../Icon";
+import { stopNote, tripTitle } from "@/lib/trip-i18n";
 
 export default function ItineraryTimeline({ itinerary }: { itinerary: ItineraryView | null }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const paid = itinerary && itinerary.status !== "DRAFT";
 
   return (
@@ -17,7 +18,7 @@ export default function ItineraryTimeline({ itinerary }: { itinerary: ItineraryV
         <div>
           <span className="text-[11px] font-extrabold tracking-[2px] text-accent">{t.smartItinerary}</span>
           <h2 className="mt-1 font-display text-[26px] font-extrabold text-white md:text-[30px]">
-            {itinerary ? itinerary.title : t.itineraryEmptyTitle}
+            {itinerary ? tripTitle(itinerary, locale) : t.itineraryEmptyTitle}
           </h2>
           {itinerary && (
             <p className="mt-1 text-xs text-ink-2">
@@ -59,9 +60,9 @@ export default function ItineraryTimeline({ itinerary }: { itinerary: ItineraryV
                     </small>
                     <h3 className="my-1 font-display text-[17px] font-bold">{s.name}</h3>
                     <p className="text-xs text-[#859d95]">
-                      {s.note ?? (i === 0 ? t.fromStart.replace("{min}", String(s.travelMin)) : "")}
+                      {stopNote(s, locale) ?? (i === 0 ? t.fromStart.replace("{min}", String(s.travelMin)) : "")}
                       <span className="md:hidden">
-                        {s.note || i === 0 ? " · " : ""}
+                        {stopNote(s, locale) || i === 0 ? " · " : ""}
                         {Number(s.priceUsdc) > 0 ? usdc(s.priceUsdc) : t.free}
                       </span>
                     </p>

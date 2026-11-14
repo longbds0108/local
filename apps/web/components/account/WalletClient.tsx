@@ -6,6 +6,7 @@ import { hhmm, shortAddr, usdc } from "@/lib/format";
 import { merchantName } from "@/lib/i18n";
 import type { DashboardActivity } from "@/lib/types";
 import { useAccount } from "@/lib/use-account";
+import { tripTitle } from "@/lib/trip-i18n";
 import { useI18n } from "../I18nProvider";
 import { tripHref } from "./TripsClient";
 import { AccountPage, ConnectCard, dayMonth, ErrorNote, fill } from "./shared";
@@ -15,7 +16,7 @@ function ActivityRow({ a }: { a: DashboardActivity }) {
   const { t, locale } = useI18n();
   const when = `${dayMonth(a.at, locale)} ${hhmm(a.at)}`;
   const meta = {
-    deposit: { icon: "↑", title: fill(t.dashTxPay, { trip: a.title }), note: t.dashTxPayNote, amount: `−${usdc(a.amountUsdc)}`, amountCls: "text-white", iconCls: "bg-surface-2 text-ink" },
+    deposit: { icon: "↑", title: fill(t.dashTxPay, { trip: tripTitle(a, locale) }), note: t.dashTxPayNote, amount: `−${usdc(a.amountUsdc)}`, amountCls: "text-white", iconCls: "bg-surface-2 text-ink" },
     release: {
       icon: "✓",
       title: fill(t.dashTxRelease, { merchant: a.merchant ? merchantName(t, { id: a.merchantId, name: a.merchant }) : a.title }),

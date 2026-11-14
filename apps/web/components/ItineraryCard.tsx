@@ -6,13 +6,14 @@ import type { ItineraryView, StopView } from "@/lib/types";
 import { useI18n } from "./I18nProvider";
 import { paySplit } from "@/lib/pay-modes";
 import { payModeLabel } from "@/lib/stop-info";
+import { stopNote, tripTitle } from "@/lib/trip-i18n";
 
 /**
  * A stop's price. Pay-at-venue and pay-yourself stops are estimates ("~"); once a
  * pay-at-venue stop is paid, the amount actually paid is shown instead.
  */
 export function PriceLabel({ stop }: { stop: Pick<StopView, "priceUsdc" | "priceSource" | "payMode" | "paidUsdc" | "status"> }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   if (Number(stop.priceUsdc) === 0) return <span className="text-ok text-xs font-medium">{t.free}</span>;
   if (stop.payMode === "VENUE" && stop.status === "RELEASED" && stop.paidUsdc) {
     return (
@@ -32,14 +33,14 @@ export function PriceLabel({ stop }: { stop: Pick<StopView, "priceUsdc" | "price
 }
 
 export default function ItineraryCard({ itinerary, compact = false }: { itinerary: ItineraryView; compact?: boolean }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const paid = itinerary.status !== "DRAFT";
   const split = paySplit(itinerary.stops);
   return (
     <div className="rounded-2xl border border-line bg-surface p-3 shadow-sm">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="truncate text-sm font-bold text-ink">{itinerary.title}</h3>
+          <h3 className="truncate text-sm font-bold text-ink">{tripTitle(itinerary, locale)}</h3>
           <p className="text-xs text-ink-2">
             {tripDay(itinerary.startAt, t.dayTomorrow) && `${tripDay(itinerary.startAt, t.dayTomorrow)} · `}{hhmm(itinerary.startAt)}–{hhmm(itinerary.endAt)} · {itinerary.partySize} {itinerary.partySize === 1 ? t.person : t.people} · {itinerary.stops.length} {t.stops}
           </p>
@@ -73,7 +74,7 @@ export default function ItineraryCard({ itinerary, compact = false }: { itinerar
                     </>
                   )}
                 </p>
-                {s.note && <p className="mt-0.5 text-xs italic text-ink-2">{s.note}</p>}
+                {stopNote(s, locale) && <p className="mt-0.5 text-xs italic text-ink-2">{stopNote(s, locale)}</p>}
               </div>
             </li>
           ))}
