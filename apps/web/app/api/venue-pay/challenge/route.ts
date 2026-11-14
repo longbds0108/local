@@ -37,7 +37,13 @@ export const POST = handle(async (req: Request) => {
   if (stop.status !== "PENDING") throw new ApiError(409, "CONFLICT", `Already paid (${stop.status})`);
 
   const wallet = await getArcWallet(userToken);
-  if (!wallet || getAddress(wallet.address) !== getAddress(stop.itinerary.payerAddress)) {
+  const me = wallet ? getAddress(wallet.address) : null;
+  // The trip's payer, or on a group trip any member who paid a share.
+  const member =
+    !!me &&
+    stop.itinerary.groupMode &&
+    !!(await prisma.groupShare.findFirst({ where: { itineraryId: stop.itineraryId, payerAddress: me, status: { not: "PENDING" } } }));
+  if (!wallet || !me || (me !== getAddress(stop.itinerary.payerAddress) && !member)) {
     throw new ApiError(403, "FORBIDDEN", "Only the wallet that started this trip can pay its stops");
   }
   const balance = await nativeUsdcWei(wallet.address as Address);

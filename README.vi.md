@@ -88,6 +88,7 @@ Private key của user không bao giờ đi qua server: mọi chữ ký diễn r
 
 ## 5. QR check-in + hoàn tiền (M7–M8)
 
+- **Đi nhóm & chia tiền**: người lập chuyến bật "Đi nhóm" trên lịch nháp rồi gửi link. Phần trả trước chia đều theo người; mỗi thành viên tự trả phần mình (có thể trả thay người đi cùng) bằng một lần ký quỹ riêng với mã check-in riêng. Tới quán, mã của ai thì giải ngân phần người đó; ai không đi/huỷ thì phần người đó hoàn về đúng ví đã trả. Hợp đồng ký quỹ giữ nguyên (`lib/group.ts`, `app/api/group/*`). Đã chạy thử trên Anvil: 31 kiểm tra đều đạt.
 - **Ba cách trả** (gắn cho từng điểm khi AI tạo lịch trình, `Stop.payMode`):
   - `ESCROW` — **trả trước**: quán có `prepay: true` trong `apps/web/data/merchants.json` (nhận đặt chỗ, ví dụ Gành Hào). Gộp vào một giao dịch deposit.
   - `VENUE` — **trả tại quán**: quán đối tác không cần đặt chỗ (Cafe Suối Bên Biển, Bánh khọt Bà Hai). Tới nơi quét mã QR của quán → nhập số tiền trên hoá đơn → xác nhận PIN → `USDC.transfer(ví quán, số tiền)` qua giao diện ERC-20 của Arc (`0x3600…`, 6 số lẻ) → server tìm sự kiện `Transfer` từ ví khách tới ví quán trên chuỗi rồi mới ghi đã trả (mỗi giao dịch chỉ tính cho một điểm). Đóng trang giữa chừng thì lần mở sau trang tự kiểm tra lại, không bắt trả lần nữa.

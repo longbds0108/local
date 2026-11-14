@@ -2,12 +2,26 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { hhmm, tripDay, usdc } from "@/lib/format";
+import {
+  CircleClientError,
+  connectWallet,
+  ensureWallet,
+  getOrRefreshSession,
+  getSession,
+  logout,
+  SESSION_EVENT,
+} from "@/lib/circle-client";
+import { errorText } from "@/lib/error-text";
+import { CATEGORY_EMOJI, hhmm, tripDay, usdc } from "@/lib/format";
+import { forViewer, myShare } from "@/lib/group-view";
+import { payModeLabel } from "@/lib/stop-info";
 import { paySplit } from "@/lib/pay-modes";
 import { isExpiredDraft } from "@/lib/use-account";
 import type { ItineraryView } from "@/lib/types";
 import { BackLink, DateBlock } from "../account/shared";
 import { useI18n } from "../I18nProvider";
+import GroupPanel from "./GroupPanel";
+import { PriceLabel } from "../ItineraryCard";
 import PaymentPanel from "./PaymentPanel";
 import VoucherPanel from "./VoucherPanel";
 
@@ -56,6 +70,39 @@ function Stepper({ step, prepay }: { step: number; prepay: boolean }) {
   );
 }
 
+/** A group trip seen by someone who hasn't paid a share: the plan, with each person's part. */
+function GroupStops({ it }: { it: ItineraryView }) {
+  const { t } = useI18n();
+  return (
+    <section className="rounded-[20px] border border-line bg-surface p-4">
+      <h2 className="text-sm font-bold text-ink-2">{t.tripStops}</h2>
+      <ul className="mt-1 divide-y divide-line">
+        {it.stops.map((s, i) => (
+          <li key={s.id} className="flex items-center justify-between gap-3 py-2.5">
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium text-ink">
+                {i + 1}. {CATEGORY_EMOJI[s.category] ?? "📍"} {s.name}
+              </div>
+              <div className="text-xs text-ink-2">
+                {hhmm(s.arriveAt)} · {s.durationMin} {t.minutes}
+                {payModeLabel(t, s) && <span className="font-semibold text-accent"> · {payModeLabel(t, s)}</span>}
+              </div>
+            </div>
+            {s.payMode === "ESCROW" ? (
+              <span className="shrink-0 text-sm font-semibold text-white tabular-nums">
+                {usdc((Number(s.priceUsdc) / it.partySize).toFixed(2))}
+                <span className="text-xs font-normal text-ink-2">{t.perPerson}</span>
+              </span>
+            ) : (
+              <PriceLabel stop={s} />
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 /** /trips/[id] — one page per trip; what it shows follows the trip's state. */
 export default function TripDetail({ initial, explorerUrl, faucetUrl, feeEstimate, paymentsConfigured, walletPaymentsConfigured }: Props) {
   const { t } = useI18n();
@@ -76,6 +123,54 @@ export default function TripDetail({ initial, explorerUrl, faucetUrl, feeEstimat
       /* user dismissed the share sheet */
     }
   };
+
+  // Who is looking: on a group trip each member sees their own share.
+  const [viewer, setViewer] = useState<string | null>(null);
+  useEffect(() => {
+    const read = () => setViewer(getSession()?.walletAddress ?? null);
+    read();
+    void getOrRefreshSession()
+      .then((s) => setViewer(s?.walletAddress ?? null))
+      .catch(() => {});
+    window.addEventListener(SESSION_EVENT, read);
+    return () => window.removeEventListener(SESSION_EVENT, read);
+  }, []);
+
+  const [groupBusy, setGroupBusy] = useState<string | null>(null);
+  const [groupError, setGroupError] = useState<string | null>(null);
+  const enableGroup = async () => {
+    setGroupError(null);
+    setGroupBusy(t.groupEnabling);
+    try {
+      let s = await getOrRefreshSession().catch(() => null);
+      if (!s) s = await connectWallet(`/trips/${it.id}`);
+      if (!s) return setGroupBusy(null);
+      if (!s.walletAddress) s = await ensureWallet(s);
+      setViewer(s.walletAddress ?? null);
+      const res = await fetch("/api/group/enable", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userToken: s.userToken, itineraryId: it.id, enabled: true }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const e = (j as { error?: { code?: string; message?: string } }).error;
+        if (e?.code === "UNAUTHORIZED") logout();
+        setGroupError(errorText(t, e?.code, e?.message));
+      } else setIt((j as { itinerary: ItineraryView }).itinerary);
+    } catch (err) {
+      setGroupError(errorText(t, err instanceof CircleClientError ? err.code : "NETWORK", (err as Error).message));
+    } finally {
+      setGroupBusy(null);
+    }
+  };
+  const onGroupChange = useCallback(
+    (next: ItineraryView) => {
+      setIt(next);
+      router.refresh();
+    },
+    [router],
+  );
 
   const step = currentStep(it);
   const expired = it.status === "DRAFT" && isExpiredDraft(it);
@@ -114,10 +209,30 @@ export default function TripDetail({ initial, explorerUrl, faucetUrl, feeEstimat
 
       {!expired && <Stepper step={step} prepay={paySplit(it.stops).prepay > 0} />}
 
+      {it.group && !expired && <GroupPanel it={it} viewer={viewer} onChange={onGroupChange} paymentsConfigured={paymentsConfigured} />}
+      {groupError && (
+        <p role="alert" className="rounded-xl bg-danger/10 px-3 py-2 text-sm text-danger">
+          {groupError}
+        </p>
+      )}
+
       {it.status === "DRAFT" ? (
-        <PaymentPanel initial={it} faucetUrl={faucetUrl} feeEstimate={feeEstimate} paymentsConfigured={paymentsConfigured} walletPaymentsConfigured={walletPaymentsConfigured} onPaid={onPaid} />
+        <PaymentPanel
+          key={it.group ? "group" : "solo"}
+          initial={it}
+          faucetUrl={faucetUrl}
+          feeEstimate={feeEstimate}
+          paymentsConfigured={paymentsConfigured}
+          walletPaymentsConfigured={walletPaymentsConfigured}
+          onPaid={onPaid}
+          hidePay={!!it.group}
+          onEnableGroup={it.group || !paymentsConfigured ? undefined : () => void enableGroup()}
+          groupBusy={groupBusy}
+        />
+      ) : it.group && !(myShare(it, viewer) && myShare(it, viewer)!.status !== "PENDING") ? (
+        <GroupStops it={it} />
       ) : (
-        <VoucherPanel it={it} onChange={setIt} explorerUrl={explorerUrl} />
+        <VoucherPanel it={forViewer(it, viewer)} onChange={setIt} explorerUrl={explorerUrl} />
       )}
     </div>
   );

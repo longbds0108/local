@@ -45,6 +45,11 @@ type Props = {
   walletPaymentsConfigured: boolean;
   /** Called once the deposit is confirmed; the trip page then reloads into its QR step. */
   onPaid: () => void;
+  /** Group trip: members pay through the group panel, so this panel only shows the plan. */
+  hidePay?: boolean;
+  /** Offer "go as a group" (prepaid part split per person). */
+  onEnableGroup?: () => void;
+  groupBusy?: string | null;
 };
 
 class FlowError extends Error {
@@ -66,7 +71,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 /** Unpaid trip: the plan with prices, then the one payment action. */
-export default function PaymentPanel({ initial, faucetUrl, feeEstimate, paymentsConfigured, walletPaymentsConfigured, onPaid }: Props) {
+export default function PaymentPanel({ initial, faucetUrl, feeEstimate, paymentsConfigured, walletPaymentsConfigured, onPaid, hidePay, onEnableGroup, groupBusy }: Props) {
   const { t } = useI18n();
   const [itinerary, setItinerary] = useState(initial);
   const [session, setSession] = useState<CircleSession | null>(null);
@@ -366,7 +371,7 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
             <p className="text-sm text-ink">{hasPrepay ? t.openingQr : t.openingTrip}</p>
           </div>
         </section>
-      ) : expired ? null : nothingInApp ? (
+      ) : expired || hidePay ? null : nothingInApp ? (
         <p className="rounded-2xl bg-surface-2 p-4 text-sm text-ink">{Number(itinerary.totalUsdc) > 0 ? t.noInAppPay : t.freeItinerary}</p>
       ) : !(hasPrepay ? paymentsConfigured : walletPaymentsConfigured) || !circleConfigured() ? (
         <p role="alert" className="rounded-2xl bg-danger/10 p-4 text-sm text-danger">
@@ -478,6 +483,19 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
           </button>
           {!busy && short === 0 && (
             <p className="text-center text-xs text-ink-2">{!hasPrepay ? t.startNote : session ? t.payConfirmNote : t.payHowNote}</p>
+          )}
+          {hasPrepay && itinerary.partySize >= 2 && onEnableGroup && !busy && (
+            <div className="border-t border-line pt-3">
+              <button
+                type="button"
+                onClick={onEnableGroup}
+                disabled={!!groupBusy}
+                className="min-h-[48px] w-full rounded-xl border border-accent/50 px-4 text-sm font-semibold text-accent hover:bg-accent-soft disabled:opacity-50"
+              >
+                👥 {groupBusy ?? t.groupEnable}
+              </button>
+              <p className="mt-1.5 text-center text-xs text-ink-2">{t.groupEnableNote.replace("{n}", String(itinerary.partySize))}</p>
+            </div>
           )}
         </section>
       )}

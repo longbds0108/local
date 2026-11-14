@@ -35,6 +35,7 @@ export const POST = handle(async (req: Request) => {
   let it = await getItineraryWithStops(itineraryId);
   if (!it) throw new ApiError(404, "NOT_FOUND", "Itinerary not found");
   if (it.status !== "DRAFT") throw new ApiError(409, "CONFLICT", "Itinerary is already paid");
+  if (it.groupMode) throw new ApiError(409, "CONFLICT", "This is a group trip — each member pays their own share");
 
   // Only stops at venues that take bookings are prepaid; pay-at-venue stops are paid on arrival.
   const paid = it.stops.filter((s) => s.status === "PENDING" && s.payMode === "ESCROW");

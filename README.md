@@ -18,6 +18,13 @@ Toura sits in the middle, and each stop is paid the way that venue works:
 | **Pay at venue** — a partner venue you just walk into (cafe, street food) | When you arrive | Scan the venue's QR, enter the bill, confirm with your PIN — USDC goes straight to the venue |
 | **Pay yourself** — not a Toura partner | When you arrive | Shown as an estimate; you pay there directly (no fake "partner pool") |
 
+**Group trips.** The organizer turns a draft into a group trip and shares the link. The prepaid part is split evenly per
+person; each member pays their own share (for themselves, or covering someone else) as a separate escrow deposit with
+their own check-in codes. At the venue each member's code releases their part to the venue; whoever doesn't come, or
+cancels, gets their own part back. The escrow contract is unchanged — a share is just one more `deposit()`
+(`apps/web/lib/group.ts`, `app/api/group/*`). Tested end to end on Anvil: 31 checks (seats, double-pay, check-in per
+member, cancel, sweep, per-member wallet history).
+
 The venue decides: `prepay: true` in [`apps/web/data/merchants.json`](apps/web/data/merchants.json) means it takes bookings. A trip with
 nothing to prepay is simply **started** (no transaction) and paid stop by stop.
 

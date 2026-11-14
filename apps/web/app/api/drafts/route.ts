@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { clientIp, handle, jsonError, parseJson } from "@/lib/api";
 import { prisma } from "@/lib/db";
-import { toView } from "@/lib/itinerary";
+import { itineraryInclude, toView } from "@/lib/itinerary";
 import { rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -22,7 +22,7 @@ export const POST = handle(async (req: Request) => {
   if (!ids.length) return NextResponse.json({ drafts: [], done: [] });
   const rows = await prisma.itinerary.findMany({
     where: { id: { in: ids } },
-    include: { stops: { include: { merchant: true }, orderBy: { order: "asc" } } },
+    include: itineraryInclude,
   });
   const drafts = rows.filter((r) => r.status === "DRAFT").map(toView);
   const keep = new Set(drafts.map((d) => d.id));

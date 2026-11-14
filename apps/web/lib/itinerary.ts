@@ -1,9 +1,43 @@
 import type { Prisma } from "@prisma/client";
+import { formatUnits } from "viem";
 import { prisma } from "./db";
-import type { ItineraryStatus, ItineraryView, PayMode, StopStatus, StopView } from "./types";
+import { toNativeUnits } from "./pricing";
+import type { GroupShareStatus, GroupView, ItineraryStatus, ItineraryView, PayMode, StopStatus, StopView } from "./types";
 
-const include = { stops: { include: { merchant: true }, orderBy: { order: "asc" } } } as const;
+export const itineraryInclude = {
+  stops: { include: { merchant: true }, orderBy: { order: "asc" } },
+  shares: { include: { stops: true }, orderBy: { createdAt: "asc" } },
+} as const;
+const include = itineraryInclude;
 type ItineraryWithStops = Prisma.ItineraryGetPayload<{ include: typeof include }>;
+
+function groupView(it: ItineraryWithStops): GroupView | null {
+  if (!it.groupMode) return null;
+  const n = BigInt(Math.max(1, it.partySize));
+  const perPerson = it.stops
+    .filter((s) => s.payMode === "ESCROW" && s.status !== "FREE")
+    .reduce((sum, s) => sum + toNativeUnits(s.priceUsdc.toString()) / n, 0n);
+  return {
+    organizerAddress: it.organizerAddress,
+    perPersonUsdc: formatUnits(perPerson, 18),
+    paidPeople: it.shares.filter((s) => s.status !== "PENDING").reduce((sum, s) => sum + s.people, 0),
+    shares: it.shares.map((s) => ({
+      id: s.id,
+      payerAddress: s.payerAddress,
+      people: s.people,
+      status: s.status as GroupShareStatus,
+      paidAt: s.paidAt?.toISOString() ?? null,
+      depositTx: s.depositTx,
+      stops: s.stops.map((ss) => ({
+        stopId: ss.stopId,
+        amountUsdc: formatUnits(BigInt(ss.amountWei), 18),
+        status: ss.status,
+        releaseTx: ss.releaseTx,
+        refundTx: ss.refundTx,
+      })),
+    })),
+  };
+}
 
 export function toView(it: ItineraryWithStops): ItineraryView {
   return {
@@ -46,6 +80,7 @@ export function toView(it: ItineraryWithStops): ItineraryView {
         merchant: s.merchant ? { id: s.merchant.id, name: s.merchant.name, walletAddress: s.merchant.walletAddress } : null,
       }),
     ),
+    group: groupView(it),
   };
 }
 

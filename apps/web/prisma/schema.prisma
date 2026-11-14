@@ -18,9 +18,9 @@ model User {
 }
 
 model Merchant {
-  id            String @id
+  id            String  @id
   name          String
-  osmId         String @unique
+  osmId         String  @unique
   walletAddress String
   /// The venue takes bookings and asks for a deposit → its stops are prepaid into the escrow.
   /// Otherwise travellers pay it directly when they arrive (scan its QR).
@@ -29,77 +29,121 @@ model Merchant {
 }
 
 model Itinerary {
-  id             String       @id @default(cuid())
-  userId         String?
-  user           User?        @relation(fields: [userId], references: [id])
-  title          String
-  startAt        DateTime
-  endAt          DateTime
-  partySize      Int
-  totalUsdc      Decimal // 6 decimals
-  status         String // DRAFT | PAID | COMPLETED | REFUNDED | PARTIAL
-  depositTxHash  String?
-  paidAt         DateTime?
-  onchainId      String? // bytes32 used in the contract
-  deadline       Int? // unix seconds, passed to deposit()
-  payerAddress   String?
-  profile        String       @default("driving")
-  geometry       String? // GeoJSON LineString (JSON) for the route
-  stops          Stop[]
-  chatSessions   ChatSession[]
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id               String        @id @default(cuid())
+  userId           String?
+  user             User?         @relation(fields: [userId], references: [id])
+  title            String
+  startAt          DateTime
+  endAt            DateTime
+  partySize        Int
+  totalUsdc        Decimal // 6 decimals
+  status           String // DRAFT | PAID | COMPLETED | REFUNDED | PARTIAL
+  depositTxHash    String?
+  paidAt           DateTime?
+  onchainId        String? // bytes32 used in the contract
+  deadline         Int? // unix seconds, passed to deposit()
+  payerAddress     String?
+  profile          String        @default("driving")
+  geometry         String? // GeoJSON LineString (JSON) for the route
+  // Group trip: each member prepays their own share (one escrow deposit per share).
+  groupMode        Boolean       @default(false)
+  organizerAddress String?
+  shares           GroupShare[]
+  stops            Stop[]
+  chatSessions     ChatSession[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 }
 
 model Stop {
-  id            String    @id @default(cuid())
-  itineraryId   String
-  itinerary     Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
-  order         Int
-  osmId         String
-  name          String
-  lat           Float
-  lon           Float
-  category      String
-  arriveAt      DateTime
-  durationMin   Int
-  travelMin     Int // from previous point (first stop: from user's start location)
-  priceUsdc     Decimal
-  priceSource   String    @default("seed") // seed | estimate
-  note          String?
-  merchantId    String?
-  merchant      Merchant? @relation(fields: [merchantId], references: [id])
-  qrSecret      String // legacy (v1 HMAC vouchers); unused since escrow v2
-  codeHash      String? // keccak256 of the check-in code; the code itself never leaves the traveller's device
+  id           String      @id @default(cuid())
+  itineraryId  String
+  itinerary    Itinerary   @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+  order        Int
+  osmId        String
+  name         String
+  lat          Float
+  lon          Float
+  category     String
+  arriveAt     DateTime
+  durationMin  Int
+  travelMin    Int // from previous point (first stop: from user's start location)
+  priceUsdc    Decimal
+  priceSource  String      @default("seed") // seed | estimate
+  note         String?
+  merchantId   String?
+  merchant     Merchant?   @relation(fields: [merchantId], references: [id])
+  qrSecret     String // legacy (v1 HMAC vouchers); unused since escrow v2
+  codeHash     String? // keccak256 of the check-in code; the code itself never leaves the traveller's device
   // How this stop is paid:
   //   ESCROW — prepaid into the escrow, released to the venue with the check-in code
   //   VENUE  — paid directly to the venue's wallet on arrival (traveller scans the venue QR)
   //   SELF   — venue isn't a Toura partner: estimate only, traveller pays it themselves
   //   NONE   — free
-  payMode       String    @default("ESCROW")
-  paidUsdc      Decimal? // VENUE: amount actually paid at the venue
-  payFromBlock  Int? // VENUE: chain block when the payment was started (where to look for the transfer)
-  status        String // FREE | PENDING | CHECKED_IN | RELEASED | REFUNDED | SKIPPED (VENUE stop never paid)
-  onchainIndex  Int? // index in the escrow's stops[] (only paid stops are escrowed)
-  releaseTx     String?
-  refundTx      String?
-  refundedAt    DateTime?
-  checkedInAt   DateTime?
+  payMode      String      @default("ESCROW")
+  paidUsdc     Decimal? // VENUE: amount actually paid at the venue
+  payFromBlock Int? // VENUE: chain block when the payment was started (where to look for the transfer)
+  status       String // FREE | PENDING | CHECKED_IN | RELEASED | REFUNDED | SKIPPED (VENUE stop never paid)
+  onchainIndex Int? // index in the escrow's stops[] (only paid stops are escrowed)
+  releaseTx    String?
+  refundTx     String?
+  refundedAt   DateTime?
+  checkedInAt  DateTime?
+  shareStops   ShareStop[]
+}
+
+// One member's prepaid part of a group trip: its own escrow deposit (own on-chain id,
+// own check-in codes), covering `people` seats. Unconfirmed shares hold a seat for a while.
+model GroupShare {
+  id           String      @id @default(cuid())
+  itineraryId  String
+  itinerary    Itinerary   @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+  payerAddress String
+  people       Int
+  onchainId    String      @unique
+  status       String // PENDING (challenge created) | PAID | DONE | REFUNDED | PARTIAL
+  depositTx    String?
+  paidAt       DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  stops        ShareStop[]
+
+  @@unique([itineraryId, payerAddress])
+}
+
+// A share's part of one prepaid stop (released to the venue with that member's code).
+model ShareStop {
+  id           String     @id @default(cuid())
+  shareId      String
+  share        GroupShare @relation(fields: [shareId], references: [id], onDelete: Cascade)
+  stopId       String
+  stop         Stop       @relation(fields: [stopId], references: [id], onDelete: Cascade)
+  amountWei    String // exact native units (18 decimals) locked for this stop
+  onchainIndex Int
+  codeHash     String
+  status       String // PENDING | CHECKED_IN | RELEASED | REFUNDING | REFUNDED
+  releaseTx    String?
+  refundTx     String?
+  releasedAt   DateTime?
+  refundedAt   DateTime?
+
+  @@unique([shareId, stopId])
+  @@index([stopId, codeHash])
 }
 
 // Full AI conversation for a chat (append-only, incl. tool calls), so edits
 // like "bỏ hải đăng" can modify the existing DRAFT itinerary.
 model ChatSession {
-  id          String     @id @default(cuid())
-  messages    String     @default("[]") // JSON array of Messages API params (DeepSeek's Anthropic-compatible format)
-  itineraryId String?
-  itinerary   Itinerary? @relation(fields: [itineraryId], references: [id])
-  startLat    Float?
-  startLon    Float?
+  id            String     @id @default(cuid())
+  messages      String     @default("[]") // JSON array of Messages API params (DeepSeek's Anthropic-compatible format)
+  itineraryId   String?
+  itinerary     Itinerary? @relation(fields: [itineraryId], references: [id])
+  startLat      Float?
+  startLon      Float?
   // The wallet that started the chat (the AI needs a signed-in wallet). Null on older chats.
   walletAddress String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
   @@index([walletAddress])
 }

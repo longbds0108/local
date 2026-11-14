@@ -34,12 +34,17 @@ export const POST = handle(async (req: Request) => {
 
   // A transfer already credited to another stop can't count twice.
   const used = await prisma.stop.findMany({ where: { payMode: "VENUE", releaseTx: { not: null } }, select: { releaseTx: true } });
-  const hit = await findUsdcTransfer(
-    stop.itinerary.payerAddress as Address,
-    stop.merchant.walletAddress as Address,
-    BigInt(stop.payFromBlock),
-    new Set(used.map((u) => u.releaseTx!.toLowerCase())),
-  );
+  // Who may have paid the bill: the trip's payer, and on a group trip any member who paid a share.
+  const members = stop.itinerary.groupMode
+    ? (await prisma.groupShare.findMany({ where: { itineraryId: stop.itineraryId, status: { not: "PENDING" } }, select: { payerAddress: true } })).map((m) => m.payerAddress)
+    : [];
+  const payers = [...new Set([stop.itinerary.payerAddress, ...members].map((a) => a.toLowerCase()))];
+  const exclude = new Set(used.map((u) => u.releaseTx!.toLowerCase()));
+  let hit: Awaited<ReturnType<typeof findUsdcTransfer>> = null;
+  for (const from of payers) {
+    hit = await findUsdcTransfer(from as Address, stop.merchant.walletAddress as Address, BigInt(stop.payFromBlock), exclude);
+    if (hit) break;
+  }
   if (!hit) return NextResponse.json({ paid: false });
 
   const amount = formatUnits(hit.value, hit.decimals);

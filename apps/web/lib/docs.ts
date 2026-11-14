@@ -88,6 +88,16 @@ const vi: Docs = {
       bullets: ["Chuyến không có điểm nào cần trả trước thì bạn chỉ cần bấm “Bắt đầu chuyến đi”, không có giao dịch nào."],
     },
     {
+      id: "di-nhom",
+      title: "Đi nhóm và chia tiền",
+      steps: [
+        "Trên lịch trình nháp có điểm trả trước, bấm “Đi nhóm: mỗi người tự trả phần mình”. Phần trả trước được chia đều theo số người.",
+        "Gửi link chuyến đi (hoặc cho bạn bè quét mã QR mời) cho cả nhóm.",
+        "Mỗi người mở link, đăng nhập ví và trả phần của mình, có thể trả thay cho người đi cùng. Hạn góp là giờ bắt đầu chuyến.",
+        "Tới quán, mỗi người tự quét mã của quán: phần của ai thì chuyển cho quán khi người đó tới. Ai không đi hoặc huỷ thì phần của người đó tự hoàn về đúng ví đã trả.",
+      ],
+    },
+    {
       id: "khi-toi-noi",
       title: "Khi tới nơi",
       steps: [
@@ -210,6 +220,16 @@ const en: Docs = {
         },
       ],
       bullets: ["If nothing on a trip needs prepaying, just tap “Start this trip”; no transaction is made."],
+    },
+    {
+      id: "group",
+      title: "Group trips and splitting the bill",
+      steps: [
+        "On a draft with prepaid stops, tap “Go as a group: everyone pays their own share”. The prepaid part is split evenly per person.",
+        "Send the trip link (or let friends scan the invite QR code) to the group.",
+        "Each person opens the link, signs in with their wallet and pays their share, and can cover someone travelling with them. Shares close when the trip starts.",
+        "At each venue everyone scans its QR code: your part goes to the venue when you arrive. If you don't go or cancel, your part goes back to the wallet that paid it.",
+      ],
     },
     {
       id: "arrive",

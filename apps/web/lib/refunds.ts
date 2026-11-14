@@ -5,6 +5,7 @@ import { ApiError } from "./api";
 import { operatorRefund } from "./chain";
 import { prisma } from "./db";
 import { config } from "./env";
+import { sweepGroup } from "./group";
 import { recomputeItineraryStatus } from "./itinerary";
 
 export async function refundStop(stop: { id: string; itineraryId: string; onchainIndex: number | null }, onchainId: string) {
@@ -37,8 +38,10 @@ export async function sweepItinerary(itineraryId: string): Promise<void> {
     if (!it || it.status !== "PAID" || !it.deadline || it.deadline > Date.now() / 1000) return;
     // Pay-at-venue stops that were never paid: no money was held, so nothing to refund.
     await prisma.stop.updateMany({ where: { itineraryId, payMode: "VENUE", status: "PENDING" }, data: { status: "SKIPPED" } });
+    // Group trip: refund each member's unused part to that member.
+    if (it.groupMode && config.paymentsConfigured && process.env.OPERATOR_PRIVATE_KEY) await sweepGroup(itineraryId);
     // Prepaid stops: refund to the payer (needs the operator key to send the tx).
-    if (it.onchainId && config.paymentsConfigured && process.env.OPERATOR_PRIVATE_KEY) {
+    if (!it.groupMode && it.onchainId && config.paymentsConfigured && process.env.OPERATOR_PRIVATE_KEY) {
       for (const s of it.stops.filter((x) => x.status === "PENDING" && x.onchainIndex !== null)) {
         await refundStop(s, it.onchainId).catch((err) => console.warn("[sweep]", s.id, (err as Error).message));
       }

@@ -1,10 +1,12 @@
+import type { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { keccak256, type Hex } from "viem";
+import { formatUnits, keccak256, type Hex } from "viem";
 import { z } from "zod";
 import { ApiError, clientIp, handle, jsonError, parseJson } from "@/lib/api";
 import { relayRelease } from "@/lib/chain";
 import { prisma } from "@/lib/db";
 import { config } from "@/lib/env";
+import { rollupGroupStop } from "@/lib/group";
 import { recomputeItineraryStatus } from "@/lib/itinerary";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -25,12 +27,49 @@ const Body = z.object({
  * code). The contract verifies the code itself and can only pay the merchant
  * fixed at deposit — the operator key just pays gas.
  */
+type StopWithTrip = Prisma.StopGetPayload<{ include: { itinerary: true; merchant: true } }>;
+
+/** Group trip: the code identifies which member's part of the stop to release. */
+async function checkinGroup(stop: StopWithTrip, code: Hex, merchantId: string) {
+  const ss = await prisma.shareStop.findFirst({
+    where: { stopId: stop.id, codeHash: { in: [keccak256(code).toLowerCase(), keccak256(code)] } },
+    include: { share: true },
+  });
+  if (!ss || ss.share.status === "PENDING") throw new ApiError(400, "BAD_REQUEST", "Invalid voucher");
+  if (stop.merchantId !== merchantId) throw new ApiError(403, "FORBIDDEN", "This QR code belongs to another partner");
+  if (stop.itinerary.status !== "PAID") throw new ApiError(409, "CONFLICT", `Itinerary is not in PAID state (${stop.itinerary.status})`);
+  if (ss.status !== "PENDING") throw new ApiError(409, "CONFLICT", `Voucher already used (${ss.status})`);
+  const deadline = stop.itinerary.deadline;
+  if (!deadline || Date.now() / 1000 >= deadline) throw new ApiError(410, "EXPIRED", "Voucher expired");
+
+  const locked = await prisma.shareStop.updateMany({ where: { id: ss.id, status: "PENDING" }, data: { status: "CHECKED_IN" } });
+  if (locked.count !== 1) throw new ApiError(409, "CONFLICT", "Voucher is being processed");
+  let txHash: Hex;
+  try {
+    txHash = await relayRelease(ss.share.onchainId as Hex, ss.onchainIndex, code);
+  } catch (err) {
+    await prisma.shareStop.update({ where: { id: ss.id }, data: { status: "PENDING" } });
+    console.error("[checkin] group release failed", err);
+    throw new ApiError(502, "CHAIN_ERROR", `On-chain release failed: ${(err as Error).message.split("\n")[0]}`);
+  }
+  await prisma.shareStop.update({ where: { id: ss.id }, data: { status: "RELEASED", releaseTx: txHash, releasedAt: new Date() } });
+  await rollupGroupStop(stop.id);
+  return NextResponse.json({
+    ok: true,
+    stop: { id: stop.id, name: stop.name, amountUsdc: formatUnits(BigInt(ss.amountWei), 18) },
+    merchant: stop.merchant ? { id: stop.merchant.id, name: stop.merchant.name, walletAddress: stop.merchant.walletAddress } : null,
+    txHash,
+    explorerTxUrl: config.explorerUrl ? `${config.explorerUrl}/tx/${txHash}` : null,
+  });
+}
+
 export const POST = handle(async (req: Request) => {
   if (!rateLimit(`checkin:${clientIp(req)}`, 30, 60_000).ok) return jsonError(429, "RATE_LIMITED", "Too many requests");
   const { stopId, code: rawCode, merchantId } = await parseJson(req, Body);
   const code = (rawCode.startsWith("0x") ? rawCode : `0x${rawCode}`).toLowerCase() as Hex;
 
   const stop = await prisma.stop.findUnique({ where: { id: stopId }, include: { itinerary: true, merchant: true } });
+  if (stop?.itinerary.groupMode) return checkinGroup(stop, code, merchantId);
   // Same response for unknown stop and bad signature: don't leak which stop ids exist.
   if (!stop || !stop.codeHash || keccak256(code).toLowerCase() !== stop.codeHash.toLowerCase()) {
     throw new ApiError(400, "BAD_REQUEST", "Invalid voucher");

@@ -5,6 +5,7 @@ import { ApiError, clientIp, handle, jsonError, parseJson } from "@/lib/api";
 import { getArcWallet } from "@/lib/circle";
 import { prisma } from "@/lib/db";
 import { config } from "@/lib/env";
+import { refundShareStop } from "@/lib/group";
 import { rateLimit } from "@/lib/rate-limit";
 import { refundStop, sweepItinerary } from "@/lib/refunds";
 
@@ -30,6 +31,17 @@ export const POST = handle(async (req: Request) => {
   if (body.mode === "cancel") {
     const stop = await prisma.stop.findUnique({ where: { id: body.stopId }, include: { itinerary: true } });
     if (!stop) throw new ApiError(404, "NOT_FOUND", "Stop not found");
+    if (stop.itinerary.groupMode) {
+      // Group trip: a member cancels their own part of the stop; it goes back to their wallet.
+      if (stop.itinerary.status !== "PAID") throw new ApiError(409, "CONFLICT", "Itinerary is not paid");
+      const wallet = await getArcWallet(body.userToken);
+      const ss = wallet
+        ? await prisma.shareStop.findFirst({ where: { stopId: stop.id, share: { payerAddress: getAddress(wallet.address), status: { not: "PENDING" } } } })
+        : null;
+      if (!ss) throw new ApiError(403, "FORBIDDEN", "Only the wallet that paid can cancel this stop");
+      const txHash = await refundShareStop(ss.id);
+      return NextResponse.json({ ok: true, txHash, explorerTxUrl: config.explorerUrl ? `${config.explorerUrl}/tx/${txHash}` : null });
+    }
     if (stop.itinerary.status !== "PAID" || !stop.itinerary.onchainId || !stop.itinerary.payerAddress) {
       throw new ApiError(409, "CONFLICT", "Itinerary is not paid");
     }

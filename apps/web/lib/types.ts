@@ -53,6 +53,27 @@ export type ItineraryView = {
   profile: string;
   geometry: { type: "LineString"; coordinates: [number, number][] } | null;
   stops: StopView[];
+  /** Group trip: each member prepays their own share. Null for a one-payer trip. */
+  group: GroupView | null;
+};
+
+export type GroupShareStatus = "PENDING" | "PAID" | "DONE" | "REFUNDED" | "PARTIAL";
+export type GroupShareView = {
+  id: string;
+  payerAddress: string;
+  people: number;
+  status: GroupShareStatus;
+  paidAt: string | null;
+  depositTx: string | null;
+  stops: { stopId: string; amountUsdc: string; status: string; releaseTx: string | null; refundTx: string | null }[];
+};
+export type GroupView = {
+  organizerAddress: string | null;
+  /** One person's part of the prepaid stops, in USDC. */
+  perPersonUsdc: string;
+  /** Seats covered by confirmed shares. */
+  paidPeople: number;
+  shares: GroupShareView[];
 };
 
 export type MapPlace = {
