@@ -484,6 +484,11 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
           {!busy && short === 0 && (
             <p className="text-center text-xs text-ink-2">{!hasPrepay ? t.startNote : session ? t.payConfirmNote : t.payHowNote}</p>
           )}
+          {!hasPrepay && itinerary.partySize >= 2 && onEnableGroup && !busy && (
+            <p className="rounded-xl border border-line bg-surface-2 p-3 text-xs leading-relaxed text-ink-2">
+              👥 <b className="text-ink">{t.groupTitle}</b>: {t.groupNoPrepay}
+            </p>
+          )}
           {hasPrepay && itinerary.partySize >= 2 && onEnableGroup && !busy && (
             <div className="border-t border-line pt-3">
               <button
