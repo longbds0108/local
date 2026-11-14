@@ -128,7 +128,7 @@ export default function Hero({ gps, here, info, infoLoading, onUpdateLocation }:
                 href={lm.filePage}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-0.5 block min-h-6 truncate pt-1 text-[11px] text-[#b8cbc4] hover:underline"
+                className="-mb-1.5 block truncate py-2 text-[11px] leading-5 text-[#b8cbc4] hover:underline"
                 title={`${lm.artist ?? ""} · ${lm.license} · Wikimedia Commons`}
               >
                 {t.photoBy} {lm.artist ?? "Wikimedia Commons"} · {lm.license}

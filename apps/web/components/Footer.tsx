@@ -36,7 +36,7 @@ export default function Footer() {
           <ul className="mt-3 grid grid-cols-2 gap-x-4 md:grid-cols-1">
             {links.map((l) => (
               <li key={l.href}>
-                <Link href={l.href} className="inline-flex min-h-11 items-center text-sm text-[#cfe0da] hover:text-white">
+                <Link href={l.href} className="flex min-h-11 w-full items-center text-sm text-[#cfe0da] hover:text-white">
                   {l.label}
                 </Link>
               </li>
@@ -58,15 +58,15 @@ export default function Footer() {
         )}
       </div>
 
-      <div className="relative mx-auto flex max-w-[1440px] flex-col gap-2 border-t border-line px-[18px] py-5 text-xs text-ink-2 md:flex-row md:items-center md:justify-between md:px-[7vw]">
-        <span>© {new Date().getFullYear()} Toura</span>
-        <span>
-          {t.footerMapData} ©{" "}
+      <div className="relative mx-auto flex max-w-[1440px] flex-col gap-0 border-t border-line px-[18px] py-3 text-xs md:gap-2 text-ink-2 md:flex-row md:items-center md:justify-between md:px-[7vw]">
+        <span className="flex min-h-9 items-center">© {new Date().getFullYear()} Toura</span>
+        <span className="flex min-h-11 items-center gap-1">
+          {t.footerMapData} ©
           <a
             href="https://www.openstreetmap.org/copyright"
             target="_blank"
             rel="noreferrer"
-            className="underline decoration-white/20 underline-offset-2 hover:text-white"
+            className="inline-flex min-h-11 items-center underline decoration-white/20 underline-offset-2 hover:text-white"
           >
             OpenStreetMap
           </a>

@@ -190,7 +190,7 @@ export default function MerchantClient() {
                 href={`${detail.explorerUrl}/address/${detail.merchant.walletAddress}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-block min-h-6 pt-1 tabular-nums text-[11px] text-accent underline"
+                className="-mb-2 inline-flex min-h-10 items-center tabular-nums text-xs text-accent underline"
               >
                 {shortAddr(detail.merchant.walletAddress)} ↗
               </a>
