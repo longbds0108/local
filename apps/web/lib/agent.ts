@@ -41,6 +41,9 @@ Cách làm việc:
 
 const MAX_ITERATIONS = 10;
 
+// The draft's date for the AI's context, so a plan for tomorrow isn't read as today.
+const ddmm = (d: Date) => new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit" }).format(d);
+
 let _client: Anthropic | null = null;
 function client() {
   // Pass the key and URL explicitly so an ANTHROPIC_* variable in the environment is never picked up.
@@ -66,7 +69,7 @@ async function contextBlock(sessionId: string, start: LatLon, startIsGps: boolea
     const stops = it.stops.map((s) => `${s.name} (${s.osmId}, ${hhmm(s.arriveAt)}, ${s.durationMin}′)`).join("; ");
     current =
       it.status === "DRAFT"
-        ? `id=${it.id}, ${it.partySize} người, ${hhmm(it.startAt)}–${hhmm(it.endAt)}, tổng ${it.totalUsdc} USDC: ${stops}`
+        ? `id=${it.id}, ${it.partySize} người, ngày ${ddmm(it.startAt)} ${hhmm(it.startAt)}–${hhmm(it.endAt)}, tổng ${it.totalUsdc} USDC: ${stops}`
         : `id=${it.id} đã thanh toán (${it.status}) — không sửa được; nếu user muốn thay đổi, tạo lịch trình mới`;
   }
   const w = await currentWeather(start.lat, start.lon).catch(() => null);

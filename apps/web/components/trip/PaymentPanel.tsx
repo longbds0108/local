@@ -39,7 +39,10 @@ type Props = {
   initial: ItineraryView;
   faucetUrl: string | null;
   feeEstimate: string | null;
+  /** Escrow ready (needed only for prepaid stops). */
   paymentsConfigured: boolean;
+  /** Circle + Arc ready (enough to start a trip with nothing prepaid). */
+  walletPaymentsConfigured: boolean;
   /** Called once the deposit is confirmed; the trip page then reloads into its QR step. */
   onPaid: () => void;
 };
@@ -63,7 +66,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 /** Unpaid trip: the plan with prices, then the one payment action. */
-export default function PaymentPanel({ initial, faucetUrl, feeEstimate, paymentsConfigured, onPaid }: Props) {
+export default function PaymentPanel({ initial, faucetUrl, feeEstimate, paymentsConfigured, walletPaymentsConfigured, onPaid }: Props) {
   const { t } = useI18n();
   const [itinerary, setItinerary] = useState(initial);
   const [session, setSession] = useState<CircleSession | null>(null);
@@ -365,7 +368,7 @@ export default function PaymentPanel({ initial, faucetUrl, feeEstimate, payments
         </section>
       ) : expired ? null : nothingInApp ? (
         <p className="rounded-2xl bg-surface-2 p-4 text-sm text-ink">{Number(itinerary.totalUsdc) > 0 ? t.noInAppPay : t.freeItinerary}</p>
-      ) : !paymentsConfigured || !circleConfigured() ? (
+      ) : !(hasPrepay ? paymentsConfigured : walletPaymentsConfigured) || !circleConfigured() ? (
         <p role="alert" className="rounded-2xl bg-danger/10 p-4 text-sm text-danger">
           {t.paymentsNotConfigured}
         </p>

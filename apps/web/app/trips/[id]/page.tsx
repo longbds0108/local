@@ -30,6 +30,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
       faucetUrl={config.faucetUrl ?? null}
       feeEstimate={feeEstimate}
       paymentsConfigured={config.paymentsConfigured}
+      walletPaymentsConfigured={config.walletPaymentsConfigured}
     />
   );
 }

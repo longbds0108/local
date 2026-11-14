@@ -68,7 +68,11 @@ export const config = {
   get cronSecret() {
     return read("CRON_SECRET");
   },
-  /** True when everything needed for on-chain payment is configured. */
+  /** Wallet payments without the escrow: starting a trip, paying at the venue, sending USDC. */
+  get walletPaymentsConfigured() {
+    return ["CIRCLE_API_KEY", "ARC_RPC_URL", "ARC_CHAIN_ID"].every((n) => !!read(n));
+  },
+  /** Prepaid (escrow) payments: everything above plus the deployed escrow contract. */
   get paymentsConfigured() {
     return ["CIRCLE_API_KEY", "ARC_RPC_URL", "ARC_CHAIN_ID", "ESCROW_ADDRESS"].every((n) => !!read(n));
   },

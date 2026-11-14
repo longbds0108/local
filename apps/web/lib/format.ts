@@ -14,6 +14,19 @@ export function dayLabel(iso: string, locale: "vi" | "en"): string {
   }).format(new Date(iso));
 }
 
+const ymd = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+
+/**
+ * The day of a trip next to its hours, so "16:00–19:00" is never mistaken for today:
+ * "" for today, the "tomorrow" word, otherwise dd/MM.
+ */
+export function tripDay(iso: string, tomorrow: string, now = new Date()): string {
+  const d = new Date(iso);
+  if (ymd(d) === ymd(now)) return "";
+  if (ymd(d) === ymd(new Date(now.getTime() + 86_400_000))) return tomorrow;
+  return new Intl.DateTimeFormat("en-GB", { timeZone: TZ, day: "2-digit", month: "2-digit" }).format(d);
+}
+
 export function usdc(amount: string | number): string {
   const n = typeof amount === "number" ? amount : Number(amount);
   return `${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} USDC`;

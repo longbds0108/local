@@ -5,6 +5,7 @@ import { ApiError, handle, parseQuery } from "@/lib/api";
 import { nativeUsdcBalance } from "@/lib/chain";
 import { prisma } from "@/lib/db";
 import { config } from "@/lib/env";
+import { PARTNER_POOL_MERCHANT_ID } from "@/lib/places";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +16,8 @@ const Query = z.object({ id: z.string().min(1).max(64).optional() });
 export const GET = handle(async (req: Request) => {
   const { id } = parseQuery(req, Query);
   if (!id) {
-    const merchants = await prisma.merchant.findMany({ orderBy: { name: "asc" } });
+    // The old shared "partner pool" wallet isn't a venue: keep it out of the list (old trips can still look it up by id).
+    const merchants = await prisma.merchant.findMany({ where: { id: { not: PARTNER_POOL_MERCHANT_ID } }, orderBy: { name: "asc" } });
     return NextResponse.json({ merchants });
   }
   const merchant = await prisma.merchant.findUnique({ where: { id } });
