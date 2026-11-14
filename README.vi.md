@@ -39,6 +39,8 @@ AI dùng **DeepSeek** qua cổng tương thích Anthropic (`https://api.deepseek
 
 ## 3. Arc testnet
 
+Hợp đồng TouraEscrow đã deploy trên Arc testnet: [`0x838C515363b7BbFb69f68106b3530Aa5Ea9865fc`](https://explorer.testnet.arc.io/address/0x838C515363b7BbFb69f68106b3530Aa5Ea9865fc).
+
 Giá trị trong `.env.example` lấy từ [docs.arc.io → Connect to Arc](https://docs.arc.io/arc/references/connect-to-arc) và [Contract addresses](https://docs.arc.io/arc/references/contract-addresses) ngày 2026-11-10 — **hãy kiểm tra lại** trước khi dùng:
 
 | Biến | Giá trị |

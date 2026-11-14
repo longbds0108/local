@@ -59,7 +59,8 @@ Every prepaid stop's money can only end up in two places: the merchant fixed at 
 Pay-at-venue money never passes through Toura: it goes from the traveller's wallet to the venue's wallet
 (address from the server's database, never from the client), and a stop is only marked paid when the chain
 shows that transfer — each transfer can count for one stop only.
-Contract: [`contracts/src/TouraEscrow.sol`](contracts/src/TouraEscrow.sol) (escrow v2).
+Contract: [`contracts/src/TouraEscrow.sol`](contracts/src/TouraEscrow.sol) (escrow v2), deployed on Arc testnet at
+[`0x838C515363b7BbFb69f68106b3530Aa5Ea9865fc`](https://explorer.testnet.arc.io/address/0x838C515363b7BbFb69f68106b3530Aa5Ea9865fc).
 
 ## Built on Arc + Circle
 
